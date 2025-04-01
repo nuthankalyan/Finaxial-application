@@ -1,0 +1,552 @@
+/* CSS Variables using a class instead of :root */
+.container {
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --text-muted: #6b7280;
+  --bg-primary: #f9fafb;
+  --bg-secondary: #fff;
+  --border-color: #e5e7eb;
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --transition: all 0.2s ease-in-out;
+
+  min-height: 100vh;
+  background-color: var(--bg-primary);
+  padding-bottom: 2rem;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  color: var(--text-primary);
+  letter-spacing: -0.025em;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 2rem;
+  background-color: var(--bg-secondary);
+  box-shadow: var(--shadow-sm);
+  border-bottom: 1px solid var(--border-color);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.header h1 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.logoutButton {
+  padding: 0.5rem 1.25rem;
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: inherit;
+}
+
+.logoutButton:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.userCard {
+  padding: 2rem;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.userCard:hover {
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-2px);
+}
+
+.userCard h2 {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.025em;
+}
+
+.userInfo {
+  font-size: 1rem;
+  color: var(--text-secondary);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 1rem;
+}
+
+.userInfo p {
+  margin: 0.5rem 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dashboardSection {
+  padding: 2rem;
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  margin-bottom: 2rem;
+  border: 1px solid var(--border-color);
+  transition: var(--transition);
+}
+
+.dashboardSection:hover {
+  box-shadow: var(--shadow-lg);
+}
+
+.dashboardSection h3 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  letter-spacing: -0.025em;
+}
+
+.dashboardSection p {
+  color: var(--text-secondary);
+  line-height: 1.6;
+  font-size: 1.0625rem;
+}
+
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.createButton {
+  padding: 0.625rem 1.25rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: flex;
+  align-items: center;
+  
+  font-family: inherit;
+}
+
+.createButton:hover {
+  background-color: var(--primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
+}
+
+.createButton svg {
+  width: 1.125rem;
+  height: 1.125rem;
+}
+
+.workspaceGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.workspaceCard {
+  background-color: var(--bg-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+  padding: 1.5rem;
+  transition: var(--transition);
+  cursor: pointer;
+  border: 1px solid var(--border-color);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.workspaceCard:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-lg);
+  border-color: #ddd;
+}
+
+.workspaceActions {
+  position: absolute;
+  top: 1rem;
+  right: 1rem;
+  display: none;
+  gap: 0.75rem;
+  z-index: 5;
+}
+
+.workspaceCard:hover .workspaceActions {
+  display: flex;
+}
+
+.actionButton {
+  background: #f3f4f6;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.5rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: var(--transition);
+  box-shadow: var(--shadow-sm);
+  font-family: inherit;
+}
+
+.actionButton:hover {
+  background: #e5e7eb;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.actionButton svg {
+  width: 1.125rem;
+  height: 1.125rem;
+  color: #4b5563;
+}
+
+.deleteButton {
+  background: #fee2e2;
+}
+
+.deleteButton:hover {
+  background: #fecaca;
+}
+
+.deleteButton svg {
+  color: #ef4444;
+}
+
+.workspaceTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-top: 0;
+  margin-bottom: 0.75rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  letter-spacing: -0.025em;
+}
+
+.workspaceDesc {
+  color: var(--text-secondary);
+  font-size: 0.9375rem;
+  margin-top: 0.5rem;
+  margin-bottom: 1rem;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
+  flex-grow: 1;
+}
+
+.workspaceFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 1rem;
+  font-size: 0.8125rem;
+  color: var(--text-muted);
+  border-top: 1px solid #f3f4f6;
+  padding-top: 1rem;
+}
+
+.workspaceDate {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.workspaceDate svg {
+  width: 0.9375rem;
+  height: 0.9375rem;
+}
+
+.emptyState {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-secondary);
+  background-color: #f9fafb;
+  border-radius: var(--radius-lg);
+  border: 2px dashed #e5e7eb;
+}
+
+.emptyState h4 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+  letter-spacing: -0.025em;
+}
+
+.emptyState p {
+  margin-bottom: 1.5rem;
+  font-size: 1.0625rem;
+}
+
+.editTitleInput {
+  width: 100%;
+  font-size: 1.25rem;
+  font-weight: 600;
+  padding: 0.375rem 0.75rem;
+  border: 2px solid var(--primary-color);
+  border-radius: var(--radius-sm);
+  outline: none;
+  margin: -0.25rem 0;
+  font-family: inherit;
+}
+
+.confirmDialog {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+}
+
+.confirmBox {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: var(--shadow-lg);
+}
+
+.confirmTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  letter-spacing: -0.025em;
+}
+
+.confirmButtons {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1.75rem;
+  justify-content: flex-end;
+}
+
+.confirmDelete {
+  background-color: #ef4444;
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.confirmDelete:hover {
+  background-color: #dc2626;
+  transform: translateY(-1px);
+}
+
+.confirmCancel {
+  background-color: #f3f4f6;
+  color: var(--text-secondary);
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 0.625rem 1.25rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.confirmCancel:hover {
+  background-color: #e5e7eb;
+  transform: translateY(-1px);
+}
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 50;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background-color: white;
+  border-radius: var(--radius-lg);
+  padding: 2rem;
+  width: 90%;
+  max-width: 550px;
+  box-shadow: var(--shadow-lg);
+}
+
+.modalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.75rem;
+}
+
+.modalTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.025em;
+}
+
+.closeButton {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: var(--transition);
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-family: inherit;
+}
+
+.closeButton:hover {
+  color: var(--text-primary);
+  background-color: #f3f4f6;
+}
+
+.modalForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: var(--text-primary);
+  font-size: 0.9375rem;
+}
+
+.formGroup input,
+.formGroup textarea {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  width: 100%;
+  outline: none;
+  transition: var(--transition);
+  font-family: inherit;
+}
+
+.formGroup input:focus,
+.formGroup textarea:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.formGroup textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.submitButton {
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary-color);
+  color: white;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 0.5rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: inherit;
+}
+
+.submitButton:hover:not(:disabled) {
+  background-color: var(--primary-hover);
+}
+
+.submitButton:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.error {
+  color: #ef4444;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+  font-weight: 500;
+}
+
+.loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+}
+
+/* Add the font-family to all specific button classes */
+.logoutButton,
+.createButton,
+.actionButton,
+.confirmDelete,
+.confirmCancel,
+.closeButton,
+.submitButton {
+  font-family: inherit;
+} 

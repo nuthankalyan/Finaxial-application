@@ -1,0 +1,131 @@
+.container {
+  margin-top: 2rem;
+  width: 100%;
+}
+
+.title {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.insightItem {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1rem;
+  overflow: hidden;
+  transition: all 0.3s ease;
+}
+
+.insightItem:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.insightHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.25rem;
+  cursor: pointer;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.insightHeader:hover {
+  background-color: #f9fafb;
+}
+
+.insightMeta {
+  display: flex;
+  flex-direction: column;
+}
+
+.fileName {
+  color: #1f2937;
+  font-size: 1rem;
+  font-weight: 500;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.currentBadge {
+  background-color: #3b82f6;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 0.125rem 0.5rem;
+  border-radius: 9999px;
+}
+
+.date {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+.expandButton {
+  background: transparent;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  height: 1.5rem;
+  width: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  transition: all 0.2s ease;
+}
+
+.expandButton:hover {
+  color: #3b82f6;
+}
+
+.icon {
+  height: 1.25rem;
+  width: 1.25rem;
+  transition: transform 0.3s ease;
+}
+
+.expanded {
+  transform: rotate(180deg);
+}
+
+.expandedContent {
+  padding: 0 1rem 1rem;
+  overflow: hidden;
+}
+
+@media (prefers-color-scheme: dark) {
+  .title {
+    color: #f3f4f6;
+  }
+  
+  .insightItem {
+    background-color: #1f2937;
+  }
+  
+  .insightHeader:hover {
+    background-color: #111827;
+  }
+  
+  .fileName {
+    color: #f3f4f6;
+  }
+  
+  .date {
+    color: #9ca3af;
+  }
+  
+  .expandButton {
+    color: #9ca3af;
+  }
+  
+  .expandButton:hover {
+    color: #60a5fa;
+  }
+} 

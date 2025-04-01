@@ -1,0 +1,181 @@
+.container {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-top: 24px;
+  overflow: hidden;
+  width: 100%;
+}
+
+.header {
+  border-bottom: 1px solid #e5e7eb;
+  padding: 16px 20px;
+}
+
+.title {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.fileName {
+  color: #4b5563;
+  font-size: 0.875rem;
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e7eb;
+  padding: 0 16px;
+  background-color: #f9fafb;
+}
+
+.tab {
+  background: transparent;
+  border: none;
+  color: #4b5563;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 12px 16px;
+  position: relative;
+  transition: all 0.2s ease;
+}
+
+.activeTab {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.activeIndicator {
+  background-color: #2563eb;
+  border-radius: 1px;
+  bottom: -1px;
+  height: 2px;
+  left: 0;
+  position: absolute;
+  width: 100%;
+}
+
+.content {
+  padding: 20px;
+  position: relative;
+  min-height: 300px;
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+.iconContainer {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.icon {
+  color: #2563eb;
+  height: 32px;
+  width: 32px;
+}
+
+.markdownContainer {
+  color: #1f2937;
+  font-size: 0.938rem;
+  line-height: 1.6;
+}
+
+.markdownContainer ul, .markdownContainer ol {
+  margin: 8px 0;
+  padding-left: 24px;
+}
+
+.markdownContainer li {
+  margin-bottom: 6px;
+}
+
+.markdownContainer p {
+  margin: 8px 0;
+}
+
+.markdownContainer h3 {
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+
+.markdownContainer h4 {
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+
+.markdownContainer strong {
+  font-weight: 600;
+}
+
+.markdownContainer em {
+  font-style: italic;
+}
+
+@media (prefers-color-scheme: dark) {
+  .container {
+    background-color: #1f2937;
+  }
+
+  .header {
+    border-bottom: 1px solid #374151;
+  }
+
+  .title {
+    color: #f3f4f6;
+  }
+
+  .fileName {
+    color: #d1d5db;
+  }
+
+  .tabs {
+    border-bottom: 1px solid #374151;
+    background-color: #111827;
+  }
+
+  .tab {
+    color: #d1d5db;
+  }
+
+  .activeTab {
+    color: #3b82f6;
+  }
+
+  .activeIndicator {
+    background-color: #3b82f6;
+  }
+
+  .icon {
+    color: #3b82f6;
+  }
+
+  .markdownContainer {
+    color: #e5e7eb;
+  }
+
+  .markdownContainer h3 {
+    color: #f3f4f6;
+  }
+
+  .markdownContainer h4 {
+    color: #e5e7eb;
+  }
+} 

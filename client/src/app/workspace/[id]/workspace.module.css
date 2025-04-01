@@ -1,0 +1,309 @@
+.container {
+  min-height: 100vh;
+  background-color: #f3f4f6;
+  padding: 24px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.backButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: transparent;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #4b5563;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 8px 16px;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.workspaceInfo {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  padding: 24px;
+}
+
+.workspaceInfo h1 {
+  color: #1f2937;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.workspaceDescription {
+  color: #4b5563;
+  font-size: 1rem;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.workspaceDetails {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.dataSection {
+  background-color: white;
+  border-radius: 12px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  padding: 24px;
+}
+
+.sectionHeader {
+  color: #1f2937;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 8px;
+}
+
+.sectionDescription {
+  color: #4b5563;
+  font-size: 0.875rem;
+  margin: 0 0 16px;
+  line-height: 1.5;
+}
+
+.primaryButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #2563eb;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 10px 16px;
+  transition: all 0.2s ease;
+}
+
+.primaryButton:hover {
+  background-color: #1d4ed8;
+}
+
+.primaryButton:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+}
+
+.secondaryButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  color: #4b5563;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 9px 16px;
+  transition: all 0.2s ease;
+}
+
+.secondaryButton:hover {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.dangerButton {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background-color: #ef4444;
+  border: none;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 10px 16px;
+  transition: all 0.2s ease;
+}
+
+.dangerButton:hover {
+  background-color: #dc2626;
+}
+
+.placeholderSection {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: white;
+  border: 2px dashed #e5e7eb;
+  border-radius: 12px;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.placeholderSection h3 {
+  color: #1f2937;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 16px 0 8px;
+}
+
+.placeholderSection p {
+  color: #6b7280;
+  font-size: 0.875rem;
+  margin: 0 0 24px;
+  max-width: 400px;
+}
+
+.loadingState, .analyzingState, .errorState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+  text-align: center;
+}
+
+.spinner {
+  border: 3px solid rgba(0, 0, 0, 0.1);
+  border-radius: 50%;
+  border-top: 3px solid #2563eb;
+  width: 30px;
+  height: 30px;
+  animation: spin 1s linear infinite;
+  margin-bottom: 16px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.errorState h2 {
+  color: #ef4444;
+  margin-bottom: 8px;
+}
+
+.errorState p {
+  color: #6b7280;
+  margin-bottom: 16px;
+}
+
+@media (prefers-color-scheme: dark) {
+  .container {
+    background-color: #111827;
+  }
+
+  .backButton {
+    border-color: #374151;
+    color: #d1d5db;
+  }
+
+  .backButton:hover {
+    background-color: #1f2937;
+    border-color: #4b5563;
+  }
+
+  .workspaceInfo, .dataSection {
+    background-color: #1f2937;
+  }
+
+  .workspaceInfo h1 {
+    color: #f3f4f6;
+  }
+
+  .workspaceDescription {
+    color: #d1d5db;
+  }
+
+  .workspaceDetails {
+    color: #9ca3af;
+  }
+
+  .sectionHeader {
+    color: #f3f4f6;
+  }
+
+  .sectionDescription {
+    color: #d1d5db;
+  }
+
+  .secondaryButton {
+    background-color: #1f2937;
+    border-color: #374151;
+    color: #d1d5db;
+  }
+
+  .secondaryButton:hover {
+    background-color: #374151;
+    border-color: #4b5563;
+  }
+
+  .placeholderSection {
+    background-color: #1f2937;
+    border-color: #374151;
+  }
+
+  .placeholderSection h3 {
+    color: #f3f4f6;
+  }
+
+  .placeholderSection p {
+    color: #9ca3af;
+  }
+
+  .spinner {
+    border-color: rgba(255, 255, 255, 0.1);
+    border-top-color: #3b82f6;
+  }
+
+  .errorState h2 {
+    color: #f87171;
+  }
+
+  .errorState p {
+    color: #9ca3af;
+  }
+}
+
+.insightsSection {
+  margin-bottom: 1.5rem;
+}
+
+.saveContainer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 1rem;
+}
+
+.buttonIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  margin-right: 0.5rem;
+}
+
+.buttonSpinner {
+  width: 1.25rem;
+  height: 1.25rem;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+  margin-right: 0.5rem;
+} 
