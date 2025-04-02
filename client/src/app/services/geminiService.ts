@@ -4,8 +4,8 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 
 export interface FinancialInsights {
   summary: string;
-  insights: string;
-  recommendations: string;
+  insights: string[];
+  recommendations: string[];
   rawResponse: string;
 }
 
@@ -32,19 +32,25 @@ Please provide a detailed analysis with the following sections:
 
 1. SUMMARY: Provide a brief summary of what this financial data represents and its overall characteristics.
 
-2. KEY INSIGHTS: Identify the most important patterns, trends, or anomalies in the data. Look for interesting correlations, significant changes over time, or notable outliers.
+2. KEY INSIGHTS: Identify the most important patterns, trends, or anomalies in the data. Look for interesting correlations, significant changes over time, or notable outliers. Present each insight as a separate bullet point.
 
-3. RECOMMENDATIONS: Based on this data, what actions would you recommend? Consider investment advice, cost-cutting measures, growth opportunities, or risk management strategies as appropriate.
+3. RECOMMENDATIONS: Based on this data, what actions would you recommend? Consider investment advice, cost-cutting measures, growth opportunities, or risk management strategies as appropriate. Present each recommendation as a separate bullet point.
 
 Format your response as follows:
 SUMMARY:
 (your summary here)
 
 KEY INSIGHTS:
-(your key insights here)
+- (insight 1)
+- (insight 2)
+- (insight 3)
+...
 
 RECOMMENDATIONS:
-(your recommendations here)
+- (recommendation 1)
+- (recommendation 2)
+- (recommendation 3)
+...
 `;
 
     // Generate content from the model
@@ -57,10 +63,46 @@ RECOMMENDATIONS:
     const insightsMatch = text.match(/KEY INSIGHTS:([\s\S]*?)(?=RECOMMENDATIONS:|$)/i);
     const recommendationsMatch = text.match(/RECOMMENDATIONS:([\s\S]*?)(?=$)/i);
 
+    const summary = summaryMatch ? summaryMatch[1].trim() : 'No summary available';
+    
+    // Parse insights as a list by splitting on bullet points or new lines
+    let insights: string[] = [];
+    if (insightsMatch && insightsMatch[1]) {
+      insights = insightsMatch[1]
+        .split(/\n\s*[-•*]\s*/) // Split by bullet points
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      
+      // If no bullet points were found, try splitting by lines
+      if (insights.length <= 1) {
+        insights = insightsMatch[1]
+          .split(/\n+/)
+          .map(item => item.trim())
+          .filter(item => item.length > 0);
+      }
+    }
+    
+    // Parse recommendations as a list
+    let recommendations: string[] = [];
+    if (recommendationsMatch && recommendationsMatch[1]) {
+      recommendations = recommendationsMatch[1]
+        .split(/\n\s*[-•*]\s*/) // Split by bullet points
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      
+      // If no bullet points were found, try splitting by lines
+      if (recommendations.length <= 1) {
+        recommendations = recommendationsMatch[1]
+          .split(/\n+/)
+          .map(item => item.trim())
+          .filter(item => item.length > 0);
+      }
+    }
+
     return {
-      summary: summaryMatch ? summaryMatch[1].trim() : 'No summary available',
-      insights: insightsMatch ? insightsMatch[1].trim() : 'No insights available',
-      recommendations: recommendationsMatch ? recommendationsMatch[1].trim() : 'No recommendations available',
+      summary,
+      insights: insights.length > 0 ? insights : ['No insights available'],
+      recommendations: recommendations.length > 0 ? recommendations : ['No recommendations available'],
       rawResponse: text
     };
   } catch (error: any) {

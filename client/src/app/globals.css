@@ -1,4 +1,16 @@
+/* Theme variables */
 :root {
+  /* Light theme (default) */
+  --background-color: #f9fafb;
+  --text-color: #111827;
+  --card-background: #ffffff;
+  --border-color: #e5e7eb;
+  --primary-color: #4f46e5;
+  --primary-hover: #4338ca;
+  --success-color: #10b981;
+  --success-hover: #059669;
+  --error-color: #ef4444;
+  --muted-color: #6b7280;
   --background: #ffffff;
   --foreground: #171717;
   --primary-50: #f0f9ff;
@@ -39,6 +51,22 @@
   --animation-fast: 300ms;
   --font-sans: var(--font-inter);
   --font-mono: var(--font-roboto-mono);
+}
+
+/* Dark theme */
+.dark {
+  --background-color: #111827;
+  --text-color: #f9fafb;
+  --card-background: #1f2937;
+  --border-color: #374151;
+  --primary-color: #6366f1;
+  --primary-hover: #4f46e5;
+  --success-color: #10b981;
+  --success-hover: #059669;
+  --error-color: #f87171;
+  --muted-color: #9ca3af;
+  --background: #0a0a0a;
+  --foreground: #ededed;
 }
 
 @media (prefers-color-scheme: dark) {

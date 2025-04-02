@@ -18,6 +18,14 @@ export default function InsightsPanel({ insights, fileName }: InsightsPanelProps
     return null;
   }
 
+  // Format insights and recommendations for display
+  const formatInsights = (data: string[] | string): string => {
+    if (Array.isArray(data)) {
+      return data.map(item => `- ${item}`).join('\n\n');
+    }
+    return data;
+  };
+
   const tabVariants = {
     inactive: { opacity: 0.6, y: 0 },
     active: { opacity: 1, y: 0, color: '#2563eb' },
@@ -143,7 +151,7 @@ export default function InsightsPanel({ insights, fileName }: InsightsPanelProps
                 </svg>
               </div>
               <div className={styles.markdownContainer}>
-                <ReactMarkdown>{insights.insights}</ReactMarkdown>
+                <ReactMarkdown>{formatInsights(insights.insights)}</ReactMarkdown>
               </div>
             </motion.div>
           )}
@@ -163,7 +171,7 @@ export default function InsightsPanel({ insights, fileName }: InsightsPanelProps
                 </svg>
               </div>
               <div className={styles.markdownContainer}>
-                <ReactMarkdown>{insights.recommendations}</ReactMarkdown>
+                <ReactMarkdown>{formatInsights(insights.recommendations)}</ReactMarkdown>
               </div>
             </motion.div>
           )}

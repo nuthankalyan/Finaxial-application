@@ -1,111 +1,103 @@
-# Finaxial App
+# Finaxial App - Client
 
-A financial insights application with AI-powered analytics.
-
-## Project Structure
-
-This project consists of two main parts:
-
-- **Client**: Next.js frontend application
-- **Server**: Express.js backend API
-
-## Authentication Features
-
-The authentication system in Finaxial includes:
-
-- User registration (signup)
-- User login with JWT
-- Protected routes
-- Dashboard for authenticated users
-
-### Authentication Flow
-
-1. User registers through the signup form
-2. On successful registration, a JWT token is generated and stored in localStorage
-3. User can log in with their credentials
-4. Protected routes (like dashboard) require authentication
-5. The token is sent with API requests to authenticate the user
-
-### MongoDB Integration
-
-The app uses MongoDB for user data storage:
-
-- User model with username, email, and securely hashed password
-- MongoDB connection configuration with environment variables
-- JWT-based authentication middleware
+This is the client side of the Finaxial App, a financial insights tool that helps users analyze financial data and generate insights using AI.
 
 ## Getting Started
 
-### Prerequisites
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-- Node.js (v14+)
-- MongoDB (local or Atlas)
+2. Set up environment variables:
+   - Create a `.env.local` file in the client directory with the following variables:
+   ```
+   NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
+   NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_emailjs_service_id
+   NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
+   NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
+   ```
 
-### Installation
+3. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-1. Clone the repository
-2. Install dependencies for both client and server:
+4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
 
-```bash
-# Install client dependencies
-cd client
-npm install
+## Setting up EmailJS for PDF Email Functionality
 
-# Install server dependencies
-cd ../server
-npm install
-```
+To enable the "Send via Email" functionality for sending financial reports via email:
 
-3. Set up environment variables:
+1. Sign up for an account at [EmailJS](https://www.emailjs.com/)
 
-Create a `.env` file in the server directory with:
+2. Create a new service in EmailJS:
+   - Go to "Email Services" tab
+   - Click "Add New Service"
+   - Choose your email provider (Gmail, Outlook, etc.)
+   - Follow the authentication steps
 
-```
-PORT=5000
-NODE_ENV=development
-MONGO_URI=mongodb://localhost:27017/finaxial
-JWT_SECRET=finaxial_jwt_secret_key
-JWT_EXPIRE=30d
-```
+3. Create an email template:
+   - Go to "Email Templates" tab
+   - Click "Create New Template"
+   - Design your template with the following variables:
+     - `{{to_email}}`: Recipient's email
+     - `{{to_name}}`: Recipient's name
+     - `{{from_name}}`: Sender name (Finaxial App)
+     - `{{subject}}`: Email subject
+     - `{{message}}`: Email body text
+     - `{{theme}}`: Current theme (light/dark)
+     - Don't forget to include the attachment placeholders
 
-4. Start the development servers:
+4. Get your API credentials:
+   - Go to "Account" → "API Keys"
+   - Copy your Public Key
+   - Note your Service ID from the "Email Services" tab
+   - Note your Template ID from the "Email Templates" tab
 
-```bash
-# Start client
-cd client
-npm run dev
+5. Update your `.env.local` file with these credentials:
+   ```
+   NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_service_id
+   NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_template_id
+   NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_public_key
+   ```
 
-# Start server
-cd ../server
-npm run dev
-```
+6. Restart your development server and the email functionality should now work.
 
-## Client Development
+## Theme Support
 
-The client is built with Next.js 13+ using the App Router. To start the development server:
+Finaxial supports both light and dark themes:
 
-```bash
-cd client
-npm run dev
-```
+1. **Automatic Theme Detection**: 
+   - The app automatically detects the user's system preference for light or dark mode.
+   - This setting is applied on first load.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Manual Theme Switching**:
+   - Users can toggle between light and dark modes using the theme toggle button in the header.
+   - The selected theme is stored in local storage for persistence.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+3. **Theme-Aware Email Templates**:
+   - When sending emails, the current theme preference is included.
+   - Email templates can use the `{{theme}}` variable to apply appropriate styling.
+   - See the example template in `emailjs-template-example.html`.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load fonts.
+## Features
 
-## Learn More
+- Financial data analysis with AI-powered insights
+- Secure authentication
+- Dashboard for managing workspaces
+- Upload and analyze CSV files
+- Generate, view, and save financial insights
+- Export insights as PDF
+- Email reports directly from the application
+- Light/dark theme support
 
-To learn more about Next.js, take a look at the following resources:
+## Technologies Used
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Next.js
+- React
+- TypeScript
+- Framer Motion
+- jsPDF (PDF generation)
+- EmailJS (Email functionality)
+- Google Gemini AI

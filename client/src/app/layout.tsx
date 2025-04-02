@@ -1,34 +1,61 @@
-import type { Metadata } from "next";
-import { Inter, Roboto_Mono } from "next/font/google";
-import "./globals.css";
-import { AuthProvider } from "./context/AuthContext";
+import './globals.css';
+import { Inter, Roboto_Mono } from 'next/font/google';
+import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
+import Script from 'next/script';
 
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
+const inter = Inter({ 
+  subsets: ['latin'],
+  variable: '--font-inter'
 });
 
 const robotoMono = Roboto_Mono({
-  variable: "--font-roboto-mono",
-  subsets: ["latin"],
+  subsets: ['latin'],
+  variable: '--font-roboto-mono'
 });
 
-export const metadata: Metadata = {
-  title: "Finaxial | Financial Insights Automated with AI",
-  description: "Transform financial data into actionable intelligence for financial institutions using generative AI.",
+export const metadata = {
+  title: 'Finaxial - Financial Analysis and Insights',
+  description: 'A powerful financial analysis tool that provides insights and recommendations based on your financial data.',
 };
 
 export default function RootLayout({
   children,
-}: Readonly<{
+}: {
   children: React.ReactNode;
-}>) {
+}) {
   return (
     <html lang="en">
       <body className={`${inter.variable} ${robotoMono.variable}`}>
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
+        {/* 
+          Initialize EmailJS globally to ensure it's available throughout the application
+          Using Script with dynamic import to ensure it only runs on the client side
+          This is necessary because EmailJS requires the window object
+          
+          Alternative approach: You could also use a useEffect in specific components where
+          email functionality is needed, but this global approach ensures EmailJS is 
+          always ready when needed.
+        */}
+        <Script id="email-js-init" strategy="afterInteractive">
+          {`
+            if (typeof window !== 'undefined') {
+              import('@emailjs/browser').then(emailjs => {
+                const publicKey = "--O1WwdZnrIVo-Mqk"; // Hardcoded key
+                if (publicKey) {
+                  emailjs.init(publicKey);
+                  console.log("EmailJS initialized with key:", publicKey.substring(0, 5) + "...");
+                } else {
+                  console.warn("EmailJS public key is not available");
+                }
+              }).catch(err => console.error('Failed to initialize EmailJS:', err));
+            }
+          `}
+        </Script>
       </body>
     </html>
   );

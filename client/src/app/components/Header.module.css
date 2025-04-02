@@ -275,4 +275,38 @@
   .mobileMenu {
     display: none;
   }
+}
+
+.themeToggleButton {
+  margin-left: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--gray-700);
+  transition: color 0.3s ease;
+}
+
+.themeToggleButton:hover {
+  color: var(--primary-700);
+}
+
+:global(.dark) .themeToggleButton {
+  color: var(--gray-300);
+}
+
+:global(.dark) .themeToggleButton:hover {
+  color: var(--primary-300);
+}
+
+.mobileThemeToggle {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: var(--gray-700);
+  font-weight: 500;
+}
+
+:global(.dark) .mobileThemeToggle {
+  color: var(--gray-300);
 } 

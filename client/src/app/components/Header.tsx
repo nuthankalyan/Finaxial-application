@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react';
 import Link from 'next/link';
 import styles from './Header.module.css';
 import { useAuth } from '../context/AuthContext';
+import ThemeToggle from './ThemeToggle';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -50,23 +51,7 @@ export default function Header() {
           </div>
           
           {/* Nav Links - Center */}
-          <nav className={styles.nav}>
-            <div className={styles.navLinks}>
-              <div className={styles.navLinkItem}>
-                <a href="#features" className={styles.navLink}>Features</a>
-              </div>
-              <div className={styles.navLinkItem}>
-                <a href="#testimonials" className={styles.navLink}>Testimonials</a>
-              </div>
-              <div className={styles.navLinkItem}>
-                <a href="#pricing" className={styles.navLink}>Pricing</a>
-              </div>
-              <div className={styles.navLinkItem}>
-                <a href="#contact" className={styles.navLink}>Contact</a>
-              </div>
-            </div>
-          </nav>
-          
+         
           {/* Auth Buttons - Right Side */}
           <div className={styles.authContainer}>
             {user ? (
@@ -75,6 +60,7 @@ export default function Header() {
                 <div className={styles.authButtonItem}>
                   <button onClick={logout} className={`${styles.signupButton} ${styles.fadeInDelay200}`}>Logout</button>
                 </div>
+                <ThemeToggle className={styles.themeToggleButton} />
               </div>
             ) : (
               <div className={styles.authButtons}>
@@ -82,6 +68,7 @@ export default function Header() {
                 <div className={styles.authButtonItem}>
                   <Link href="/signup" className={`${styles.signupButton} ${styles.fadeInDelay200}`}>Sign Up</Link>
                 </div>
+                <ThemeToggle className={styles.themeToggleButton} />
               </div>
             )}
             
@@ -139,6 +126,12 @@ export default function Header() {
                   </div>
                 </>
               )}
+              <div className={styles.mobileNavItem}>
+                <div className={styles.mobileThemeToggle}>
+                  <ThemeToggle />
+                  <span>Toggle theme</span>
+                </div>
+              </div>
             </nav>
           </div>
         )}

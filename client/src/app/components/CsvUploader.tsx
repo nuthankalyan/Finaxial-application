@@ -48,13 +48,39 @@ export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProp
     },
     maxFiles: 1,
     disabled: isLoading,
+    noClick: false,
+    noKeyboard: false,
+    noDrag: false,
+    noDragEventsBubbling: false,
   });
+
+  // We need to handle the drag events ourselves to make it work with motion.div
+  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+  };
+
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    event.stopPropagation();
+    
+    // Extract the dropzone's onDrop handler to call manually
+    const dropzoneProps = getRootProps();
+    if (!isLoading && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
+      onDrop(Array.from(event.dataTransfer.files));
+    }
+  };
 
   return (
     <div className={styles.uploaderContainer}>
       <motion.div
         className={`${styles.dropzone} ${isDragActive ? styles.active : ''} ${isLoading ? styles.loading : ''}`}
-        {...getRootProps()}
+        {...getRootProps({
+          onClick: undefined, // We'll handle click separately to avoid conflicts
+        })}
+        onClick={!isLoading ? getRootProps().onClick : undefined}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
       >

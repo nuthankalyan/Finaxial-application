@@ -10,8 +10,8 @@ export interface SavedInsight {
   _id: string;
   fileName: string;
   summary: string;
-  insights: string;
-  recommendations: string;
+  insights: string[] | string;
+  recommendations: string[] | string;
   rawResponse: string;
   createdAt: string;
 }
