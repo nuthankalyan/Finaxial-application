@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './dashboard.module.css';
 import { useAuth } from '../context/AuthContext';
-import { buildApiUrl } from '../utils/apiConfig';
+import { buildApiUrl, fetchWithErrorHandling } from '../utils/apiConfig';
 
 interface Workspace {
   _id: string;
@@ -52,7 +52,7 @@ export default function Dashboard() {
       setError(null);
       
       const token = localStorage.getItem('token');
-      const response = await fetch(buildApiUrl('workspaces'), {
+      const response = await fetch(buildApiUrl('api/workspaces'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -90,20 +90,18 @@ export default function Dashboard() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(buildApiUrl('workspaces'), {
+      const url = buildApiUrl('api/workspaces');
+      console.log('Creating workspace at:', url);
+      
+      const data = await fetchWithErrorHandling(url, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to create workspace');
-      }
 
       // Close modal and reset form
       setModalOpen(false);
@@ -140,7 +138,7 @@ export default function Dashboard() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(buildApiUrl(`workspaces/${workspaceId}`), {
+      const response = await fetch(buildApiUrl(`api/workspaces/${workspaceId}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -197,7 +195,7 @@ export default function Dashboard() {
   const handleDeleteWorkspace = async (workspaceId: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(buildApiUrl(`workspaces/${workspaceId}`), {
+      const response = await fetch(buildApiUrl(`api/workspaces/${workspaceId}`), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,

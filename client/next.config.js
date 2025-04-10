@@ -1,9 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Enable static export for Render static site
-  output: 'export',
+  // Remove static export to support dynamic routes
+  // output: 'export',
   
-  // Required for static export with images
+  // Still keep unoptimized images for Render compatibility
   images: {
     unoptimized: true,
   },
