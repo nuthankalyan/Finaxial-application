@@ -97,12 +97,25 @@ function ensureNextFiles() {
       console.log(`pages-manifest.json not found, creating placeholder at ${pagesManifestPath}`);
       // Create a placeholder pages-manifest.json with basic routes
       fs.writeFileSync(pagesManifestPath, JSON.stringify({
-        "/": "pages/index.html",
+        "/": "pages/index.html",  // Make sure this points to the HTML file
         "/_app": "pages/_app.js",
         "/_error": "pages/_error.js",
         "/_document": "pages/_document.js"
       }), 'utf8');
       console.log('Created pages-manifest.json');
+    } else {
+      // If pages-manifest exists but might not have the correct entry, update it
+      try {
+        const pagesManifest = JSON.parse(fs.readFileSync(pagesManifestPath, 'utf8'));
+        // Make sure the home route points to our HTML file
+        if (!pagesManifest['/'] || pagesManifest['/'] !== 'pages/index.html') {
+          pagesManifest['/'] = 'pages/index.html';
+          fs.writeFileSync(pagesManifestPath, JSON.stringify(pagesManifest), 'utf8');
+          console.log('Updated pages-manifest.json with correct home route');
+        }
+      } catch (e) {
+        console.error('Error updating pages-manifest.json:', e);
+      }
     }
 
     // Ensure BUILD_ID exists
@@ -384,6 +397,62 @@ function checkAndFixPermissions() {
   }
 }
 
+// Add this function after createNextFontManifest
+function createIndexHtml() {
+  try {
+    console.log('Creating index.html file...');
+    
+    // Path to pages directory
+    const pagesDir = path.join(process.cwd(), '.next', 'server', 'pages');
+    
+    // Ensure pages directory exists
+    if (!fs.existsSync(pagesDir)) {
+      console.log(`Creating pages directory at ${pagesDir}...`);
+      fs.mkdirSync(pagesDir, { recursive: true });
+    }
+    
+    // Create index.html file
+    const indexHtmlPath = path.join(pagesDir, 'index.html');
+    
+    // Create a more substantial HTML file that Next.js will accept
+    const html = `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Finaxial</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+    h1 { color: #333; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Finaxial</h1>
+    <p>Application is initializing, please wait...</p>
+  </div>
+</body>
+</html>`;
+    
+    fs.writeFileSync(indexHtmlPath, html, 'utf8');
+    console.log(`Created index.html at ${indexHtmlPath}`);
+    
+    // Verify the file was written
+    if (fs.existsSync(indexHtmlPath)) {
+      const stats = fs.statSync(indexHtmlPath);
+      console.log(`index.html verified with size: ${stats.size} bytes`);
+      return true;
+    } else {
+      console.error('Failed to create index.html');
+      return false;
+    }
+  } catch (error) {
+    console.error('Error creating index.html:', error);
+    return false;
+  }
+}
+
 // Check permissions before doing anything else
 console.log('Checking directory permissions...');
 checkAndFixPermissions();
@@ -419,6 +488,9 @@ verifyNextFiles();
 
 // Ensure font manifest exists
 createNextFontManifest();
+
+// Create index.html to avoid MissingStaticPage error
+createIndexHtml();
 
 // Now try to prepare the app
 console.log('Preparing Next.js application...');
@@ -471,7 +543,9 @@ app.prepare()
     checkAndFixPermissions();
     ensureNextFiles();
     verifyNextFiles();
-    
+    createNextFontManifest();
+    createIndexHtml();
+
     // Create font manifest explicitly as it's often the cause of issues
     console.log('Creating font manifest file...');
     createNextFontManifest();
@@ -484,8 +558,8 @@ app.prepare()
       const pagesDir = path.join(process.cwd(), '.next/server/pages');
       fs.mkdirSync(pagesDir, { recursive: true });
       
-      const indexHtmlPath = path.join(pagesDir, 'index.html');
-      fs.writeFileSync(indexHtmlPath, '<html><body><h1>Finaxial</h1><p>Application is initializing, please wait...</p></body></html>');
+      // Create the index.html file using our comprehensive function
+      createIndexHtml();
       
       // Create middleware manifest file to avoid errors
       const serverDir = path.join(process.cwd(), '.next/server');
@@ -579,6 +653,7 @@ app.prepare()
       ensureNextFiles();
       verifyNextFiles();
       createNextFontManifest();
+      createIndexHtml();
 
       // Try starting the Next.js app again with retry logic
       console.log('Attempting to start Next.js again...');
