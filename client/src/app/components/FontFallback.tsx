@@ -14,18 +14,28 @@ export default function FontFallback() {
   useEffect(() => {
     // Check if Google Fonts resources failed to load
     const checkFonts = setTimeout(() => {
-      // Look for failed font requests in the performance entries
-      const entries = performance.getEntriesByType('resource');
-      const failedFonts = entries.some(entry => {
-        return (
-          entry.name.includes('fonts.gstatic.com') && 
-          !entry.responseEnd && 
-          entry.duration === 0
-        );
-      });
+      try {
+        // Look for failed font requests in the performance entries
+        const entries = performance.getEntriesByType('resource');
+        const failedFonts = entries.some(entry => {
+          // Use type guard to check if it's a resource timing entry
+          const isResourceTiming = 'responseEnd' in entry;
+          return (
+            entry.name.includes('fonts.gstatic.com') && 
+            isResourceTiming && 
+            // Check if responseEnd exists and is 0
+            (entry as PerformanceResourceTiming).responseEnd === 0 &&
+            entry.duration === 0
+          );
+        });
 
-      if (failedFonts) {
-        console.warn('Google Fonts failed to load - applying fallback fonts');
+        if (failedFonts) {
+          console.warn('Google Fonts failed to load - applying fallback fonts');
+          setFontsFailed(true);
+        }
+      } catch (error) {
+        // If there's any error checking performance, default to using system fonts
+        console.warn('Error checking font loading status, using fallback fonts', error);
         setFontsFailed(true);
       }
     }, 3000); // Check after 3 seconds

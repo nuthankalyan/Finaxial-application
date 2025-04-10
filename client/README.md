@@ -10,12 +10,13 @@ This is the client side of the Finaxial App, a financial insights tool that help
    ```
 
 2. Set up environment variables:
-   - Create a `.env.local` file in the client directory with the following variables:
+   - Copy `.env.example` to `.env.local` in the client directory and fill in your API keys:
    ```
    NEXT_PUBLIC_GEMINI_API_KEY=your_gemini_api_key
    NEXT_PUBLIC_EMAILJS_SERVICE_ID=your_emailjs_service_id
    NEXT_PUBLIC_EMAILJS_TEMPLATE_ID=your_emailjs_template_id
    NEXT_PUBLIC_EMAILJS_PUBLIC_KEY=your_emailjs_public_key
+   NEXT_PUBLIC_API_URL=http://localhost:5000
    ```
 
 3. Run the development server:
@@ -24,6 +25,16 @@ This is the client side of the Finaxial App, a financial insights tool that help
    ```
 
 4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+
+## Local Development
+
+This repository has been cleaned of deployment-specific configuration files. To run the application locally:
+
+1. Make sure you have Node.js 18 or higher installed
+2. Follow the "Getting Started" section above
+3. For backend API integration, run the server component separately (see the server README)
+
+If you need to prepare the app for deployment again, refer to the deployment documentation.
 
 ## Setting up EmailJS for PDF Email Functionality
 
