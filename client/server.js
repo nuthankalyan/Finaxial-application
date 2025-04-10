@@ -283,7 +283,8 @@ function ensureNextFiles() {
         dynamicRoutes: [],
         dataRoutes: [],
         notFoundRoutes: []
-      })
+      }),
+      'react-loadable-manifest.json': JSON.stringify({})
     };
     
     // Create basic page files
@@ -374,6 +375,7 @@ function verifyNextFiles() {
       '.next/server/font-manifest.json',
       '.next/server/middleware-manifest.json',
       '.next/routes-manifest.json',
+      '.next/react-loadable-manifest.json',
       '.next/server/pages/_app.js',
       '.next/server/pages/_document.js',
       '.next/server/pages/_error.js'
@@ -432,6 +434,8 @@ function verifyNextFiles() {
                   appUsingSizeAdjust: false,
                   pagesUsingSizeAdjust: false
                 }));
+              } else if (file.includes('react-loadable-manifest')) {
+                fs.writeFileSync(filePath, JSON.stringify({}));
               }
             }
           }
@@ -440,6 +444,67 @@ function verifyNextFiles() {
         }
       } else {
         console.warn(`✗ ${file} does not exist`);
+        
+        // Create missing JSON files
+        if (file.endsWith('.json')) {
+          try {
+            const dirName = path.dirname(filePath);
+            if (!fs.existsSync(dirName)) {
+              fs.mkdirSync(dirName, { recursive: true });
+            }
+            
+            let content = '{}';
+            if (file.includes('pages-manifest')) {
+              content = JSON.stringify({
+                "/": "pages/index.html",
+                "/_app": "pages/_app.js",
+                "/_error": "pages/_error.js",
+                "/_document": "pages/_document.js"
+              });
+            } else if (file.includes('build-manifest')) {
+              content = JSON.stringify({
+                polyfillFiles: [],
+                lowPriorityFiles: [],
+                rootMainFiles: [],
+                pages: { "/_app": [], "/_error": [], "/" : [] }
+              });
+            } else if (file.includes('routes-manifest')) {
+              content = JSON.stringify({
+                version: 4,
+                basePath: "",
+                redirects: [],
+                rewrites: [],
+                headers: [],
+                staticRoutes: [{ page: "/", regex: "^/?$" }],
+                dynamicRoutes: [],
+                dataRoutes: [],
+                notFoundRoutes: []
+              });
+            } else if (file.includes('next-font-manifest') || file.includes('font-manifest')) {
+              content = JSON.stringify({
+                pages: {},
+                app: {},
+                appUsingSizeAdjust: false,
+                pagesUsingSizeAdjust: false
+              });
+            } else if (file.includes('middleware-manifest')) {
+              content = JSON.stringify({
+                version: 2,
+                sortedMiddleware: [],
+                middleware: {},
+                functions: {},
+                matchers: {}
+              });
+            } else if (file.includes('react-loadable-manifest')) {
+              content = JSON.stringify({});
+            }
+            
+            fs.writeFileSync(filePath, content, 'utf8');
+            console.log(`Created missing file: ${file}`);
+          } catch (createErr) {
+            console.error(`Failed to create ${file}:`, createErr.message);
+          }
+        }
       }
     }
     
@@ -506,6 +571,13 @@ function createNextFontManifest() {
       const filePath = path.join(serverDir, fileName);
       fs.writeFileSync(filePath, JSON.stringify(fontManifestContent), 'utf8');
       console.log(`Created ${fileName}`);
+    }
+    
+    // Create react-loadable-manifest.json at root of .next directory
+    const reactLoadablePath = path.join(nextDir, 'react-loadable-manifest.json');
+    if (!fs.existsSync(reactLoadablePath)) {
+      fs.writeFileSync(reactLoadablePath, JSON.stringify({}), 'utf8');
+      console.log('Created react-loadable-manifest.json');
     }
     
     return true;
