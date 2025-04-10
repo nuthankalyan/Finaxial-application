@@ -1,9 +1,7 @@
 services:
-  - type: web
+  - type: static_site
     name: finaxial-client
-    runtime: node
-    buildCommand: npm install && CI=false npm run build
-    startCommand: npm start
+    buildCommand: chmod +x render-build.sh && ./render-build.sh
     publishDirectory: build
     envVars:
       - key: NODE_ENV

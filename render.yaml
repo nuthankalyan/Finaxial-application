@@ -24,12 +24,10 @@ services:
       - key: CLIENT_URL
         value: https://finaxial-client.onrender.com
 
-  - type: web
+  - type: static_site
     name: finaxial-client
-    runtime: node
     rootDir: client
-    buildCommand: npm install && CI=false npm run build
-    startCommand: npm start
+    buildCommand: chmod +x render-build.sh && ./render-build.sh
     publishDirectory: build
     plan: free
     envVars:
