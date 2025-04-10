@@ -28,7 +28,7 @@ services:
     name: finaxial-client
     runtime: node
     rootDir: client
-    buildCommand: npm ci && npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm start
     plan: free
     envVars:
@@ -43,4 +43,6 @@ services:
     disk:
       name: nextjs-build
       mountPath: /opt/render/project/src/client/.next
-      sizeGB: 1 
+      sizeGB: 1
+    healthCheckPath: /
+    healthCheckTimeout: 180 
