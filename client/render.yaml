@@ -2,7 +2,7 @@ services:
   - type: web
     name: finaxial-client
     runtime: node
-    buildCommand: npm install && npm run build
+    buildCommand: npm ci && npm run build
     startCommand: npm start
     envVars:
       - key: NODE_ENV
@@ -10,4 +10,8 @@ services:
       - key: NEXT_PUBLIC_API_URL
         value: https://finaxial-backend.onrender.com
       - key: PORT
-        value: "3000" 
+        value: "3000"
+    disk:
+      name: nextjs-build
+      mountPath: /opt/render/project/src/client/.next
+      sizeGB: 1 
