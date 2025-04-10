@@ -7,6 +7,10 @@ const fs = require('fs');
 const { execSync } = require('child_process');
 const express = require('express');
 
+// Global server instances to be able to close them properly
+let tempServer = null;
+let mainServer = null;
+
 // Check if we're in production mode
 const dev = process.env.NODE_ENV !== 'production';
 
@@ -22,12 +26,19 @@ console.log(`Using port: ${port}`);
 // Handle termination signals gracefully
 process.on('SIGTERM', () => {
   console.log('SIGTERM received, shutting down gracefully');
-  tempServer.close(() => {
-    console.log('Temporary server closed');
-    process.exit(0);
-  });
   
-  // Force exit after 5 seconds if server doesn't close properly
+  if (tempServer) {
+    tempServer.close(() => {
+      console.log('Temporary server closed');
+    });
+  }
+  
+  if (mainServer) {
+    mainServer.close(() => {
+      console.log('Main server closed');
+    });
+  }
+  
   setTimeout(() => {
     console.log('Forced shutdown after timeout');
     process.exit(1);
@@ -36,12 +47,19 @@ process.on('SIGTERM', () => {
 
 process.on('SIGINT', () => {
   console.log('SIGINT received, shutting down gracefully');
-  tempServer.close(() => {
-    console.log('Temporary server closed');
-    process.exit(0);
-  });
   
-  // Force exit after 5 seconds if server doesn't close properly
+  if (tempServer) {
+    tempServer.close(() => {
+      console.log('Temporary server closed');
+    });
+  }
+  
+  if (mainServer) {
+    mainServer.close(() => {
+      console.log('Main server closed');
+    });
+  }
+  
   setTimeout(() => {
     console.log('Forced shutdown after timeout');
     process.exit(1);
@@ -61,7 +79,7 @@ process.on('unhandledRejection', (reason, promise) => {
 });
 
 // Start a minimal HTTP server immediately so Render detects a port
-const tempServer = require('http').createServer((req, res) => {
+tempServer = require('http').createServer((req, res) => {
   // Simple request handling
   const url = req.url;
   
@@ -283,6 +301,35 @@ function ensureNextFiles() {
         console.log(`Created ${file}`);
       }
     }
+    
+    // Define server-specific files
+    const serverFiles = {
+      'pages-manifest.json': JSON.stringify({
+        "/_app": "pages/_app.js",
+        "/_error": "pages/_error.js",
+        "/_document": "pages/_document.js",
+        "/": "pages/index.html"
+      }),
+      'middleware-manifest.json': JSON.stringify({
+        version: 2,
+        sortedMiddleware: [],
+        middleware: {},
+        functions: {},
+        matchers: {}
+      }),
+      'font-manifest.json': JSON.stringify({
+        pages: {},
+        app: {},
+        appUsingSizeAdjust: false,
+        pagesUsingSizeAdjust: false
+      }),
+      'next-font-manifest.json': JSON.stringify({
+        pages: {},
+        app: {},
+        appUsingSizeAdjust: false,
+        pagesUsingSizeAdjust: false
+      })
+    };
     
     // Create server-specific files
     for (const [file, content] of Object.entries(serverFiles)) {
@@ -661,8 +708,37 @@ app.prepare()
     console.log('Next.js app prepared successfully');
     
     // Close temporary server
-    tempServer.close(() => {
-      console.log('Temporary server closed');
+    if (tempServer) {
+      tempServer.close(() => {
+        console.log('Temporary server closed');
+        
+        // Start the real Next.js server
+        createServer((req, res) => {
+          // Parse the URL
+          const parsedUrl = parse(req.url, true);
+          
+          // Special handling for direct requests to /login and /signup routes
+          // Ensure they're handled by the Next.js client-side router
+          if (req.headers.accept && req.headers.accept.includes('text/html')) {
+            const path = parsedUrl.pathname;
+            if (path === '/login' || 
+                path === '/signup' || 
+                path === '/dashboard' || 
+                path.startsWith('/workspace/')) {
+              console.log(`Handling client-side route: ${path}`);
+              // Rewrite to home page and let client-side routing take over
+              parsedUrl.pathname = '/';
+            }
+          }
+          
+          handle(req, res, parsedUrl);
+        }).listen(port, (err) => {
+          if (err) throw err;
+          console.log(`> Next.js server ready on http://localhost:${port}`);
+        });
+      });
+    } else {
+      console.log('No temporary server to close, starting Next.js server directly');
       
       // Start the real Next.js server
       createServer((req, res) => {
@@ -688,7 +764,7 @@ app.prepare()
         if (err) throw err;
         console.log(`> Next.js server ready on http://localhost:${port}`);
       });
-    });
+    }
   })
   .catch(err => {
     console.error('Error preparing Next.js app:', err);
@@ -828,34 +904,22 @@ app.prepare()
             .then(() => {
               const handle2 = app2.getRequestHandler();
               
-              // Close temporary server
-              tempServer.close(() => {
-                console.log('Temporary server closed');
-                
-                // Start the real Next.js server
-                createServer((req, res) => {
-                  // Parse the URL
-                  const parsedUrl = parse(req.url, true);
-                  
-                  // Special handling for direct requests to /login and /signup routes
-                  // Ensure they're handled by the Next.js client-side router
-                  if (req.headers.accept && req.headers.accept.includes('text/html')) {
-                    const path = parsedUrl.pathname;
-                    if (path === '/login' || 
-                        path === '/signup' || 
-                        path === '/dashboard' || 
-                        path.startsWith('/workspace/')) {
-                      console.log(`Handling client-side route: ${path}`);
-                      // Rewrite to home page and let client-side routing take over
-                      parsedUrl.pathname = '/';
-                    }
-                  }
-                  
-                  handle2(req, res, parsedUrl);
-                }).listen(port, () => {
-                  console.log(`> Recovery successful! Next.js server ready on http://localhost:${port}`);
-                });
-              });
+              // Close temporary server if it exists
+              if (tempServer) {
+                try {
+                  tempServer.close(() => {
+                    console.log('Temporary server closed');
+                    startMainServer(app2, handle2);
+                  });
+                } catch (closeError) {
+                  console.warn('Error closing temporary server:', closeError);
+                  // Still try to start the main server
+                  startMainServer(app2, handle2);
+                }
+              } else {
+                console.log('No temporary server to close in recovery, starting Next.js server directly');
+                startMainServer(app2, handle2);
+              }
             })
             .catch(finalErr => {
               console.error('Final error starting Next.js:', finalErr);
@@ -873,10 +937,54 @@ app.prepare()
     }
   });
 
+// Helper function to start the main server
+function startMainServer(app, handler) {
+  try {
+    // Start the real Next.js server
+    createServer((req, res) => {
+      // Parse the URL
+      const parsedUrl = parse(req.url, true);
+      
+      // Special handling for direct requests to /login and /signup routes
+      // Ensure they're handled by the Next.js client-side router
+      if (req.headers.accept && req.headers.accept.includes('text/html')) {
+        const path = parsedUrl.pathname;
+        if (path === '/login' || 
+            path === '/signup' || 
+            path === '/dashboard' || 
+            path.startsWith('/workspace/')) {
+          console.log(`Handling client-side route: ${path}`);
+          // Rewrite to home page and let client-side routing take over
+          parsedUrl.pathname = '/';
+        }
+      }
+      
+      handler(req, res, parsedUrl);
+    }).listen(port, () => {
+      console.log(`> Recovery successful! Next.js server ready on http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error('Error starting main server:', error);
+  }
+}
+
 // Add a cache to store the prepared app
 let cachedApp = null;
 let lastPrepareTime = 0;
 const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+
+// Define nextConfig to avoid reference error
+const nextConfig = {
+  distDir: '.next',
+  // Allow server to start even if build is incomplete
+  experimental: {
+    disableOptimizedLoading: true
+  },
+  // Add production optimization settings
+  productionBrowserSourceMaps: false,
+  optimizeFonts: true,
+  swcMinify: true
+};
 
 // Function to prepare Next.js app with improved caching
 async function prepareNextApp() {
@@ -927,6 +1035,20 @@ const startServer = async () => {
     // Ensure we're in production mode
     process.env.NODE_ENV = process.env.NODE_ENV || 'production';
     
+    // First close the temp server if it exists
+    if (tempServer) {
+      console.log('Closing temporary server before starting main server...');
+      await new Promise((resolve) => {
+        tempServer.close(() => {
+          console.log('Temporary server closed');
+          tempServer = null;
+          resolve();
+        });
+      });
+    } else {
+      console.log('No temporary server to close, proceeding with main server');
+    }
+    
     // Prepare the Next.js app
     const app = await prepareNextApp();
     if (!app) {
@@ -944,14 +1066,19 @@ const startServer = async () => {
       next();
     });
     
-    // Handle all routes with Next.js
-    server.all('*', (req, res) => {
-      return app.getRequestHandler()(req, res);
+    // Instead of using server.all('*'), use middleware approach
+    server.use((req, res) => {
+      try {
+        // Use Next.js request handler
+        return app.getRequestHandler()(req, res);
+      } catch (error) {
+        console.error('Error handling request:', error);
+        res.status(500).send('Internal Server Error');
+      }
     });
     
     // Start the server
-    const port = process.env.PORT || 3000;
-    server.listen(port, (err) => {
+    mainServer = server.listen(port, (err) => {
       if (err) throw err;
       console.log(`> Ready on http://localhost:${port}`);
     });
