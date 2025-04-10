@@ -1,0 +1,38 @@
+services:
+  - type: web
+    name: finaxial-api
+    runtime: node
+    rootDir: server
+    buildCommand: npm install
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: MONGODB_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: EMAIL_USER
+        sync: false
+      - key: EMAIL_PASS
+        sync: false
+      - key: EMAIL_HOST
+        sync: false
+      - key: EMAIL_PORT
+        sync: false
+      - key: CLIENT_URL
+        value: https://finaxial-client.onrender.com
+
+  - type: web
+    name: finaxial-client
+    runtime: node
+    rootDir: client
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    plan: free
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://finaxial-api.onrender.com
+      - key: NEXT_PUBLIC_GEMINI_API_KEY
+        sync: false 
