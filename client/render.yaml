@@ -2,9 +2,9 @@ services:
   - type: web
     name: finaxial-client
     runtime: node
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && CI=false npm run build
     startCommand: npm start
-    publishDirectory: .next
+    publishDirectory: build
     envVars:
       - key: NODE_ENV
         value: production

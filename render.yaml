@@ -28,8 +28,9 @@ services:
     name: finaxial-client
     runtime: node
     rootDir: client
-    buildCommand: chmod +x render-build.sh && ./render-build.sh
+    buildCommand: npm install && CI=false npm run build
     startCommand: npm start
+    publishDirectory: build
     plan: free
     envVars:
       - key: NEXT_PUBLIC_API_URL
@@ -37,8 +38,4 @@ services:
       - key: NEXT_PUBLIC_GEMINI_API_KEY
         sync: false
       - key: NODE_ENV
-        value: production
-    branch: main
-    buildFilter:
-      paths:
-        - client/**/* 
+        value: production 
