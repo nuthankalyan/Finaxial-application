@@ -105,11 +105,30 @@ function ensureNextFiles() {
       'react-loadable-manifest.json': JSON.stringify({})
     };
     
+    // Add additional server files
+    const serverFiles = {
+      'next-font-manifest.json': JSON.stringify({
+        pages: {},
+        app: {},
+        appUsingSizeAdjust: false,
+        pagesUsingSizeAdjust: false
+      })
+    };
+    
     for (const [file, content] of Object.entries(requiredFiles)) {
       const filePath = path.join(nextDir, file);
       if (!fs.existsSync(filePath)) {
         fs.writeFileSync(filePath, content, 'utf8');
         console.log(`Created ${file}`);
+      }
+    }
+    
+    // Create server-specific files
+    for (const [file, content] of Object.entries(serverFiles)) {
+      const filePath = path.join(nextDir, 'server', file);
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, content, 'utf8');
+        console.log(`Created server/${file}`);
       }
     }
 
@@ -129,6 +148,7 @@ function verifyNextFiles() {
       '.next/BUILD_ID',
       '.next/build-manifest.json',
       '.next/server/pages-manifest.json',
+      '.next/server/next-font-manifest.json',
       '.next/routes-manifest.json'
     ];
     
@@ -170,6 +190,13 @@ function verifyNextFiles() {
                   dataRoutes: [],
                   notFoundRoutes: []
                 }));
+              } else if (file.includes('next-font-manifest')) {
+                fs.writeFileSync(filePath, JSON.stringify({
+                  pages: {},
+                  app: {},
+                  appUsingSizeAdjust: false,
+                  pagesUsingSizeAdjust: false
+                }));
               }
             }
           }
@@ -193,6 +220,36 @@ function verifyNextFiles() {
     return true;
   } catch (error) {
     console.error('Error during file verification:', error);
+    return false;
+  }
+}
+
+// Add this function after verifyNextFiles
+function createNextFontManifest() {
+  try {
+    const nextDir = path.join(process.cwd(), '.next');
+    const serverDir = path.join(nextDir, 'server');
+    
+    // Ensure server directory exists
+    if (!fs.existsSync(serverDir)) {
+      fs.mkdirSync(serverDir, { recursive: true });
+    }
+    
+    // Create next-font-manifest.json
+    const fontManifestPath = path.join(serverDir, 'next-font-manifest.json');
+    const fontManifestContent = {
+      pages: {},
+      app: {},
+      appUsingSizeAdjust: false,
+      pagesUsingSizeAdjust: false
+    };
+    
+    fs.writeFileSync(fontManifestPath, JSON.stringify(fontManifestContent), 'utf8');
+    console.log('Created next-font-manifest.json');
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to create next-font-manifest.json:', error);
     return false;
   }
 }
@@ -226,6 +283,9 @@ const handle = app.getRequestHandler();
 // First, verify all critical files
 verifyNextFiles();
 
+// Ensure font manifest exists
+createNextFontManifest();
+
 // Now try to prepare the app
 console.log('Preparing Next.js application...');
 app.prepare()
@@ -257,6 +317,10 @@ app.prepare()
     ensureNextFiles();
     verifyNextFiles();
     
+    // Create font manifest explicitly as it's often the cause of issues
+    console.log('Creating font manifest file...');
+    createNextFontManifest();
+    
     // Keep the temporary server running but try one last approach
     console.log('Attempting build and restart...');
     
@@ -267,6 +331,9 @@ app.prepare()
       
       const indexHtmlPath = path.join(pagesDir, 'index.html');
       fs.writeFileSync(indexHtmlPath, '<html><body><h1>Finaxial</h1><p>Application is initializing, please wait...</p></body></html>');
+      
+      // Create font manifest to avoid errors
+      createNextFontManifest();
       
       // Try running the build
       console.log('Running build process...');
