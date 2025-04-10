@@ -1,19 +1,4 @@
-/* Font fallbacks */
-@font-face {
-  font-family: 'System Sans';
-  src: local(system-ui), local(-apple-system), local(BlinkMacSystemFont), local('Segoe UI'), local(Roboto), local(Oxygen), local(Ubuntu), local(Cantarell), local('Open Sans'), local('Helvetica Neue'), local(sans-serif);
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'System Mono';
-  src: local(ui-monospace), local(SFMono-Regular), local(Menlo), local(Monaco), local(Consolas), local('Liberation Mono'), local('Courier New'), local(monospace);
-  font-style: normal;
-  font-weight: 400;
-  font-display: swap;
-}
+/* We're using system fonts only - no custom font definitions needed */
 
 /* Theme variables */
 :root {
@@ -66,8 +51,8 @@
   --animation-slow: 700ms;
   --animation-medium: 500ms;
   --animation-fast: 300ms;
-  --font-sans: var(--font-inter);
-  --font-mono: var(--font-roboto-mono);
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
   /* System font fallbacks if webfonts fail to load */
   --system-sans: 'System Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
   --system-mono: 'System Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;

@@ -7,7 +7,7 @@
     "build": "next build",
     "start": "node server.js",
     "lint": "next lint",
-    "download-fonts": "node scripts/download-fonts.js",
+    "download-fonts": "node scripts/download-fonts.js # creates empty WOFF2 placeholders",
     "postinstall": "npm run download-fonts || echo \"Font download failed, using fallbacks\""
   },
   "dependencies": {

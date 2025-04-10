@@ -1,46 +1,8 @@
 import './globals.css';
-// Import fonts CSS
 import './fonts.css';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Script from 'next/script';
-import localFont from 'next/font/local';
-
-// Define local fonts
-const interFont = localFont({
-  src: [
-    {
-      path: '../../public/fonts/inter/Inter-Regular.woff2',
-      weight: '400',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/inter/Inter-Medium.woff2',
-      weight: '500',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/inter/Inter-SemiBold.woff2',
-      weight: '600',
-      style: 'normal',
-    },
-    {
-      path: '../../public/fonts/inter/Inter-Bold.woff2',
-      weight: '700',
-      style: 'normal',
-    },
-  ],
-  variable: '--font-inter',
-  display: 'swap',
-  fallback: ['system-ui', 'Arial', 'sans-serif'],
-});
-
-const robotoMonoFont = localFont({
-  src: '../../public/fonts/roboto-mono/RobotoMono-Regular.woff2',
-  variable: '--font-roboto-mono',
-  display: 'swap',
-  fallback: ['Consolas', 'monospace'],
-});
 
 export const metadata = {
   title: 'Finaxial - Financial Analysis and Insights',
@@ -55,9 +17,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* No external font resources needed - using local fonts */}
+        {/* No external font resources needed - using system fonts */}
       </head>
-      <body className={`${interFont.variable} ${robotoMonoFont.variable}`}>
+      <body className="font-sans">
         <ThemeProvider>
           <AuthProvider>
             {children}
