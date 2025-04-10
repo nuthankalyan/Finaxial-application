@@ -1,12 +1,18 @@
 // API URL configuration
 export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000';
 
+// Check if we're making an incorrect API call to "finaxial-backend" and fix it to "finaxial-api"
+const correctedApiUrl = API_BASE_URL.replace(
+  'https://finaxial-backend.onrender.com', 
+  'https://finaxial-api.onrender.com'
+);
+
 // Helper function to build API URLs with proper formatting
 export const buildApiUrl = (endpoint: string): string => {
-  // Clean up the API base URL - remove trailing slashes
-  const baseUrl = API_BASE_URL.endsWith('/') 
-    ? API_BASE_URL.slice(0, -1) 
-    : API_BASE_URL;
+  // Use the corrected API URL
+  const baseUrl = correctedApiUrl.endsWith('/') 
+    ? correctedApiUrl.slice(0, -1) 
+    : correctedApiUrl;
     
   // Ensure endpoint starts with a slash
   const formattedEndpoint = endpoint.startsWith('/') 
