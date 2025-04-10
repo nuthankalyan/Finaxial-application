@@ -243,6 +243,20 @@ function ensureNextFiles() {
       console.log('Created server directory');
     }
     
+    // Create static directory
+    const staticDir = path.join(nextDir, 'static');
+    if (!fs.existsSync(staticDir)) {
+      fs.mkdirSync(staticDir, { recursive: true });
+      console.log('Created static directory');
+    }
+    
+    // Create cache directory
+    const cacheDir = path.join(nextDir, 'cache');
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+      console.log('Created cache directory');
+    }
+    
     // Create BUILD_ID file
     fs.writeFileSync(buildIdPath, Date.now().toString(), 'utf8');
     console.log('Created BUILD_ID file');
@@ -365,6 +379,14 @@ function verifyNextFiles() {
       '.next/server/pages/_error.js'
     ];
     
+    // Critical directories to check
+    const criticalDirs = [
+      '.next/static',
+      '.next/cache',
+      '.next/server',
+      '.next/server/pages'
+    ];
+    
     console.log('Verifying critical Next.js files...');
     for (const file of criticalFiles) {
       const filePath = path.join(process.cwd(), file);
@@ -418,6 +440,24 @@ function verifyNextFiles() {
         }
       } else {
         console.warn(`✗ ${file} does not exist`);
+      }
+    }
+    
+    // Check critical directories
+    console.log('Verifying critical Next.js directories...');
+    for (const dir of criticalDirs) {
+      const dirPath = path.join(process.cwd(), dir);
+      if (fs.existsSync(dirPath)) {
+        console.log(`✓ ${dir} exists`);
+      } else {
+        console.warn(`✗ ${dir} does not exist`);
+        // Create the directory
+        try {
+          fs.mkdirSync(dirPath, { recursive: true });
+          console.log(`Created ${dir} directory`);
+        } catch (mkdirErr) {
+          console.error(`Failed to create ${dir}:`, mkdirErr.message);
+        }
       }
     }
 
@@ -1002,6 +1042,23 @@ async function prepareNextApp() {
     if (!ensureNextFiles()) {
       console.error('Failed to ensure required Next.js files');
       return null;
+    }
+    
+    // Verify all critical files and directories
+    verifyNextFiles();
+    
+    // Create static directory if it doesn't exist
+    const staticDir = path.join(process.cwd(), '.next', 'static');
+    if (!fs.existsSync(staticDir)) {
+      fs.mkdirSync(staticDir, { recursive: true });
+      console.log('Created static directory');
+    }
+    
+    // Create cache directory if it doesn't exist
+    const cacheDir = path.join(process.cwd(), '.next', 'cache');
+    if (!fs.existsSync(cacheDir)) {
+      fs.mkdirSync(cacheDir, { recursive: true });
+      console.log('Created cache directory');
     }
     
     // Create Next.js app instance
