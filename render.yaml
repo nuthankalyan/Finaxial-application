@@ -28,7 +28,7 @@ services:
     name: finaxial-client
     runtime: node
     rootDir: client
-    buildCommand: npm install && npm run build
+    buildCommand: npm install
     startCommand: npm start
     plan: free
     envVars:

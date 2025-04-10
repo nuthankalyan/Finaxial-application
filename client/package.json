@@ -6,6 +6,7 @@
     "dev": "next dev",
     "build": "next build",
     "start": "node server.js",
+    "postinstall": "npm run build",
     "lint": "next lint"
   },
   "dependencies": {
@@ -23,7 +24,9 @@
     "react-dom": "^18",
     "react-dropzone": "^14.2.3",
     "react-markdown": "^9.0.1",
-    "typescript": "^5"
+    "typescript": "^5",
+    "fs": "0.0.1-security",
+    "path": "^0.12.7"
   },
   "devDependencies": {
     "@types/node": "^20",
