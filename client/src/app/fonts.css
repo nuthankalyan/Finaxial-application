@@ -1,0 +1,60 @@
+/* Local Font Definitions */
+
+/* Inter Font */
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/inter/Inter-Regular.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url('/fonts/inter/Inter-Medium.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/inter/Inter-SemiBold.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url('/fonts/inter/Inter-Bold.woff2') format('woff2');
+}
+
+/* Roboto Mono Font */
+@font-face {
+  font-family: 'Roboto Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/roboto-mono/RobotoMono-Regular.woff2') format('woff2');
+}
+
+/* System Font Fallbacks */
+@font-face {
+  font-family: 'System Sans';
+  src: local(system-ui), local(-apple-system), local(BlinkMacSystemFont), local('Segoe UI'), local(Roboto), local(Oxygen), local(Ubuntu), local(Cantarell), local('Open Sans'), local('Helvetica Neue'), local(sans-serif);
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'System Mono';
+  src: local(ui-monospace), local(SFMono-Regular), local(Menlo), local(Monaco), local(Consolas), local('Liberation Mono'), local('Courier New'), local(monospace);
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+} 

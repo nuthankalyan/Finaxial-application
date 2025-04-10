@@ -1,30 +1,45 @@
 import './globals.css';
-import { Inter, Roboto_Mono } from 'next/font/google';
+// Import fonts CSS
+import './fonts.css';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Script from 'next/script';
-import dynamic from 'next/dynamic';
+import localFont from 'next/font/local';
 
-// Dynamically import the FontFallback component (client-side only)
-const FontFallback = dynamic(() => import('./components/FontFallback'), { 
-  ssr: false 
-});
-
-// Configure fonts with fallbacks and display options
-const inter = Inter({ 
-  subsets: ['latin'],
+// Define local fonts
+const interFont = localFont({
+  src: [
+    {
+      path: '../../public/fonts/inter/Inter-Regular.woff2',
+      weight: '400',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/inter/Inter-Medium.woff2',
+      weight: '500',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/inter/Inter-SemiBold.woff2',
+      weight: '600',
+      style: 'normal',
+    },
+    {
+      path: '../../public/fonts/inter/Inter-Bold.woff2',
+      weight: '700',
+      style: 'normal',
+    },
+  ],
   variable: '--font-inter',
-  weight: ['400', '500', '600', '700'],
-  display: 'swap', // This helps with FOUT (Flash of Unstyled Text)
-  fallback: ['system-ui', 'Arial', 'sans-serif']
+  display: 'swap',
+  fallback: ['system-ui', 'Arial', 'sans-serif'],
 });
 
-const robotoMono = Roboto_Mono({
-  subsets: ['latin'],
+const robotoMonoFont = localFont({
+  src: '../../public/fonts/roboto-mono/RobotoMono-Regular.woff2',
   variable: '--font-roboto-mono',
   display: 'swap',
-  fallback: ['monospace'],
-  preload: true
+  fallback: ['Consolas', 'monospace'],
 });
 
 export const metadata = {
@@ -40,21 +55,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* Preload critical fonts */}
-        <link 
-          rel="preload" 
-          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Roboto+Mono&display=swap"
-          as="style"
-          crossOrigin="anonymous"
-        />
-        {/* Preconnect to font domains */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" crossOrigin="anonymous" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* No external font resources needed - using local fonts */}
       </head>
-      <body className={`${inter.variable} ${robotoMono.variable}`}>
-        {/* FontFallback component will render only if font loading fails */}
-        <FontFallback />
-        
+      <body className={`${interFont.variable} ${robotoMonoFont.variable}`}>
         <ThemeProvider>
           <AuthProvider>
             {children}

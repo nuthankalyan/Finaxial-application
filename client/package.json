@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "node server.js",
-    "lint": "next lint"
+    "lint": "next lint",
+    "download-fonts": "node scripts/download-fonts.js",
+    "postinstall": "npm run download-fonts || echo \"Font download failed, using fallbacks\""
   },
   "dependencies": {
     "@emailjs/browser": "^4.4.1",
