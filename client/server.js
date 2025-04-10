@@ -5,6 +5,7 @@ const next = require('next');
 const path = require('path');
 const fs = require('fs');
 const { execSync } = require('child_process');
+const express = require('express');
 
 // Check if we're in production mode
 const dev = process.env.NODE_ENV !== 'production';
@@ -203,61 +204,32 @@ tempServer.listen(port, () => {
 // Function to ensure required directories and files exist
 function ensureNextFiles() {
   try {
-    // Ensure .next directory exists
+    // Add early return if critical files exist
     const nextDir = path.join(process.cwd(), '.next');
-    if (!fs.existsSync(nextDir)) {
-      console.log(`.next directory not found, creating it at ${nextDir}`);
-      fs.mkdirSync(nextDir, { recursive: true });
-    }
-
-    // Create subdirectories that Next.js expects
-    const requiredDirs = ['server', 'static', 'cache'];
-    for (const dir of requiredDirs) {
-      const dirPath = path.join(nextDir, dir);
-      if (!fs.existsSync(dirPath)) {
-        fs.mkdirSync(dirPath, { recursive: true });
-        console.log(`Created directory: ${dirPath}`);
-      }
-    }
-
-    // Ensure the pages-manifest.json file exists in the server directory
-    const serverDir = path.join(nextDir, 'server');
-    const pagesManifestPath = path.join(serverDir, 'pages-manifest.json');
-    if (!fs.existsSync(pagesManifestPath)) {
-      console.log(`pages-manifest.json not found, creating placeholder at ${pagesManifestPath}`);
-      // Create a placeholder pages-manifest.json with basic routes
-      fs.writeFileSync(pagesManifestPath, JSON.stringify({
-        "/": "pages/index.html",  // Make sure this points to the HTML file
-        "/_app": "pages/_app.js",
-        "/_error": "pages/_error.js",
-        "/_document": "pages/_document.js"
-      }), 'utf8');
-      console.log('Created pages-manifest.json');
-    } else {
-      // If pages-manifest exists but might not have the correct entry, update it
-      try {
-        const pagesManifest = JSON.parse(fs.readFileSync(pagesManifestPath, 'utf8'));
-        // Make sure the home route points to our HTML file
-        if (!pagesManifest['/'] || pagesManifest['/'] !== 'pages/index.html') {
-          pagesManifest['/'] = 'pages/index.html';
-          fs.writeFileSync(pagesManifestPath, JSON.stringify(pagesManifest), 'utf8');
-          console.log('Updated pages-manifest.json with correct home route');
-        }
-      } catch (e) {
-        console.error('Error updating pages-manifest.json:', e);
-      }
-    }
-
-    // Ensure BUILD_ID exists
     const buildIdPath = path.join(nextDir, 'BUILD_ID');
-    if (!fs.existsSync(buildIdPath)) {
-      console.log(`BUILD_ID not found, creating placeholder at ${buildIdPath}`);
-      // Create a placeholder BUILD_ID
-      fs.writeFileSync(buildIdPath, Date.now().toString(), 'utf8');
-      console.log('Created placeholder BUILD_ID');
+    if (fs.existsSync(buildIdPath)) {
+      console.log('Critical Next.js files already exist, skipping creation');
+      return true;
     }
     
-    // Required files with minimal valid content
+    // Create .next directory if it doesn't exist
+    if (!fs.existsSync(nextDir)) {
+      fs.mkdirSync(nextDir, { recursive: true });
+      console.log('Created .next directory');
+    }
+    
+    // Create server directory
+    const serverDir = path.join(nextDir, 'server');
+    if (!fs.existsSync(serverDir)) {
+      fs.mkdirSync(serverDir, { recursive: true });
+      console.log('Created server directory');
+    }
+    
+    // Create BUILD_ID file
+    fs.writeFileSync(buildIdPath, Date.now().toString(), 'utf8');
+    console.log('Created BUILD_ID file');
+    
+    // Create required files with minimal content
     const requiredFiles = {
       'build-manifest.json': JSON.stringify({
         polyfillFiles: [],
@@ -267,13 +239,7 @@ function ensureNextFiles() {
       }),
       'prerender-manifest.json': JSON.stringify({
         version: 4,
-        routes: {},
-        dynamicRoutes: {},
-        preview: {
-          previewModeId: "development",
-          previewModeSigningKey: "development",
-          previewModeEncryptionKey: "development"
-        }
+        routes: {}
       }),
       'routes-manifest.json': JSON.stringify({
         version: 4,
@@ -285,24 +251,6 @@ function ensureNextFiles() {
         dynamicRoutes: [],
         dataRoutes: [],
         notFoundRoutes: []
-      }),
-      'react-loadable-manifest.json': JSON.stringify({})
-    };
-    
-    // Add additional server files
-    const serverFiles = {
-      'next-font-manifest.json': JSON.stringify({
-        pages: {},
-        app: {},
-        appUsingSizeAdjust: false,
-        pagesUsingSizeAdjust: false
-      }),
-      'middleware-manifest.json': JSON.stringify({
-        version: 2,
-        sortedMiddleware: [],
-        middleware: {},
-        functions: {},
-        matchers: {}
       })
     };
     
@@ -924,3 +872,94 @@ app.prepare()
       console.log('Using temporary server as fallback');
     }
   });
+
+// Add a cache to store the prepared app
+let cachedApp = null;
+let lastPrepareTime = 0;
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes cache TTL
+
+// Function to prepare Next.js app with improved caching
+async function prepareNextApp() {
+  try {
+    // Check if we have a cached app that's still valid
+    const now = Date.now();
+    if (cachedApp && (now - lastPrepareTime < CACHE_TTL)) {
+      console.log('Using cached Next.js app');
+      return cachedApp;
+    }
+    
+    console.log('Preparing Next.js app...');
+    
+    // Ensure required files exist
+    if (!ensureNextFiles()) {
+      console.error('Failed to ensure required Next.js files');
+      return null;
+    }
+    
+    // Create Next.js app instance
+    const app = next({
+      dev: process.env.NODE_ENV !== 'production',
+      conf: nextConfig
+    });
+    
+    // Prepare the app
+    await app.prepare();
+    
+    // Cache the prepared app
+    cachedApp = app;
+    lastPrepareTime = now;
+    
+    console.log('Next.js app prepared successfully');
+    return app;
+  } catch (error) {
+    console.error(`Failed to prepare Next.js app: ${error.message}`);
+    console.error(error.stack);
+    return null;
+  }
+}
+
+// Main server startup
+const startServer = async () => {
+  try {
+    console.log('Starting server...');
+    console.log('Current directory:', process.cwd());
+    
+    // Ensure we're in production mode
+    process.env.NODE_ENV = process.env.NODE_ENV || 'production';
+    
+    // Prepare the Next.js app
+    const app = await prepareNextApp();
+    if (!app) {
+      throw new Error('Failed to prepare Next.js app');
+    }
+    
+    // Create Express server
+    const server = express();
+    
+    // Add basic security headers
+    server.use((req, res, next) => {
+      res.setHeader('X-Content-Type-Options', 'nosniff');
+      res.setHeader('X-Frame-Options', 'DENY');
+      res.setHeader('X-XSS-Protection', '1; mode=block');
+      next();
+    });
+    
+    // Handle all routes with Next.js
+    server.all('*', (req, res) => {
+      return app.getRequestHandler()(req, res);
+    });
+    
+    // Start the server
+    const port = process.env.PORT || 3000;
+    server.listen(port, (err) => {
+      if (err) throw err;
+      console.log(`> Ready on http://localhost:${port}`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+// Start the server
+startServer();
