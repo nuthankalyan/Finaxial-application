@@ -49,6 +49,21 @@ function ensureNextFiles() {
       }
     }
 
+    // Ensure the pages-manifest.json file exists in the server directory
+    const serverDir = path.join(nextDir, 'server');
+    const pagesManifestPath = path.join(serverDir, 'pages-manifest.json');
+    if (!fs.existsSync(pagesManifestPath)) {
+      console.log(`pages-manifest.json not found, creating placeholder at ${pagesManifestPath}`);
+      // Create a placeholder pages-manifest.json with basic routes
+      fs.writeFileSync(pagesManifestPath, JSON.stringify({
+        "/": "pages/index.html",
+        "/_app": "pages/_app.js",
+        "/_error": "pages/_error.js",
+        "/_document": "pages/_document.js"
+      }), 'utf8');
+      console.log('Created pages-manifest.json');
+    }
+
     // Ensure BUILD_ID exists
     const buildIdPath = path.join(nextDir, 'BUILD_ID');
     if (!fs.existsSync(buildIdPath)) {
@@ -106,6 +121,82 @@ function ensureNextFiles() {
   }
 }
 
+// Function to verify required Next.js files exist
+function verifyNextFiles() {
+  try {
+    // Most critical files to check
+    const criticalFiles = [
+      '.next/BUILD_ID',
+      '.next/build-manifest.json',
+      '.next/server/pages-manifest.json',
+      '.next/routes-manifest.json'
+    ];
+    
+    console.log('Verifying critical Next.js files...');
+    for (const file of criticalFiles) {
+      const filePath = path.join(process.cwd(), file);
+      if (fs.existsSync(filePath)) {
+        console.log(`✓ ${file} exists`);
+        // Log the content for debugging
+        try {
+          const content = fs.readFileSync(filePath, 'utf8');
+          if (content.trim().length === 0) {
+            console.warn(`Warning: ${file} is empty`);
+            if (file.endsWith('.json')) {
+              console.log('Fixing empty JSON file');
+              if (file.includes('pages-manifest')) {
+                fs.writeFileSync(filePath, JSON.stringify({
+                  "/": "pages/index.html",
+                  "/_app": "pages/_app.js",
+                  "/_error": "pages/_error.js",
+                  "/_document": "pages/_document.js"
+                }));
+              } else if (file.includes('build-manifest')) {
+                fs.writeFileSync(filePath, JSON.stringify({
+                  polyfillFiles: [],
+                  lowPriorityFiles: [],
+                  rootMainFiles: [],
+                  pages: { "/_app": [], "/_error": [], "/" : [] }
+                }));
+              } else if (file.includes('routes-manifest')) {
+                fs.writeFileSync(filePath, JSON.stringify({
+                  version: 4,
+                  basePath: "",
+                  redirects: [],
+                  rewrites: [],
+                  headers: [],
+                  staticRoutes: [{ page: "/", regex: "^/?$" }],
+                  dynamicRoutes: [],
+                  dataRoutes: [],
+                  notFoundRoutes: []
+                }));
+              }
+            }
+          }
+        } catch (readErr) {
+          console.warn(`Warning: Could not read ${file}:`, readErr.message);
+        }
+      } else {
+        console.warn(`✗ ${file} does not exist`);
+      }
+    }
+
+    // Additional check for server directory
+    const serverDir = path.join(process.cwd(), '.next/server');
+    const pagesDir = path.join(serverDir, 'pages');
+    
+    if (!fs.existsSync(pagesDir)) {
+      console.log('Creating pages directory');
+      fs.mkdirSync(pagesDir, { recursive: true });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error during file verification:', error);
+    return false;
+  }
+}
+
 // Ensure Next.js required files exist before starting
 console.log('Ensuring Next.js required files exist...');
 const filesCreated = ensureNextFiles();
@@ -132,6 +223,11 @@ const app = next(serverConfig);
 const handle = app.getRequestHandler();
 
 // Prepare the Next.js app in the background
+// First, verify all critical files
+verifyNextFiles();
+
+// Now try to prepare the app
+console.log('Preparing Next.js application...');
 app.prepare()
   .then(() => {
     console.log('Next.js app prepared successfully');
@@ -154,41 +250,66 @@ app.prepare()
   })
   .catch(err => {
     console.error('Error preparing Next.js app:', err);
-    console.log('Continuing with temporary server since Render port detection already succeeded');
+    console.log('Detailed error:', err.stack);
     
-    // Keep temporary server running but try to fix Next.js in the background
+    // Try to fix the issues by ensuring files and directories
+    console.log('Attempting to fix file issues...');
+    ensureNextFiles();
+    verifyNextFiles();
+    
+    // Keep the temporary server running but try one last approach
+    console.log('Attempting build and restart...');
+    
     try {
-      // Try running the build
-      console.log('Running next build...');
-      execSync('npm run build', { stdio: 'inherit' });
-      console.log('Build completed, trying to start again...');
+      // Create basic placeholder for pages/index.js
+      const pagesDir = path.join(process.cwd(), '.next/server/pages');
+      fs.mkdirSync(pagesDir, { recursive: true });
       
-      // Try starting the Next.js app again
-      const app2 = next(serverConfig);
-      app2.prepare()
-        .then(() => {
-          const handle2 = app2.getRequestHandler();
-          
-          // Close temporary server
-          tempServer.close(() => {
-            console.log('Temporary server closed');
-            
-            // Start the real Next.js server
-            createServer((req, res) => {
-              handle2(req, res, parse(req.url, true));
-            }).listen(port, () => {
-              console.log(`> Recovery successful! Next.js server ready on http://localhost:${port}`);
+      const indexHtmlPath = path.join(pagesDir, 'index.html');
+      fs.writeFileSync(indexHtmlPath, '<html><body><h1>Finaxial</h1><p>Application is initializing, please wait...</p></body></html>');
+      
+      // Try running the build
+      console.log('Running build process...');
+      try {
+        execSync('npm run build', { stdio: 'inherit' });
+        console.log('Build completed, trying to start again...');
+      } catch (buildError) {
+        console.error('Build failed but continuing:', buildError.message);
+      }
+      
+      // Try starting the Next.js app again with retry logic
+      console.log('Attempting to start Next.js again...');
+      setTimeout(() => {
+        try {
+          const app2 = next(serverConfig);
+          app2.prepare()
+            .then(() => {
+              const handle2 = app2.getRequestHandler();
+              
+              // Close temporary server
+              tempServer.close(() => {
+                console.log('Temporary server closed');
+                
+                // Start the real Next.js server
+                createServer((req, res) => {
+                  handle2(req, res, parse(req.url, true));
+                }).listen(port, () => {
+                  console.log(`> Recovery successful! Next.js server ready on http://localhost:${port}`);
+                });
+              });
+            })
+            .catch(finalErr => {
+              console.error('Final error starting Next.js:', finalErr);
+              console.log('Using temporary server as fallback');
+              // Keep the temporary server running for basic functionality
             });
-          });
-        })
-        .catch(finalErr => {
-          console.error('Final error starting Next.js:', finalErr);
-          console.log('Keeping temporary server running');
-          // Keep the temporary server running since we already have a port detected
-        });
-    } catch (buildErr) {
-      console.error('Failed to run build:', buildErr);
-      console.log('Keeping temporary server running');
-      // Keep the temporary server running since we already have a port detected
+        } catch (initError) {
+          console.error('Failed to initialize Next.js:', initError);
+          console.log('Using temporary server as fallback');
+        }
+      }, 5000); // Wait 5 seconds before retry
+    } catch (recoveryErr) {
+      console.error('Recovery failed:', recoveryErr);
+      console.log('Using temporary server as fallback');
     }
   }); 
