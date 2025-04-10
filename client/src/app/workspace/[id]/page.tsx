@@ -442,6 +442,10 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         creator: 'Finaxial App'
       });
       
+      // Define PDF layout constants
+      const footerPosition = 280;
+      const footerMargin = 15; // Margin above footer to prevent content overflow
+      
       // Add title
       doc.setFontSize(20);
       doc.setTextColor(33, 37, 41);
@@ -496,7 +500,8 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         columnStyles: {
           0: { cellWidth: 10 },
           1: { cellWidth: 'auto' }
-        }
+        },
+        margin: { bottom: footerMargin + 10 }
       });
       
       // Check if we need a new page for recommendations
@@ -534,7 +539,8 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         columnStyles: {
           0: { cellWidth: 10 },
           1: { cellWidth: 'auto' }
-        }
+        },
+        margin: { bottom: footerMargin + 10 }
       });
       
       // Add visualizations section if charts are available
@@ -553,8 +559,15 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         
         // Loop through charts (max 2 per page)
         charts.forEach((chart, index) => {
-          // Create a new page after every 2 charts
-          if (index > 0 && index % 2 === 0) {
+          // Calculate estimated height for this chart (title + chart + description)
+          const estimatedHeight = 8 + chartHeight + 20; // Basic height without description
+          
+          // Check if we need a new page based on vertical space
+          if (currentY + estimatedHeight > footerPosition - footerMargin) {
+            doc.addPage();
+            currentY = 30;
+          } else if (index > 0 && index % 2 === 0) {
+            // Create a new page after every 2 charts (original logic)
             doc.addPage();
             currentY = 30;
           }
@@ -627,10 +640,16 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
         doc.setPage(i);
+        
+        // Add footer line to visually separate content from footer
+        doc.setDrawColor(200, 200, 200);
+        doc.line(15, footerPosition - footerMargin, 195, footerPosition - footerMargin);
+        
+        // Add footer text
         doc.setFontSize(8);
         doc.setTextColor(150, 150, 150);
-        doc.text('Finaxial App - Financial Insights Report', 15, 280);
-        doc.text(`Page ${i} of ${pageCount}`, 180, 280);
+        doc.text('Finaxial App - Financial Insights Report', 15, footerPosition);
+        doc.text(`Page ${i} of ${pageCount}`, 180, footerPosition);
       }
       
       return doc;
