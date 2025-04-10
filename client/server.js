@@ -61,8 +61,138 @@ process.on('unhandledRejection', (reason, promise) => {
 
 // Start a minimal HTTP server immediately so Render detects a port
 const tempServer = require('http').createServer((req, res) => {
+  // Simple request handling
+  const url = req.url;
+  
+  // Check if we should attempt to load actual Next.js files
+  const nextPath = path.join(process.cwd(), '.next');
+  const hasNextFiles = fs.existsSync(path.join(nextPath, 'BUILD_ID'));
+  
+  if (url === '/status') {
+    // Status check endpoint
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({
+      status: 'initializing',
+      nextReady: hasNextFiles,
+      timestamp: new Date().toISOString()
+    }));
+    return;
+  }
+  
+  if (url === '/reload') {
+    // Force reload of Next.js app
+    res.writeHead(200, { 'Content-Type': 'text/html' });
+    res.end(`
+      <html><body>
+        <h1>Reloading Finaxial App</h1>
+        <p>Triggering reload...</p>
+        <script>
+          // Trigger a build
+          fetch('/build', { method: 'POST' })
+            .then(res => res.json())
+            .then(data => {
+              document.body.innerHTML += '<p>Build triggered. Redirecting in 5 seconds...</p>';
+              setTimeout(() => window.location.href = '/', 5000);
+            })
+            .catch(err => {
+              document.body.innerHTML += '<p>Error: ' + err.message + '</p>';
+            });
+        </script>
+      </body></html>
+    `);
+    return;
+  }
+  
+  if (url === '/build' && req.method === 'POST') {
+    // Trigger a Next.js build
+    res.writeHead(200, { 'Content-Type': 'application/json' });
+    
+    // Attempt to run the build asynchronously
+    attemptProductionBuild();
+    
+    res.end(JSON.stringify({ status: 'build_triggered' }));
+    return;
+  }
+  
+  // Default: serve the loading page with build status
   res.writeHead(200, { 'Content-Type': 'text/html' });
-  res.end('<html><body><h1>Server is starting...</h1><p>The Next.js application is initializing.</p></body></html>');
+  res.end(`
+    <!DOCTYPE html>
+    <html>
+    <head>
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width, initial-scale=1">
+      <title>Finaxial - Initializing</title>
+      <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
+        .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
+        h1 { color: #333; }
+        .loader { 
+          border: 5px solid #f3f3f3; 
+          border-top: 5px solid #3498db; 
+          border-radius: 50%;
+          width: 50px;
+          height: 50px;
+          animation: spin 2s linear infinite;
+          margin: 20px auto;
+        }
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        .button {
+          background-color: #4CAF50;
+          border: none;
+          color: white;
+          padding: 10px 20px;
+          text-align: center;
+          text-decoration: none;
+          display: inline-block;
+          font-size: 16px;
+          margin: 10px 2px;
+          cursor: pointer;
+          border-radius: 4px;
+        }
+      </style>
+    </head>
+    <body>
+      <div class="container">
+        <h1>Finaxial</h1>
+        <p>The application is initializing, please wait...</p>
+        <div class="loader"></div>
+        <p id="status">Loading...</p>
+        <p>If the application takes too long to load, you can try:</p>
+        <a href="/reload" class="button">Rebuild & Reload Application</a>
+        
+        <script>
+          // Check status periodically
+          function checkStatus() {
+            fetch('/status')
+              .then(res => res.json())
+              .then(data => {
+                document.getElementById('status').textContent = 'Status: ' + data.status;
+                if (data.nextReady) {
+                  document.getElementById('status').textContent += ' - Next.js files are ready';
+                  // Try reloading the page when files are ready
+                  setTimeout(() => window.location.reload(), 3000);
+                } else {
+                  // Check again in a few seconds
+                  setTimeout(checkStatus, 5000);
+                }
+              })
+              .catch(err => {
+                document.getElementById('status').textContent = 'Error checking status: ' + err.message;
+                setTimeout(checkStatus, 10000);
+              });
+          }
+          
+          // Start checking status after a delay
+          setTimeout(checkStatus, 3000);
+        </script>
+      </div>
+    </body>
+    </html>
+  `);
 });
 
 // Listen on the port immediately
@@ -414,7 +544,7 @@ function createIndexHtml() {
     // Create index.html file
     const indexHtmlPath = path.join(pagesDir, 'index.html');
     
-    // Create a more substantial HTML file that Next.js will accept
+    // Create a more functional HTML file with automatic redirect to the actual app
     const html = `<!DOCTYPE html>
 <html>
 <head>
@@ -425,12 +555,49 @@ function createIndexHtml() {
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 0; }
     .container { max-width: 800px; margin: 0 auto; padding: 2rem; }
     h1 { color: #333; }
+    .loader { 
+      border: 5px solid #f3f3f3; 
+      border-top: 5px solid #3498db; 
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      animation: spin 2s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
   </style>
+  <script>
+    // Try to redirect to the actual app after a short delay
+    window.onload = function() {
+      setTimeout(function() {
+        // Attempt to fetch the actual index page
+        fetch('/')
+          .then(response => {
+            if (response.ok) {
+              window.location.reload(true);
+            } else {
+              document.getElementById('status').textContent = 'Still initializing. Please wait a moment...';
+              // Try again in a few seconds
+              setTimeout(() => window.location.reload(true), 5000);
+            }
+          })
+          .catch(error => {
+            document.getElementById('status').textContent = 'Connection issue. Retrying...';
+            setTimeout(() => window.location.reload(true), 5000);
+          });
+      }, 3000);
+    }
+  </script>
 </head>
 <body>
   <div class="container">
     <h1>Finaxial</h1>
     <p>Application is initializing, please wait...</p>
+    <div class="loader"></div>
+    <p id="status">Loading...</p>
   </div>
 </body>
 </html>`;
@@ -464,8 +631,9 @@ if (!filesCreated) {
   console.warn('Warning: Failed to create some required Next.js files. Will attempt to continue anyway.');
 }
 
-// Create server configuration
-const serverConfig = { 
+// Initialize Next.js app
+console.log('Initializing Next.js...');
+const app = next({
   dev,
   dir: process.cwd(),
   conf: { 
@@ -473,13 +641,13 @@ const serverConfig = {
     // Allow server to start even if build is incomplete
     experimental: {
       disableOptimizedLoading: true
-    }
+    },
+    // Add production optimization settings
+    productionBrowserSourceMaps: false,
+    optimizeFonts: true,
+    swcMinify: true
   }
-};
-
-// Initialize Next.js app
-console.log('Initializing Next.js...');
-const app = next(serverConfig);
+});
 const handle = app.getRequestHandler();
 
 // Prepare the Next.js app in the background
@@ -492,8 +660,45 @@ createNextFontManifest();
 // Create index.html to avoid MissingStaticPage error
 createIndexHtml();
 
+// Add this function right before the prepare section to create a full production build
+function attemptProductionBuild() {
+  console.log('Attempting to run a full production build...');
+  try {
+    // Using execSync to run the build command with proper environment
+    const buildCommand = 'npm run build';
+    console.log(`Executing: ${buildCommand}`);
+    
+    execSync(buildCommand, {
+      stdio: 'inherit',
+      env: {
+        ...process.env,
+        NODE_ENV: 'production',
+        NEXT_TELEMETRY_DISABLED: '1'
+      }
+    });
+    
+    console.log('Build completed successfully!');
+    return true;
+  } catch (buildError) {
+    console.error('Build failed:', buildError.message);
+    return false;
+  }
+}
+
 // Now try to prepare the app
 console.log('Preparing Next.js application...');
+
+// Try running a full build first if in production mode
+if (process.env.NODE_ENV === 'production') {
+  console.log('Running in production mode, attempting full build first...');
+  const buildSuccess = attemptProductionBuild();
+  if (buildSuccess) {
+    console.log('Production build completed, proceeding with optimized server');
+  } else {
+    console.log('Production build failed, proceeding with fallback approach');
+  }
+}
+
 app.prepare()
   .then(() => {
     console.log('Next.js app prepared successfully');
@@ -659,7 +864,21 @@ app.prepare()
       console.log('Attempting to start Next.js again...');
       setTimeout(() => {
         try {
-          const app2 = next(serverConfig);
+          const app2 = next({
+            dev,
+            dir: process.cwd(),
+            conf: { 
+              distDir: '.next',
+              // Allow server to start even if build is incomplete
+              experimental: {
+                disableOptimizedLoading: true
+              },
+              // Add production optimization settings
+              productionBrowserSourceMaps: false,
+              optimizeFonts: true,
+              swcMinify: true
+            }
+          });
           app2.prepare()
             .then(() => {
               const handle2 = app2.getRequestHandler();
