@@ -190,6 +190,7 @@ function verifyNextFiles() {
       '.next/build-manifest.json',
       '.next/server/pages-manifest.json',
       '.next/server/next-font-manifest.json',
+      '.next/server/font-manifest.json',
       '.next/routes-manifest.json'
     ];
     
@@ -276,8 +277,7 @@ function createNextFontManifest() {
       fs.mkdirSync(serverDir, { recursive: true });
     }
     
-    // Create next-font-manifest.json
-    const fontManifestPath = path.join(serverDir, 'next-font-manifest.json');
+    // Font manifest content
     const fontManifestContent = {
       pages: {},
       app: {},
@@ -285,12 +285,21 @@ function createNextFontManifest() {
       pagesUsingSizeAdjust: false
     };
     
-    fs.writeFileSync(fontManifestPath, JSON.stringify(fontManifestContent), 'utf8');
-    console.log('Created next-font-manifest.json');
+    // Create both versions of the font manifest files
+    const fontManifestFiles = [
+      'next-font-manifest.json',  // Newer Next.js versions
+      'font-manifest.json'        // Older Next.js versions
+    ];
+    
+    for (const fileName of fontManifestFiles) {
+      const filePath = path.join(serverDir, fileName);
+      fs.writeFileSync(filePath, JSON.stringify(fontManifestContent), 'utf8');
+      console.log(`Created ${fileName}`);
+    }
     
     return true;
   } catch (error) {
-    console.error('Failed to create next-font-manifest.json:', error);
+    console.error('Failed to create font manifest files:', error);
     return false;
   }
 }
