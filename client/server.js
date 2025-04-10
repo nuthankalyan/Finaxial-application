@@ -153,8 +153,37 @@ function ensureNextFiles() {
         app: {},
         appUsingSizeAdjust: false,
         pagesUsingSizeAdjust: false
+      }),
+      'middleware-manifest.json': JSON.stringify({
+        version: 2,
+        sortedMiddleware: [],
+        middleware: {},
+        functions: {},
+        matchers: {}
       })
     };
+    
+    // Create basic page files
+    const pagesDir = path.join(nextDir, 'server', 'pages');
+    if (!fs.existsSync(pagesDir)) {
+      fs.mkdirSync(pagesDir, { recursive: true });
+      console.log(`Created pages directory: ${pagesDir}`);
+    }
+    
+    // Create basic required page files
+    const pageFiles = {
+      '_document.js': 'module.exports = require("next/dist/pages/_document");',
+      '_app.js': 'module.exports = require("next/dist/pages/_app");',
+      '_error.js': 'module.exports = require("next/dist/pages/_error");'
+    };
+    
+    for (const [file, content] of Object.entries(pageFiles)) {
+      const filePath = path.join(pagesDir, file);
+      if (!fs.existsSync(filePath)) {
+        fs.writeFileSync(filePath, content, 'utf8');
+        console.log(`Created pages/${file}`);
+      }
+    }
     
     for (const [file, content] of Object.entries(requiredFiles)) {
       const filePath = path.join(nextDir, file);
@@ -191,7 +220,11 @@ function verifyNextFiles() {
       '.next/server/pages-manifest.json',
       '.next/server/next-font-manifest.json',
       '.next/server/font-manifest.json',
-      '.next/routes-manifest.json'
+      '.next/server/middleware-manifest.json',
+      '.next/routes-manifest.json',
+      '.next/server/pages/_app.js',
+      '.next/server/pages/_document.js',
+      '.next/server/pages/_error.js'
     ];
     
     console.log('Verifying critical Next.js files...');
@@ -453,6 +486,31 @@ app.prepare()
       
       const indexHtmlPath = path.join(pagesDir, 'index.html');
       fs.writeFileSync(indexHtmlPath, '<html><body><h1>Finaxial</h1><p>Application is initializing, please wait...</p></body></html>');
+      
+      // Create middleware manifest file to avoid errors
+      const serverDir = path.join(process.cwd(), '.next/server');
+      const middlewareManifestPath = path.join(serverDir, 'middleware-manifest.json');
+      fs.writeFileSync(middlewareManifestPath, JSON.stringify({
+        version: 2,
+        sortedMiddleware: [],
+        middleware: {},
+        functions: {},
+        matchers: {}
+      }), 'utf8');
+      console.log('Created middleware-manifest.json');
+      
+      // Create basic required page files
+      const pageFiles = {
+        '_document.js': 'module.exports = require("next/dist/pages/_document");',
+        '_app.js': 'module.exports = require("next/dist/pages/_app");',
+        '_error.js': 'module.exports = require("next/dist/pages/_error");'
+      };
+      
+      for (const [file, content] of Object.entries(pageFiles)) {
+        const filePath = path.join(pagesDir, file);
+        fs.writeFileSync(filePath, content, 'utf8');
+        console.log(`Created pages/${file}`);
+      }
       
       // Create font manifest to avoid errors
       createNextFontManifest();
