@@ -17,6 +17,9 @@ const InsightSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  charts: {
+    type: mongoose.Schema.Types.Mixed  // This allows any JSON structure
+  },
   rawResponse: {
     type: String
   },

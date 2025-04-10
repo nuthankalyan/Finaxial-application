@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './InsightsList.module.css';
 import InsightsPanel from './InsightsPanel';
+import VisualizationPanel from './VisualizationPanel';
 import { FinancialInsights } from '../services/geminiService';
 
 export interface SavedInsight {
@@ -12,6 +13,7 @@ export interface SavedInsight {
   summary: string;
   insights: string[] | string;
   recommendations: string[] | string;
+  charts?: any;  // Add charts data
   rawResponse: string;
   createdAt: string;
 }
@@ -20,10 +22,12 @@ interface InsightsListProps {
   savedInsights: SavedInsight[];
   currentInsight: FinancialInsights | null;
   currentFileName: string | null;
+  currentCharts?: any;  // Add currentCharts prop
 }
 
-export default function InsightsList({ savedInsights, currentInsight, currentFileName }: InsightsListProps) {
+export default function InsightsList({ savedInsights, currentInsight, currentFileName, currentCharts }: InsightsListProps) {
   const [expandedInsightId, setExpandedInsightId] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<'insights' | 'visualizations'>('insights');
   
   // Format the date for display
   const formatDate = (dateString: string) => {
@@ -47,6 +51,7 @@ export default function InsightsList({ savedInsights, currentInsight, currentFil
           summary: currentInsight.summary,
           insights: currentInsight.insights,
           recommendations: currentInsight.recommendations,
+          charts: currentCharts || null,  // Use the charts from props
           rawResponse: currentInsight.rawResponse,
           createdAt: new Date().toISOString(),
         },
@@ -109,15 +114,65 @@ export default function InsightsList({ savedInsights, currentInsight, currentFil
                   transition={{ duration: 0.3 }}
                   className={styles.expandedContent}
                 >
-                  <InsightsPanel 
-                    insights={{
-                      summary: insight.summary,
-                      insights: insight.insights,
-                      recommendations: insight.recommendations,
-                      rawResponse: insight.rawResponse
-                    }}
-                    fileName={insight.fileName}
-                  />
+                  {/* Tabs for Insights and Visualizations */}
+                  {insight.charts && Array.isArray(insight.charts) && insight.charts.length > 0 && (
+                    <div className={styles.expandedTabs}>
+                      <button 
+                        className={`${styles.expandedTabButton} ${activeTab === 'insights' ? styles.activeExpandedTab : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTab('insights');
+                        }}
+                      >
+                        Insights
+                      </button>
+                      <button 
+                        className={`${styles.expandedTabButton} ${activeTab === 'visualizations' ? styles.activeExpandedTab : ''}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveTab('visualizations');
+                        }}
+                      >
+                        Visualizations
+                      </button>
+                    </div>
+                  )}
+                  
+                  <AnimatePresence mode="wait">
+                    {activeTab === 'insights' && (
+                      <motion.div
+                        key="insights-panel"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <InsightsPanel 
+                          insights={{
+                            summary: insight.summary,
+                            insights: Array.isArray(insight.insights) ? insight.insights : typeof insight.insights === 'string' ? insight.insights.split('\n\n').filter(Boolean) : [],
+                            recommendations: Array.isArray(insight.recommendations) ? insight.recommendations : typeof insight.recommendations === 'string' ? insight.recommendations.split('\n\n').filter(Boolean) : [],
+                            rawResponse: insight.rawResponse
+                          }}
+                          fileName={insight.fileName}
+                        />
+                      </motion.div>
+                    )}
+                    
+                    {activeTab === 'visualizations' && insight.charts && Array.isArray(insight.charts) && insight.charts.length > 0 && (
+                      <motion.div
+                        key="visualizations-panel"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                      >
+                        <VisualizationPanel 
+                          charts={insight.charts} 
+                          fileName={insight.fileName}
+                          isLoading={false}
+                        />
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </motion.div>
               )}
             </AnimatePresence>

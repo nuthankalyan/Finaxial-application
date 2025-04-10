@@ -100,6 +100,47 @@
   overflow: hidden;
 }
 
+.expandedTabs {
+  display: flex;
+  margin-bottom: 1rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  padding-bottom: 0.5rem;
+}
+
+.expandedTabButton {
+  padding: 0.5rem 1rem;
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  color: #64748b;
+  cursor: pointer;
+  border-radius: 4px;
+  margin-right: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.expandedTabButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  color: #2563eb;
+}
+
+.activeExpandedTab {
+  color: #2563eb;
+  font-weight: 600;
+  position: relative;
+}
+
+.activeExpandedTab::after {
+  content: '';
+  position: absolute;
+  bottom: -0.5rem;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #2563eb;
+  border-radius: 1px;
+}
+
 @media (prefers-color-scheme: dark) {
   .title {
     color: #f3f4f6;

@@ -7,11 +7,14 @@ import styles from './workspace.module.css';
 import CsvUploader from '../../components/CsvUploader';
 import InsightsPanel from '../../components/InsightsPanel';
 import InsightsList, { SavedInsight } from '../../components/InsightsList';
-import { analyzeCsvWithGemini, FinancialInsights } from '../../services/geminiService';
+import VisualizationPanel from '../../components/VisualizationPanel';
+import VisualizationHistory from '../../components/VisualizationHistory';
+import { analyzeCsvWithGemini, generateChartData, FinancialInsights, ChartData } from '../../services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { sendPdfReportByEmail } from '../../services/emailService';
+import { Chart as ChartJS, ChartTypeRegistry } from 'chart.js/auto';
 
 interface Workspace {
   _id: string;
@@ -168,6 +171,10 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [exporting, setExporting] = useState(false);
   const [isViewingHistory, setIsViewingHistory] = useState(false);
   
+  // Add new state for visualizations
+  const [charts, setCharts] = useState<ChartData[] | null>(null);
+  const [generatingCharts, setGeneratingCharts] = useState(false);
+  
   // Add new state for email functionality
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [sending, setSending] = useState(false);
@@ -188,6 +195,11 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     title: '',
     message: ''
   });
+
+  // Add new state to track selected insight for details modal
+  const [selectedInsight, setSelectedInsight] = useState<SavedInsight | null>(null);
+  const [showInsightDetails, setShowInsightDetails] = useState(false);
+  const [detailsTab, setDetailsTab] = useState<'insights' | 'visualizations'>('insights');
 
   useEffect(() => {
     // Check if user is authenticated
@@ -241,18 +253,42 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     setFileName(name);
     setAnalyzing(true);
     setInsights(null);
+    setCharts(null);
     setIsViewingHistory(false);
     
     try {
       const results = await analyzeCsvWithGemini(csvContent);
       setInsights(results);
       
+      // Generate chart data
+      setGeneratingCharts(true);
+      try {
+        const chartData = await generateChartData(csvContent);
+        setCharts(chartData);
+      } catch (chartError) {
+        console.error('Error generating chart data:', chartError);
+        setNotification({
+          show: true,
+          type: 'error',
+          title: 'Chart Generation Failed',
+          message: 'Failed to generate visualization charts, but insights are available.'
+        });
+      } finally {
+        setGeneratingCharts(false);
+      }
+      
       // Scroll to the content area when insights load
       if (contentRef.current) {
         contentRef.current.scrollIntoView({ behavior: 'smooth' });
       }
     } catch (err: any) {
-      setError(`Analysis failed: ${err.message}`);
+      setError(err.message);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Analysis Failed',
+        message: err.message || 'Failed to analyze CSV data'
+      });
     } finally {
       setAnalyzing(false);
     }
@@ -290,6 +326,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           summary: insights.summary,
           insights: insightsString,
           recommendations: recommendationsString,
+          charts: charts,  // Save the chart data
           rawResponse: insights.rawResponse
         }),
       });
@@ -309,25 +346,43 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           : data.data.insights.split('\n\n').filter(Boolean),
         recommendations: Array.isArray(data.data.recommendations) 
           ? data.data.recommendations 
-          : data.data.recommendations.split('\n\n').filter(Boolean)
+          : data.data.recommendations.split('\n\n').filter(Boolean),
+        charts: data.data.charts || null
       };
       
       // Add the newly saved insight to the savedInsights state
       setSavedInsights(prevInsights => [savedInsight, ...prevInsights]);
       
+      // Show success notification
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Insights Saved',
+        message: 'Your financial analysis has been saved successfully.'
+      });
+      
       // Clear the current insights after saving
       setInsights(null);
       setFileName(null);
+      setCharts(null);
       
     } catch (err: any) {
       setError(`Failed to save insights: ${err.message}`);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Save Failed',
+        message: err.message || 'Failed to save insights'
+      });
     } finally {
       setSaving(false);
     }
   };
 
   const handleViewInsight = (insight: SavedInsight) => {
-    // Handle the case where insights and recommendations are strings in the database
+    setIsViewingHistory(true);
+    
+    // Ensure insights and recommendations are arrays
     const insightsArray = Array.isArray(insight.insights) 
       ? insight.insights 
       : typeof insight.insights === 'string'
@@ -340,22 +395,35 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         ? insight.recommendations.split('\n\n').filter(Boolean)
         : [];
     
-    const insightData: FinancialInsights = {
-      summary: insight.summary || '',
+    setInsights({
+      summary: insight.summary,
       insights: insightsArray,
       recommendations: recommendationsArray,
-      rawResponse: insight.rawResponse || ''
-    };
+      rawResponse: insight.rawResponse
+    });
     
     setFileName(insight.fileName);
-    setInsights(insightData);
     setActiveTab('summary');
-    setIsViewingHistory(true);
     
-    // Scroll to content area
+    // Set the charts data if available
+    if (insight.charts && Array.isArray(insight.charts)) {
+      setCharts(insight.charts);
+    } else {
+      setCharts(null);
+    }
+    
+    // Scroll to the content area when viewing saved insights
     if (contentRef.current) {
       contentRef.current.scrollIntoView({ behavior: 'smooth' });
     }
+  };
+
+  // Add a new function to open the insight details modal
+  const openInsightDetails = (insight: SavedInsight) => {
+    setSelectedInsight(insight);
+    setShowInsightDetails(true);
+    // Default to insights tab, but switch to visualizations if there are no insights
+    setDetailsTab('insights');
   };
 
   // Generate PDF function (will be reused for email)
@@ -469,6 +537,92 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         }
       });
       
+      // Add visualizations section if charts are available
+      if (charts && charts.length > 0) {
+        // Add a new page for charts
+        doc.addPage();
+        
+        // Add visualizations section title
+        doc.setFontSize(16);
+        doc.setTextColor(33, 37, 41);
+        doc.text('Visualizations', 15, 20);
+        
+        let currentY = 30;
+        const chartWidth = 180;
+        const chartHeight = 100;
+        
+        // Loop through charts (max 2 per page)
+        charts.forEach((chart, index) => {
+          // Create a new page after every 2 charts
+          if (index > 0 && index % 2 === 0) {
+            doc.addPage();
+            currentY = 30;
+          }
+          
+          // Add chart title
+          doc.setFontSize(14);
+          doc.setTextColor(33, 37, 41);
+          doc.text(chart.title, 15, currentY);
+          currentY += 8;
+          
+          try {
+            // Create a temporary canvas for chart rendering
+            const tempCanvas = document.createElement('canvas');
+            tempCanvas.width = chartWidth * 5;  // Higher resolution for better quality
+            tempCanvas.height = chartHeight * 5;
+            tempCanvas.style.width = `${chartWidth}px`;
+            tempCanvas.style.height = `${chartHeight}px`;
+            document.body.appendChild(tempCanvas);
+            
+            // Create chart instance
+            const chartInstance = new ChartJS(tempCanvas, {
+              type: chart.type as keyof ChartTypeRegistry,
+              data: chart.data,
+              options: {
+                ...chart.options,
+                responsive: false,
+                animation: false,
+                plugins: {
+                  legend: {
+                    display: true,
+                    position: 'bottom'
+                  },
+                  title: {
+                    display: false
+                  }
+                }
+              }
+            });
+            
+            // Render chart and add to PDF
+            chartInstance.render();
+            const imageData = tempCanvas.toDataURL('image/png', 1.0);
+            doc.addImage(imageData, 'PNG', 15, currentY, chartWidth, chartHeight);
+            
+            // Clean up
+            chartInstance.destroy();
+            document.body.removeChild(tempCanvas);
+            
+            // Add chart description
+            currentY += chartHeight + 10;
+            doc.setFontSize(10);
+            doc.setTextColor(75, 85, 99);
+            const descriptionLines = doc.splitTextToSize(chart.description, 170);
+            doc.text(descriptionLines, 15, currentY);
+            
+            // Update Y position for next chart
+            currentY += descriptionLines.length * 5 + 20;
+          } catch (chartError) {
+            console.error('Error rendering chart in PDF:', chartError);
+            // Add error message instead of chart
+            doc.setFontSize(10);
+            doc.setTextColor(220, 53, 69);
+            doc.text(`Could not render chart: ${chart.title}`, 15, currentY);
+            currentY += 20;
+          }
+        });
+      }
+      
       // Add footer with app name
       const pageCount = doc.getNumberOfPages();
       for (let i = 1; i <= pageCount; i++) {
@@ -483,6 +637,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     } catch (err: any) {
       console.error('Error generating PDF:', err);
       setError(`Failed to generate PDF: ${err.message}`);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'PDF Generation Failed',
+        message: err.message || 'Failed to generate PDF report'
+      });
       return null;
     }
   };
@@ -629,10 +789,36 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     className={styles.insightItem}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
-                    onClick={() => handleViewInsight(insight)}
                   >
-                    <h4>{insight.fileName}</h4>
-                    <p>{formatDate(insight.createdAt)}</p>
+                    <div className={styles.insightContent} onClick={() => handleViewInsight(insight)}>
+                      <h4>{insight.fileName}</h4>
+                      <p>{formatDate(insight.createdAt)}</p>
+                    </div>
+                    {insight.charts && Array.isArray(insight.charts) && insight.charts.length > 0 && (
+                      <button 
+                        className={styles.viewVisualizations}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openInsightDetails(insight);
+                        }}
+                        title="View Visualizations"
+                      >
+                        <svg 
+                          xmlns="http://www.w3.org/2000/svg" 
+                          viewBox="0 0 24 24" 
+                          fill="none" 
+                          stroke="currentColor" 
+                          strokeWidth="2" 
+                          strokeLinecap="round" 
+                          strokeLinejoin="round"
+                          className={styles.visualizationIcon}
+                        >
+                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                          <line x1="3" y1="9" x2="21" y2="9"></line>
+                          <line x1="9" y1="21" x2="9" y2="9"></line>
+                        </svg>
+                      </button>
+                    )}
                   </motion.div>
                 ))}
               </div>
@@ -698,92 +884,122 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
             }}
             transition={{ duration: 0.5 }}
           >
+            <div className={styles.tabsContainer}>
+              <div className={styles.tabs}>
+                <button 
+                  className={`${styles.tabButton} ${activeTab === 'summary' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('summary')}
+                >
+                  Summary
+                </button>
+                <button 
+                  className={`${styles.tabButton} ${activeTab === 'insights' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('insights')}
+                >
+                  Insights
+                </button>
+                <button 
+                  className={`${styles.tabButton} ${activeTab === 'recommendations' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('recommendations')}
+                >
+                  Recommendations
+                </button>
+                <button 
+                  className={`${styles.tabButton} ${activeTab === 'visualizations' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('visualizations')}
+                >
+                  Visualizations
+                </button>
+              </div>
+            </div>
+
+            {/* Tab content - using display property instead of conditional rendering to preserve state */}
             {insights && (
               <>
-                <div className={styles.tabsContainer}>
-                  <div className={styles.tabs}>
-                    <button 
-                      className={`${styles.tabButton} ${activeTab === 'summary' ? styles.activeTab : ''}`}
-                      onClick={() => setActiveTab('summary')}
-                    >
-                      Summary
-                    </button>
-                    <button 
-                      className={`${styles.tabButton} ${activeTab === 'insights' ? styles.activeTab : ''}`}
-                      onClick={() => setActiveTab('insights')}
-                    >
-                      Insights
-                    </button>
-                    <button 
-                      className={`${styles.tabButton} ${activeTab === 'recommendations' ? styles.activeTab : ''}`}
-                      onClick={() => setActiveTab('recommendations')}
-                    >
-                      Recommendations
-                    </button>
-                  </div>
-                </div>
-
-                <AnimatePresence mode="wait">
-                  <motion.div 
-                    key={activeTab}
-                    className={styles.tabContent}
-                    initial={{ opacity: 0, y: 10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.3 }}
+                <div className={styles.allTabContents}>
+                  <div 
+                    className={styles.tabContentWrapper} 
+                    style={{ display: activeTab === 'summary' ? 'block' : 'none' }}
                   >
-                    {activeTab === 'summary' && (
-                      <div className={styles.summaryContent}>
-                        <h3>Financial Summary</h3>
-                        <p>{insights.summary}</p>
-                      </div>
-                    )}
+                    <div className={styles.summaryContent}>
+                      <h3>Financial Summary</h3>
+                      <p>{insights.summary}</p>
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={styles.tabContentWrapper} 
+                    style={{ display: activeTab === 'insights' ? 'block' : 'none' }}
+                  >
+                    <div className={styles.insightsContent}>
+                      <h3>Key Insights</h3>
+                      {Array.isArray(insights?.insights) && insights.insights.length > 0 ? (
+                        <ul>
+                          {insights.insights.map((insight, index) => (
+                            <motion.li 
+                              key={index}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.3, delay: index * 0.1 }}
+                            >
+                              {insight}
+                            </motion.li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>No insights available for this analysis.</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={styles.tabContentWrapper} 
+                    style={{ display: activeTab === 'recommendations' ? 'block' : 'none' }}
+                  >
+                    <div className={styles.recommendationsContent}>
+                      <h3>Recommendations</h3>
+                      {Array.isArray(insights?.recommendations) && insights.recommendations.length > 0 ? (
+                        <ul>
+                          {insights.recommendations.map((recommendation, index) => (
+                            <motion.li 
+                              key={index}
+                              initial={{ opacity: 0, x: -10 }}
+                              animate={{ opacity: 1, x: 0 }}
+                              transition={{ duration: 0.3, delay: index * 0.1 }}
+                            >
+                              {recommendation}
+                            </motion.li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>No recommendations available for this analysis.</p>
+                      )}
+                    </div>
+                  </div>
+                  
+                  <div 
+                    className={styles.tabContentWrapper} 
+                    style={{ display: activeTab === 'visualizations' ? 'block' : 'none' }}
+                  >
+                    <div className={styles.visualizationsContent}>
+                      <VisualizationPanel 
+                        charts={charts} 
+                        fileName={fileName}
+                        isLoading={generatingCharts}
+                      />
+                    </div>
+                  </div>
 
-                    {activeTab === 'insights' && (
-                      <div className={styles.insightsContent}>
-                        <h3>Key Insights</h3>
-                        {Array.isArray(insights?.insights) && insights.insights.length > 0 ? (
-                          <ul>
-                            {insights.insights.map((insight, index) => (
-                              <motion.li 
-                                key={index}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.3, delay: index * 0.1 }}
-                              >
-                                {insight}
-                              </motion.li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p>No insights available for this analysis.</p>
-                        )}
-                      </div>
-                    )}
-
-                    {activeTab === 'recommendations' && (
-                      <div className={styles.recommendationsContent}>
-                        <h3>Recommendations</h3>
-                        {Array.isArray(insights?.recommendations) && insights.recommendations.length > 0 ? (
-                          <ul>
-                            {insights.recommendations.map((recommendation, index) => (
-                              <motion.li 
-                                key={index}
-                                initial={{ opacity: 0, x: -10 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                transition={{ duration: 0.3, delay: index * 0.1 }}
-                              >
-                                {recommendation}
-                              </motion.li>
-                            ))}
-                          </ul>
-                        ) : (
-                          <p>No recommendations available for this analysis.</p>
-                        )}
-                      </div>
-                    )}
-                  </motion.div>
-                </AnimatePresence>
+                  {/* For transition effects, use an overlay that slides/fades */}
+                  <motion.div 
+                    className={styles.tabTransitionOverlay}
+                    key={activeTab}
+                    initial={{ opacity: 1 }}
+                    animate={{ opacity: 0 }}
+                    exit={{ opacity: 0 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                </div>
 
                 {/* Save/Export/Email buttons */}
                 <div className={styles.saveButtonContainer}>
@@ -877,6 +1093,138 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
             onSubmit={sendEmailWithPdf}
             sending={sending}
           />
+        )}
+      </AnimatePresence>
+      
+      {/* Insight Details Modal with Visualizations */}
+      <AnimatePresence>
+        {showInsightDetails && selectedInsight && (
+          <motion.div 
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div 
+              className={styles.insightDetailsModal}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+            >
+              <div className={styles.modalHeader}>
+                <h3>{selectedInsight.fileName}</h3>
+                <button 
+                  className={styles.closeButton}
+                  onClick={() => setShowInsightDetails(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              
+              <div className={styles.modalTabs}>
+                <button 
+                  className={`${styles.modalTab} ${detailsTab === 'insights' ? styles.activeModalTab : ''}`}
+                  onClick={() => setDetailsTab('insights')}
+                >
+                  Insights
+                </button>
+                {selectedInsight.charts && Array.isArray(selectedInsight.charts) && selectedInsight.charts.length > 0 && (
+                  <button 
+                    className={`${styles.modalTab} ${detailsTab === 'visualizations' ? styles.activeModalTab : ''}`}
+                    onClick={() => setDetailsTab('visualizations')}
+                  >
+                    Visualizations
+                  </button>
+                )}
+              </div>
+              
+              <div className={styles.modalContent}>
+                <AnimatePresence mode="wait">
+                  {detailsTab === 'insights' && (
+                    <motion.div
+                      key="details-insights"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                    >
+                      <div className={styles.insightSummary}>
+                        <h4>Summary</h4>
+                        <p>{selectedInsight.summary}</p>
+                      </div>
+                      
+                      <div className={styles.insightFindings}>
+                        <h4>Key Insights</h4>
+                        <ul>
+                          {Array.isArray(selectedInsight.insights) 
+                            ? selectedInsight.insights.map((insight, index) => (
+                                <li key={index}>{insight}</li>
+                              ))
+                            : typeof selectedInsight.insights === 'string'
+                              ? selectedInsight.insights.split('\n\n').map((insight, index) => (
+                                  <li key={index}>{insight}</li>
+                                ))
+                              : <li>No insights available</li>
+                          }
+                        </ul>
+                      </div>
+                      
+                      <div className={styles.insightRecommendations}>
+                        <h4>Recommendations</h4>
+                        <ul>
+                          {Array.isArray(selectedInsight.recommendations) 
+                            ? selectedInsight.recommendations.map((rec, index) => (
+                                <li key={index}>{rec}</li>
+                              ))
+                            : typeof selectedInsight.recommendations === 'string'
+                              ? selectedInsight.recommendations.split('\n\n').map((rec, index) => (
+                                  <li key={index}>{rec}</li>
+                                ))
+                              : <li>No recommendations available</li>
+                          }
+                        </ul>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  {detailsTab === 'visualizations' && selectedInsight.charts && Array.isArray(selectedInsight.charts) && (
+                    <motion.div
+                      key="details-visualizations"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className={styles.visualizationsContainer}
+                    >
+                      <VisualizationHistory
+                        charts={selectedInsight.charts}
+                        fileName={selectedInsight.fileName}
+                      />
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              
+              <div className={styles.modalFooter}>
+                <button 
+                  className={styles.modalCloseButton}
+                  onClick={() => setShowInsightDetails(false)}
+                >
+                  Close
+                </button>
+                <button 
+                  className={styles.modalViewButton}
+                  onClick={() => {
+                    handleViewInsight(selectedInsight);
+                    setShowInsightDetails(false);
+                  }}
+                >
+                  View in Main Area
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
       
