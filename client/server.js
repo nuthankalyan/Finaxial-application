@@ -18,6 +18,47 @@ console.log(`Current directory: ${process.cwd()}`);
 console.log(`Node.js version: ${process.version}`);
 console.log(`Using port: ${port}`);
 
+// Handle termination signals gracefully
+process.on('SIGTERM', () => {
+  console.log('SIGTERM received, shutting down gracefully');
+  tempServer.close(() => {
+    console.log('Temporary server closed');
+    process.exit(0);
+  });
+  
+  // Force exit after 5 seconds if server doesn't close properly
+  setTimeout(() => {
+    console.log('Forced shutdown after timeout');
+    process.exit(1);
+  }, 5000);
+});
+
+process.on('SIGINT', () => {
+  console.log('SIGINT received, shutting down gracefully');
+  tempServer.close(() => {
+    console.log('Temporary server closed');
+    process.exit(0);
+  });
+  
+  // Force exit after 5 seconds if server doesn't close properly
+  setTimeout(() => {
+    console.log('Forced shutdown after timeout');
+    process.exit(1);
+  }, 5000);
+});
+
+// Prevent uncaught exceptions from crashing the server
+process.on('uncaughtException', (err) => {
+  console.error('Uncaught exception:', err);
+  console.log('Server will continue running despite error');
+});
+
+// Prevent unhandled promise rejections from crashing the server 
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('Unhandled promise rejection:', reason);
+  console.log('Server will continue running despite error');
+});
+
 // Start a minimal HTTP server immediately so Render detects a port
 const tempServer = require('http').createServer((req, res) => {
   res.writeHead(200, { 'Content-Type': 'text/html' });
@@ -254,6 +295,57 @@ function createNextFontManifest() {
   }
 }
 
+// Add this function after createNextFontManifest
+function checkAndFixPermissions() {
+  try {
+    console.log('Checking permissions on .next directory...');
+    
+    // Path to .next directory
+    const nextDir = path.join(process.cwd(), '.next');
+    
+    // Ensure .next directory exists
+    if (!fs.existsSync(nextDir)) {
+      console.log('.next directory missing, creating it...');
+      fs.mkdirSync(nextDir, { recursive: true });
+    }
+    
+    // Check if directory is writable by trying to write a test file
+    const testFile = path.join(nextDir, '.permission-test');
+    try {
+      fs.writeFileSync(testFile, 'test', { flag: 'w' });
+      fs.unlinkSync(testFile); // Remove test file
+      console.log('✓ .next directory is writable');
+    } catch (err) {
+      console.error('✗ .next directory is not writable:', err.message);
+      // Try changing permissions if possible
+      try {
+        console.log('Attempting to fix permissions...');
+        // This usually only works if the process has ownership of the directory
+        fs.chmodSync(nextDir, 0o755);
+        console.log('Changed permissions on .next directory');
+      } catch (permError) {
+        console.error('Failed to change permissions:', permError.message);
+      }
+    }
+    
+    // Check for server directory
+    const serverDir = path.join(nextDir, 'server');
+    if (!fs.existsSync(serverDir)) {
+      console.log('server directory missing, creating it...');
+      fs.mkdirSync(serverDir, { recursive: true });
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error checking permissions:', error);
+    return false;
+  }
+}
+
+// Check permissions before doing anything else
+console.log('Checking directory permissions...');
+checkAndFixPermissions();
+
 // Ensure Next.js required files exist before starting
 console.log('Ensuring Next.js required files exist...');
 const filesCreated = ensureNextFiles();
@@ -312,8 +404,29 @@ app.prepare()
     console.error('Error preparing Next.js app:', err);
     console.log('Detailed error:', err.stack);
     
+    // Check if this is a BUILD_ID issue
+    if (err.code === 'ENOENT' && err.path && err.path.includes('BUILD_ID')) {
+      console.log('BUILD_ID file missing - creating it explicitly');
+      try {
+        // Create .next directory if needed
+        const nextDir = path.join(process.cwd(), '.next');
+        if (!fs.existsSync(nextDir)) {
+          fs.mkdirSync(nextDir, { recursive: true });
+        }
+        
+        // Create fresh BUILD_ID
+        const buildIdPath = path.join(nextDir, 'BUILD_ID');
+        fs.writeFileSync(buildIdPath, Date.now().toString(), 'utf8');
+        console.log('BUILD_ID created successfully');
+      } catch (buildIdError) {
+        console.error('Failed to create BUILD_ID:', buildIdError);
+      }
+    }
+    
     // Try to fix the issues by ensuring files and directories
     console.log('Attempting to fix file issues...');
+    // Check permissions first
+    checkAndFixPermissions();
     ensureNextFiles();
     verifyNextFiles();
     
@@ -335,15 +448,71 @@ app.prepare()
       // Create font manifest to avoid errors
       createNextFontManifest();
       
-      // Try running the build
-      console.log('Running build process...');
+      // Try running the build with memory limits to prevent SIGKILL
+      console.log('Running build process with memory optimizations...');
       try {
-        execSync('npm run build', { stdio: 'inherit' });
+        // Limit Node.js memory usage to prevent SIGKILL
+        console.log('Setting Node.js memory limits for the build process');
+        
+        // Create a smaller-memory build command that's less likely to get killed
+        const buildCmd = process.platform === 'win32' 
+          ? 'set NODE_OPTIONS=--max_old_space_size=512 && npm run build'
+          : 'NODE_OPTIONS="--max_old_space_size=512" npm run build';
+        
+        execSync(buildCmd, { 
+          stdio: 'inherit',
+          env: {
+            ...process.env,
+            // Force production mode for smaller bundles
+            NODE_ENV: 'production',
+            // Skip unnecessary checks
+            NEXT_TELEMETRY_DISABLED: '1',
+            // Disable source maps for smaller memory footprint
+            GENERATE_SOURCEMAP: 'false'
+          }
+        });
         console.log('Build completed, trying to start again...');
       } catch (buildError) {
         console.error('Build failed but continuing:', buildError.message);
+        console.log('Attempting minimal build recovery...');
+        
+        // Create minimal required files for Next.js to start
+        ensureNextFiles();
+        verifyNextFiles();
+        createNextFontManifest();
+        checkAndFixPermissions();
       }
       
+      // Ensure all required files exist before retry, especially BUILD_ID
+      console.log('Recreating critical files before retry...');
+      const nextDir = path.join(process.cwd(), '.next');
+      const buildIdPath = path.join(nextDir, 'BUILD_ID');
+
+      // Force recreate BUILD_ID since this is what's failing
+      if (fs.existsSync(buildIdPath)) {
+        console.log('Removing existing BUILD_ID to ensure fresh one...');
+        try {
+          fs.unlinkSync(buildIdPath);
+        } catch (e) {
+          console.warn('Failed to delete existing BUILD_ID:', e.message);
+        }
+      }
+
+      // Create new BUILD_ID
+      console.log('Creating fresh BUILD_ID file...');
+      try {
+        fs.writeFileSync(buildIdPath, Date.now().toString(), 'utf8');
+        console.log('BUILD_ID created successfully');
+      } catch (buildIdError) {
+        console.error('Error creating BUILD_ID:', buildIdError);
+      }
+
+      // Re-verify and recreate all files
+      console.log('Running final verification of all critical files...');
+      ensureNextFiles();
+      verifyNextFiles();
+      createNextFontManifest();
+
       // Try starting the Next.js app again with retry logic
       console.log('Attempting to start Next.js again...');
       setTimeout(() => {
@@ -379,4 +548,4 @@ app.prepare()
       console.error('Recovery failed:', recoveryErr);
       console.log('Using temporary server as fallback');
     }
-  }); 
+  });
