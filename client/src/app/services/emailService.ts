@@ -1,5 +1,8 @@
 // Service to handle sending PDF reports via email through the server API
 
+// Add import for API config
+import { buildApiUrl } from '../utils/apiConfig';
+
 /**
  * Send a PDF report via email using the server's Nodemailer implementation
  * @param recipientEmail Email address of the recipient
@@ -31,7 +34,7 @@ export const sendPdfReportByEmail = async (
     // Log the size of the PDF for debugging
     console.log(`Sending PDF data of size: ${pdfData.length} characters`);
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'}/api/email/send-pdf-report`, {
+    const response = await fetch(buildApiUrl('api/email/send-pdf-report'), {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

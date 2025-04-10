@@ -15,6 +15,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { sendPdfReportByEmail } from '../../services/emailService';
 import { Chart as ChartJS, ChartTypeRegistry } from 'chart.js/auto';
+import { buildApiUrl } from '../../utils/apiConfig';
 
 interface Workspace {
   _id: string;
@@ -212,7 +213,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     // Fetch workspace data
     const fetchWorkspace = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/workspaces/${id}`, {
+        const response = await fetch(buildApiUrl(`api/workspaces/${id}`), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -315,7 +316,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         ? insights.recommendations.join('\n\n') 
         : insights.recommendations;
       
-      const response = await fetch(`http://localhost:5000/api/workspaces/${id}/insights`, {
+      const response = await fetch(buildApiUrl(`api/workspaces/${id}/insights`), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

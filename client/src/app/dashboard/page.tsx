@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './dashboard.module.css';
 import { useAuth } from '../context/AuthContext';
+import { buildApiUrl } from '../utils/apiConfig';
 
 interface Workspace {
   _id: string;
@@ -51,7 +52,7 @@ export default function Dashboard() {
       setError(null);
       
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/workspaces', {
+      const response = await fetch(buildApiUrl('workspaces'), {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -89,7 +90,7 @@ export default function Dashboard() {
 
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch('http://localhost:5000/api/workspaces', {
+      const response = await fetch(buildApiUrl('workspaces'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -139,7 +140,7 @@ export default function Dashboard() {
         throw new Error('No authentication token found');
       }
 
-      const response = await fetch(`http://localhost:5000/api/workspaces/${workspaceId}`, {
+      const response = await fetch(buildApiUrl(`workspaces/${workspaceId}`), {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -196,7 +197,7 @@ export default function Dashboard() {
   const handleDeleteWorkspace = async (workspaceId: string) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/workspaces/${workspaceId}`, {
+      const response = await fetch(buildApiUrl(`workspaces/${workspaceId}`), {
         method: 'DELETE',
         headers: {
           Authorization: `Bearer ${token}`,

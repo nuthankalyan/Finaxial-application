@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
+import { API_BASE_URL, buildApiUrl } from '../utils/apiConfig';
 
 interface UserType {
   id: string;
@@ -41,7 +42,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const response = await fetch('http://localhost:5000/api/auth/me', {
+        const response = await fetch(buildApiUrl('api/auth/me'), {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -71,7 +72,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch(buildApiUrl('api/auth/login'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -88,7 +89,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       localStorage.setItem('token', data.token);
       
       // Fetch the full user profile
-      const userResponse = await fetch('http://localhost:5000/api/auth/me', {
+      const userResponse = await fetch(buildApiUrl('api/auth/me'), {
         headers: {
           Authorization: `Bearer ${data.token}`,
         },
@@ -114,7 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setError(null);
     
     try {
-      const response = await fetch('http://localhost:5000/api/auth/signup', {
+      const response = await fetch(buildApiUrl('api/auth/signup'), {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
