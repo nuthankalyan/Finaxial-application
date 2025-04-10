@@ -17,6 +17,7 @@ const PORT = process.env.PORT || 5000;
 const corsOptions = {
   origin: [
     'http://localhost:3000',
+    'https://finaxial-application.vercel.app',
     'https://finaxial-client.onrender.com',
     'https://finaxial.onrender.com', // Add potential client URL
     process.env.CLIENT_URL, // For flexibility
