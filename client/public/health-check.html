@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Health Check</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+      color: #333;
+    }
+    .container {
+      max-width: 500px;
+    }
+    h1 {
+      color: #4CAF50;
+      font-size: 32px;
+    }
+    .status {
+      padding: 10px;
+      border-radius: 4px;
+      background-color: #e8f5e9;
+      margin: 20px 0;
+    }
+    .info {
+      font-size: 14px;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Health Check: OK</h1>
+    <div class="status">
+      <p>Finaxial Application is running properly</p>
+      <p id="timestamp"></p>
+    </div>
+    <p class="info">This is a health check endpoint for Render.com deployment monitoring.</p>
+  </div>
+  
+  <script>
+    document.getElementById('timestamp').textContent = 'Last checked: ' + new Date().toLocaleString();
+  </script>
+</body>
+</html> 

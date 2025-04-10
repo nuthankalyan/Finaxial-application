@@ -662,6 +662,11 @@ createIndexHtml();
 
 // Add this function right before the prepare section to create a full production build
 function attemptProductionBuild() {
+  // Skip build in production as it's already handled by Render
+  console.log('Skipping runtime build as Render should have already built the app');
+  return true;
+  
+  /* Original code commented out
   console.log('Attempting to run a full production build...');
   try {
     // Using execSync to run the build command with proper environment
@@ -683,11 +688,14 @@ function attemptProductionBuild() {
     console.error('Build failed:', buildError.message);
     return false;
   }
+  */
 }
 
 // Now try to prepare the app
 console.log('Preparing Next.js application...');
 
+// Skip the production build check to improve startup time
+/*
 // Try running a full build first if in production mode
 if (process.env.NODE_ENV === 'production') {
   console.log('Running in production mode, attempting full build first...');
@@ -698,6 +706,7 @@ if (process.env.NODE_ENV === 'production') {
     console.log('Production build failed, proceeding with fallback approach');
   }
 }
+*/
 
 app.prepare()
   .then(() => {
@@ -765,7 +774,7 @@ app.prepare()
     createNextFontManifest();
     createIndexHtml();
 
-    // Create font manifest explicitly as it's often the cause of issues
+    // Create font manifest to avoid errors
     console.log('Creating font manifest file...');
     createNextFontManifest();
     
@@ -808,41 +817,15 @@ app.prepare()
       // Create font manifest to avoid errors
       createNextFontManifest();
       
-      // Try running the build with memory limits to prevent SIGKILL
-      console.log('Running build process with memory optimizations...');
-      try {
-        // Limit Node.js memory usage to prevent SIGKILL
-        console.log('Setting Node.js memory limits for the build process');
-        
-        // Create a smaller-memory build command that's less likely to get killed
-        const buildCmd = process.platform === 'win32' 
-          ? 'set NODE_OPTIONS=--max_old_space_size=512 && npm run build'
-          : 'NODE_OPTIONS="--max_old_space_size=512" npm run build';
-        
-        execSync(buildCmd, { 
-          stdio: 'inherit',
-          env: {
-            ...process.env,
-            // Force production mode for smaller bundles
-            NODE_ENV: 'production',
-            // Skip unnecessary checks
-            NEXT_TELEMETRY_DISABLED: '1',
-            // Disable source maps for smaller memory footprint
-            GENERATE_SOURCEMAP: 'false'
-          }
-        });
-        console.log('Build completed, trying to start again...');
-      } catch (buildError) {
-        console.error('Build failed but continuing:', buildError.message);
-        console.log('Attempting minimal build recovery...');
-        
-        // Create minimal required files for Next.js to start
-        ensureNextFiles();
-        verifyNextFiles();
-        createNextFontManifest();
-        checkAndFixPermissions();
-      }
+      // Skip the build process to avoid slow initialization
+      console.log('Skipping build process to improve startup time...');
       
+      // Just create the necessary files without rebuilding
+      ensureNextFiles();
+      verifyNextFiles();
+      createNextFontManifest();
+      checkAndFixPermissions();
+
       // Ensure all required files exist before retry, especially BUILD_ID
       console.log('Recreating critical files before retry...');
       const nextDir = path.join(process.cwd(), '.next');

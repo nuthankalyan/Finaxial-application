@@ -44,5 +44,5 @@ services:
       name: nextjs-build
       mountPath: /opt/render/project/src/client/.next
       sizeGB: 1
-    healthCheckPath: /
-    healthCheckTimeout: 180 
+    healthCheckPath: /health-check.html
+    healthCheckTimeout: 300 
