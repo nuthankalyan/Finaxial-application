@@ -711,7 +711,21 @@ app.prepare()
       createServer((req, res) => {
         // Parse the URL
         const parsedUrl = parse(req.url, true);
-        // Let Next.js handle the request
+        
+        // Special handling for direct requests to /login and /signup routes
+        // Ensure they're handled by the Next.js client-side router
+        if (req.headers.accept && req.headers.accept.includes('text/html')) {
+          const path = parsedUrl.pathname;
+          if (path === '/login' || 
+              path === '/signup' || 
+              path === '/dashboard' || 
+              path.startsWith('/workspace/')) {
+            console.log(`Handling client-side route: ${path}`);
+            // Rewrite to home page and let client-side routing take over
+            parsedUrl.pathname = '/';
+          }
+        }
+        
         handle(req, res, parsedUrl);
       }).listen(port, (err) => {
         if (err) throw err;
@@ -889,7 +903,24 @@ app.prepare()
                 
                 // Start the real Next.js server
                 createServer((req, res) => {
-                  handle2(req, res, parse(req.url, true));
+                  // Parse the URL
+                  const parsedUrl = parse(req.url, true);
+                  
+                  // Special handling for direct requests to /login and /signup routes
+                  // Ensure they're handled by the Next.js client-side router
+                  if (req.headers.accept && req.headers.accept.includes('text/html')) {
+                    const path = parsedUrl.pathname;
+                    if (path === '/login' || 
+                        path === '/signup' || 
+                        path === '/dashboard' || 
+                        path.startsWith('/workspace/')) {
+                      console.log(`Handling client-side route: ${path}`);
+                      // Rewrite to home page and let client-side routing take over
+                      parsedUrl.pathname = '/';
+                    }
+                  }
+                  
+                  handle2(req, res, parsedUrl);
                 }).listen(port, () => {
                   console.log(`> Recovery successful! Next.js server ready on http://localhost:${port}`);
                 });

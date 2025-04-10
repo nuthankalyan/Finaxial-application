@@ -37,6 +37,24 @@ const nextConfig = {
     ];
   },
   
+  // Add rewrites to handle client-side routing for SPA
+  async rewrites() {
+    return [
+      // Rewrite everything to `pages/index` to handle client-side routing
+      {
+        source: '/:path*',
+        destination: '/',
+        has: [
+          {
+            type: 'header',
+            key: 'accept',
+            value: '(.*text/html.*)',
+          }
+        ],
+      },
+    ];
+  },
+  
   // Memory-optimized experimental settings
   experimental: {
     // Optimize memory usage
