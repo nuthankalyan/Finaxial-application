@@ -1,3 +1,20 @@
+/* Font fallbacks */
+@font-face {
+  font-family: 'Inter Fallback';
+  src: local(system-ui), local(-apple-system), local(BlinkMacSystemFont), local('Segoe UI'), local(Roboto), local(Oxygen), local(Ubuntu), local(Cantarell), local('Open Sans'), local('Helvetica Neue'), local(sans-serif);
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: optional;
+}
+
+@font-face {
+  font-family: 'Roboto Mono Fallback';
+  src: local(ui-monospace), local(SFMono-Regular), local(Menlo), local(Monaco), local(Consolas), local('Liberation Mono'), local('Courier New'), local(monospace);
+  font-style: normal;
+  font-weight: 400;
+  font-display: optional;
+}
+
 /* Theme variables */
 :root {
   /* Light theme (default) */
@@ -51,6 +68,9 @@
   --animation-fast: 300ms;
   --font-sans: var(--font-inter);
   --font-mono: var(--font-roboto-mono);
+  /* Add fallback font variables */
+  --font-fallback-sans: 'Inter Fallback', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  --font-fallback-mono: 'Roboto Mono Fallback', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
 }
 
 /* Dark theme */
