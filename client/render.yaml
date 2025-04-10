@@ -2,10 +2,12 @@ services:
   - type: web
     name: finaxial-client
     runtime: node
-    buildCommand: npm install
-    startCommand: npm run build && npm start
+    buildCommand: npm install && npm run build
+    startCommand: npm start
     envVars:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        value: https://finaxial-backend.onrender.com 
+        value: https://finaxial-backend.onrender.com
+      - key: PORT
+        value: "3000" 
