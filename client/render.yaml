@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: finaxial-client
+    runtime: node
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    publishDirectory: .next
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXT_PUBLIC_API_URL
+        value: https://finaxial-backend.onrender.com 
