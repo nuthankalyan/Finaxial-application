@@ -33,6 +33,6 @@ services:
     plan: free
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://finaxial-api.onrender.com
+        value: https://finaxial-backend.onrender.com
       - key: NEXT_PUBLIC_GEMINI_API_KEY
         sync: false 

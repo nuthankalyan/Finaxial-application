@@ -18,6 +18,7 @@ const corsOptions = {
   origin: [
     'http://localhost:3000',
     'https://finaxial-client.onrender.com',
+    'https://finaxial.onrender.com', // Add potential client URL
     process.env.CLIENT_URL, // For flexibility
   ].filter(Boolean), // Remove any undefined/empty values
   credentials: true,
