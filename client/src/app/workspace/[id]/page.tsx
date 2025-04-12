@@ -884,6 +884,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4, delay: 0.1 }}
           >
+            <div className={styles.disclaimerBox}>
+              Disclaimer:This product can be leveraged to different business needs and doesn't limit to financial industry only
+            </div>
             
             <div id="csv-uploader" className={styles.uploaderContainer}>
               <CsvUploader 

@@ -189,6 +189,20 @@
   align-items: center;
 }
 
+.disclaimerBox {
+  width: 100%;
+  max-width: 800px;
+  margin-bottom: 1.5rem;
+  padding: 0.75rem 1rem;
+  background-color: rgba(239, 246, 255, 0.8);
+  border: 1px solid #dbeafe;
+  border-radius: 0.375rem;
+  font-size: 0.9rem;
+  color: #3b82f6;
+  text-align: center;
+  font-style: italic;
+}
+
 .uploadButton {
   background-color: #4f46e5;
   color: white;
@@ -747,6 +761,12 @@
   
   .errorState p {
     color: #d1d5db;
+  }
+  
+  .disclaimerBox {
+    background-color: rgba(30, 41, 59, 0.8);
+    border-color: #1e40af;
+    color: #93c5fd;
   }
 }
 

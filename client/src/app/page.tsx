@@ -1,11 +1,15 @@
+'use client';
+
 import Image from "next/image";
 import Header from './components/Header';
 import ClientWrapper from './components/ClientWrapper';
 import styles from "./page.module.css";
+import Link from "next/link";
+import ScrollToTopButton from './components/ScrollToTopButton';
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center">
+    <main className="flex min-h-screen flex-col items-center relative">
       {/* Header */}
       <ClientWrapper>
         <Header />
@@ -23,9 +27,11 @@ export default function Home() {
                 Transforming financial data into actionable intelligence for institutions using generative AI.
               </p>
               <div className="pt-4 flex flex-wrap gap-4 fade-in-up delay-300">
-                <button className="btn btn-primary hover-scale">
-                  Get Started
-                </button>
+                <Link href="/signup">
+                  <button className="btn btn-primary hover-scale">
+                    Get Started
+                  </button>
+                </Link>
               </div>
             </div>
             <div className="hidden md:block relative fade-in-left delay-400">
@@ -152,54 +158,25 @@ export default function Home() {
             Join the financial institutions already leveraging our generative AI platform to gain deeper insights and make data-driven decisions.
           </p>
           <div className="flex flex-wrap justify-center gap-4 fade-in-up delay-200">
-            <button className="btn btn-primary hover-scale">
-              Get Started Today
-            </button>
+            <Link href="/signup">
+              <button className="btn btn-primary hover-scale">
+                Get Started Today
+              </button>
+            </Link>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="footer">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-            <div className="fade-in-up delay-100">
-              <h3 className="text-xl font-bold text-white mb-4">Finaxial</h3>
-              <p className="mb-4">Transforming financial analysis with generative AI.</p>
-            </div>
-            
-            <div className="fade-in-up delay-200">
-              <h4 className="text-lg font-semibold text-white mb-4">Product</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors">Features</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Pricing</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Case Studies</a></li>
-              </ul>
-            </div>
-            
-            <div className="fade-in-up delay-300">
-              <h4 className="text-lg font-semibold text-white mb-4">Company</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors">About</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Careers</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Contact</a></li>
-              </ul>
-            </div>
-            
-            <div className="fade-in-up delay-400">
-              <h4 className="text-lg font-semibold text-white mb-4">Legal</h4>
-              <ul className="space-y-2">
-                <li><a href="#" className="hover:text-white transition-colors">Privacy</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Terms</a></li>
-                <li><a href="#" className="hover:text-white transition-colors">Security</a></li>
-              </ul>
-            </div>
-          </div>
-          <div className="footer-border">
-            <p>&copy; {new Date().getFullYear()} Finaxial. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
+      {/* Scroll to top button */}
+      <ScrollToTopButton />
+      
+      {/* Set CSS variables for the button */}
+      <style jsx global>{`
+        :root {
+          --primary-color: #3b82f6;
+          --secondary-color: #8b5cf6;
+        }
+      `}</style>
     </main>
   );
 }
