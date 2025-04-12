@@ -202,6 +202,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [showInsightDetails, setShowInsightDetails] = useState(false);
   const [detailsTab, setDetailsTab] = useState<'insights' | 'visualizations'>('insights');
 
+  // Add new state for data validation popup
+  const [showDataValidationError, setShowDataValidationError] = useState(false);
+
   useEffect(() => {
     // Check if user is authenticated
     const token = localStorage.getItem('token');
@@ -250,14 +253,76 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     });
   };
 
+  // Add a function to check if data is financial in nature
+  const isFinancialData = (csvContent: string): boolean => {
+    // Convert to lowercase for case-insensitive matching
+    const lowerCaseContent = csvContent.toLowerCase();
+    
+    // Define financial keywords and patterns to look for
+    const financialKeywords = [
+      'revenue', 'profit', 'loss', 'balance', 'asset', 'liability', 
+      'income', 'expense', 'cash flow', 'dividend', 'investment',
+      'equity', 'debt', 'tax', 'interest', 'capital', 'budget',
+      'fiscal', 'quarter', 'annual', 'statement', 'sales', 'cost',
+      'price', 'share', 'stock', 'financial', 'accounting', 'roi',
+      'margin', 'ebitda', 'depreciation', 'amortization', 'payment'
+    ];
+    
+    // Check for common financial column headers
+    const financialColumnPatterns = [
+      /\b(q[1-4]|quarter[1-4])\b/,  // Quarterly data
+      /\bfy\d{2,4}\b/,              // Fiscal year
+      /\b\d{4}\b/,                  // Years
+      /\b(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\b/, // Months
+      /\bvalue\b/,
+      /\bamount\b/,
+      /\brate\b/,
+      /\btotal\b/,
+    ];
+    
+    // Check if any financial keywords are found
+    const hasFinancialKeywords = financialKeywords.some(keyword => 
+      lowerCaseContent.includes(keyword)
+    );
+    
+    // Check if any financial column patterns are found
+    const hasFinancialColumns = financialColumnPatterns.some(pattern => 
+      pattern.test(lowerCaseContent)
+    );
+    
+    // Check if there are numeric values in the data (percentage of numeric content)
+    const numericContent = lowerCaseContent.replace(/[^\d.-]/g, '').length;
+    const totalContent = lowerCaseContent.length;
+    const numericRatio = totalContent > 0 ? numericContent / totalContent : 0;
+    
+    // Data is considered financial if it has financial keywords or column patterns
+    // and also has a reasonable amount of numeric content
+    return (hasFinancialKeywords || hasFinancialColumns) && numericRatio > 0.1;
+  };
+
   const handleFileUpload = async (csvContent: string, name: string) => {
     setFileName(name);
+    
+    // Check if the uploaded data is financial in nature
+    if (!isFinancialData(csvContent)) {
+      // Show notification for non-financial data
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Non-Financial Data Detected',
+        message: 'The uploaded file does not appear to contain financial data. Please upload data related to financial analysis.'
+      });
+      setShowDataValidationError(true);
+      return;
+    }
+    
     setAnalyzing(true);
     setInsights(null);
     setCharts(null);
     setIsViewingHistory(false);
     
     try {
+      // First, analyze the data to get insights
       const results = await analyzeCsvWithGemini(csvContent);
       setInsights(results);
       
@@ -265,15 +330,32 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       setGeneratingCharts(true);
       try {
         const chartData = await generateChartData(csvContent);
-        setCharts(chartData);
+        
+        // Check if we received fallback charts (which would mean there was an error)
+        const isFallbackChart = chartData.length === 1 && 
+                               chartData[0].title === 'Financial Data Overview' &&
+                               chartData[0].description.startsWith('Unable to generate') || 
+                               chartData[0].description.startsWith('Error:');
+                               
+        if (isFallbackChart) {
+          console.warn('Using fallback charts due to chart generation issues');
+          // We still set the charts, but also show a subtle notification
+          setCharts(chartData);
+          setNotification({
+            show: true,
+            type: 'error',
+            title: 'Chart Generation Limited',
+            message: 'There were some issues creating detailed visualizations. Basic charts are displayed instead.'
+          });
+        } else {
+          // We got proper charts, use them
+          setCharts(chartData);
+        }
       } catch (chartError) {
         console.error('Error generating chart data:', chartError);
-        setNotification({
-          show: true,
-          type: 'error',
-          title: 'Chart Generation Failed',
-          message: 'Failed to generate visualization charts, but insights are available.'
-        });
+        // Don't show an error notification here, the generateChartData function
+        // now returns fallback charts instead of throwing
+        setCharts(null);
       } finally {
         setGeneratingCharts(false);
       }
@@ -763,6 +845,36 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     setNotification(prev => ({ ...prev, show: false }));
   };
 
+  // Add a component for data validation error popup
+  const DataValidationErrorModal = () => {
+    if (!showDataValidationError) return null;
+    
+    return (
+      <div className={styles.modalOverlay}>
+        <motion.div 
+          className={styles.modalContent}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
+          <h3>Non-Financial Data Detected</h3>
+          <p>The uploaded file does not appear to contain financial data. The application is designed to analyze financial datasets.</p>
+          <p>Please upload data that includes financial information such as revenue, expenses, profit/loss, cash flow, or other financial metrics.</p>
+          
+          <div className={styles.modalButtons}>
+            <button 
+              type="button" 
+              className={styles.saveButton}
+              onClick={() => setShowDataValidationError(false)}
+            >
+              Understand
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className={styles.container}>
@@ -885,7 +997,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
             transition={{ duration: 0.4, delay: 0.1 }}
           >
             <div className={styles.disclaimerBox}>
-              Disclaimer:This product can be leveraged to different business needs and doesn't limit to financial industry only
+              Disclaimer: This product can be leveraged to different business needs and doesn't limit to financial industry only
             </div>
             
             <div id="csv-uploader" className={styles.uploaderContainer}>
@@ -1251,7 +1363,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         )}
       </AnimatePresence>
       
-      {/* Notification */}
+      {/* Add the data validation error modal to the component JSX */}
+      <AnimatePresence>
+        {showDataValidationError && <DataValidationErrorModal />}
+      </AnimatePresence>
+      
+      {/* Existing notification */}
       <AnimatePresence>
         {notification.show && (
           <Notification

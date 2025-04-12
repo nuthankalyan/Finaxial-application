@@ -43,6 +43,96 @@ interface VisualizationPanelProps {
   isLoading: boolean;
 }
 
+// Add this ErrorBoundary component if it doesn't already exist
+class ChartErrorBoundary extends React.Component<
+  { children: React.ReactNode; fallback: React.ReactNode },
+  { hasError: boolean }
+> {
+  constructor(props: { children: React.ReactNode; fallback: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: any) {
+    // Update state so the next render will show the fallback UI
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: any, errorInfo: any) {
+    // Log the error to an error reporting service
+    console.error('Chart rendering error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // You can render any custom fallback UI
+      return this.props.fallback;
+    }
+
+    return this.props.children;
+  }
+}
+
+// Add this ChartRenderer component to safely render each chart type
+const ChartRenderer = ({ chart }: { chart: ChartData }) => {
+  // Validate chart data structure to prevent runtime errors
+  const isValidChart = chart && 
+    chart.data && 
+    chart.data.datasets && 
+    Array.isArray(chart.data.datasets) && 
+    chart.data.datasets.length > 0 &&
+    chart.data.labels &&
+    Array.isArray(chart.data.labels);
+
+  if (!isValidChart) {
+    return (
+      <div className={styles.chartError}>
+        <p>Unable to render this chart due to invalid data structure</p>
+      </div>
+    );
+  }
+
+  try {
+    // Ensure chart options exist
+    const options = chart.options || {};
+    
+    // For bar charts, add datalabels configuration if not present
+    if (chart.type === 'bar' && options.plugins && !options.plugins.datalabels) {
+      if (!options.plugins) options.plugins = {};
+      options.plugins.datalabels = {
+        anchor: 'end',
+        align: 'top',
+        font: {
+          weight: 'bold'
+        }
+      };
+    }
+
+    // Render appropriate chart based on type
+    switch (chart.type.toLowerCase()) {
+      case 'bar':
+        return <Bar data={chart.data} options={options} />;
+      case 'line':
+        return <Line data={chart.data} options={options} />;
+      case 'pie':
+        return <Pie data={chart.data} options={options} />;
+      case 'doughnut':
+        return <Doughnut data={chart.data} options={options} />;
+      case 'radar':
+        return <Radar data={chart.data} options={options} />;
+      default:
+        return <Bar data={chart.data} options={options} />;
+    }
+  } catch (error) {
+    console.error('Error rendering chart:', error);
+    return (
+      <div className={styles.chartError}>
+        <p>Error rendering chart: {error instanceof Error ? error.message : 'Unknown error'}</p>
+      </div>
+    );
+  }
+};
+
 export default function VisualizationPanel({ charts, fileName, isLoading }: VisualizationPanelProps) {
   const [activeChart, setActiveChart] = useState<number>(0);
 
@@ -110,20 +200,15 @@ export default function VisualizationPanel({ charts, fileName, isLoading }: Visu
     // Process options to ensure data labels are configured
     const processedOptions = processChartOptions(chart);
     
-    switch (chart.type) {
-      case 'bar':
-        return <Bar data={chart.data} options={processedOptions} />;
-      case 'line':
-        return <Line data={chart.data} options={processedOptions} />;
-      case 'pie':
-        return <Pie data={chart.data} options={processedOptions} />;
-      case 'doughnut':
-        return <Doughnut data={chart.data} options={processedOptions} />;
-      case 'radar':
-        return <Radar data={chart.data} options={processedOptions} />;
-      default:
-        return <Bar data={chart.data} options={processedOptions} />;
-    }
+    return (
+      <ChartErrorBoundary fallback={
+        <div className={styles.chartError}>
+          <p>Error rendering this chart. Please try a different visualization.</p>
+        </div>
+      }>
+        <ChartRenderer chart={chart} />
+      </ChartErrorBoundary>
+    );
   };
 
   return (

@@ -144,7 +144,7 @@ For each chart, provide:
 3. A brief description of what insight this chart provides
 4. The exact data structure needed for a Chart.js visualization in React, including datasets, labels, and appropriate colors
 
-IMPORTANT: For any bar charts you generate, include options to display data values above each bar.Don't include data values for other charts other than bar charts
+IMPORTANT: For bar charts, do NOT include a formatter function. Instead, just include the datalabels plugin with basic settings.
 
 Format your response as a valid JSON array with objects for each chart. All property names and string values must be in double quotes, not single quotes, to ensure valid JSON format.
 
@@ -182,8 +182,7 @@ Example of the expected structure:
           "align": "top",
           "font": {
             "weight": "bold"
-          },
-          "formatter": "function(value) { return value.toLocaleString(); }"
+          }
         }
       }
     }
@@ -191,6 +190,8 @@ Example of the expected structure:
 ]
 
 Ensure the colors are visually appealing and that the chart types you choose are the most appropriate for effectively visualizing the patterns in the data. Use professional color schemes and always use double quotes for property names and string values.
+
+DO NOT include any text before or after the JSON array. Return ONLY the JSON array.
 `;
 
     // Generate content from the model
@@ -206,72 +207,171 @@ Ensure the colors are visually appealing and that the chart types you choose are
         throw new Error('No valid JSON found in the response');
       }
       
-      // Fix JSON by replacing single quotes with double quotes
-      // Also handle other common invalid JSON issues
-      let jsonString = jsonMatch[0];
+      const jsonString = jsonMatch[0];
       
-      // 1. Replace single quotes with double quotes (but not inside already quoted strings)
-      jsonString = jsonString.replace(/(\w+)\'(\w+)/g, '$1"$2'); // Replace words with apostrophes
-      
-      // 2. More comprehensive single quote replacement
-      let fixedJson = '';
-      let inDoubleQuote = false;
-      
-      for (let i = 0; i < jsonString.length; i++) {
-        const char = jsonString[i];
-        const nextChar = jsonString[i + 1] || '';
-        
-        // Toggle inDoubleQuote flag when we hit a double quote
-        if (char === '"') {
-          inDoubleQuote = !inDoubleQuote;
-          fixedJson += char;
-        }
-        // Replace single quotes with double quotes, but only if not inside a double-quoted string
-        else if (char === "'" && !inDoubleQuote) {
-          fixedJson += '"';
-        }
-        // Add the character as is
-        else {
-          fixedJson += char;
-        }
-      }
-      
-      // 3. Fix property names without quotes
-      fixedJson = fixedJson.replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3');
-      
-      // 4. Fix trailing commas in arrays and objects
-      fixedJson = fixedJson.replace(/,(\s*[\]}])/g, '$1');
-      
-      console.log("Original JSON:", jsonString);
-      console.log("Fixed JSON:", fixedJson);
+      // Sanitize the JSON string
+      const sanitized = sanitizeJsonString(jsonString);
       
       try {
-        const chartData: ChartData[] = JSON.parse(fixedJson);
-        return chartData;
-      } catch (innerParseError) {
-        console.error('Error parsing fixed JSON:', innerParseError);
+        // Parse and validate the chart data
+        const chartData: ChartData[] = JSON.parse(sanitized);
         
-        // As a fallback, try a more aggressive approach
-        // Replace all single quotes with double quotes and then normalize
-        const aggressiveReplace = jsonString.replace(/'/g, '"');
-        
-        // Try to fix invalid property names and trailing commas
-        const normalizedJson = aggressiveReplace
-          .replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3') // Fix unquoted property names
-          .replace(/,(\s*[\]}])/g, '$1'); // Fix trailing commas
+        // Remove any formatter properties that could cause issues
+        const safeChartData = chartData.map(chart => {
+          // Ensure options exists
+          if (!chart.options) {
+            chart.options = {};
+          }
           
-        console.log("Fallback JSON:", normalizedJson);
+          // If datalabels formatter exists, remove it to prevent errors
+          if (chart.options.plugins?.datalabels?.formatter) {
+            delete chart.options.plugins.datalabels.formatter;
+          }
+          
+          return chart;
+        });
         
-        const chartData: ChartData[] = JSON.parse(normalizedJson);
-        return chartData;
+        return safeChartData;
+      } catch (innerError) {
+        console.error('Error parsing sanitized JSON:', innerError);
+        
+        // Try a more aggressive approach
+        const aggressiveFixed = aggressiveJsonFix(jsonString);
+        
+        try {
+          // Try parsing with aggressive fixes
+          const chartData: ChartData[] = JSON.parse(aggressiveFixed);
+          return sanitizeChartData(chartData);
+        } catch (finalError) {
+          console.error('Failed to parse JSON after aggressive fixing:', finalError);
+          
+          // Return a fallback chart
+          return getFallbackCharts();
+        }
       }
     } catch (parseError: unknown) {
       console.error('Error parsing chart data JSON:', parseError);
-      const errorMessage = parseError instanceof Error ? parseError.message : 'Unknown error';
-      throw new Error(`Failed to parse chart data from Gemini response: ${errorMessage}`);
+      return getFallbackCharts();
     }
   } catch (error: any) {
     console.error('Error generating chart data with Gemini:', error);
-    throw new Error(`Failed to generate chart data: ${error.message}`);
+    return getFallbackCharts(error.message);
   }
-}; 
+};
+
+// Helper function to sanitize JSON string
+function sanitizeJsonString(jsonString: string): string {
+  // Remove any special characters that might break JSON
+  let sanitized = jsonString.replace(/[\u0000-\u001F\u007F-\u009F]/g, '');
+  
+  // Fix function references that are common causes of JSON parse errors
+  sanitized = sanitized.replace(/"formatter"\s*:\s*"?function\([^)]*\)\s*\{[^}]*\}"?/g, '"formatter": null');
+  sanitized = sanitized.replace(/"function\([^)]*\)\s*\{[^}]*\}"/g, '"null"');
+  
+  // Replace single quotes with double quotes (carefully)
+  let fixedJson = '';
+  let inDoubleQuote = false;
+  
+  for (let i = 0; i < sanitized.length; i++) {
+    const char = sanitized[i];
+    
+    // Toggle inDoubleQuote flag when we hit a double quote (not escaped)
+    if (char === '"' && (i === 0 || sanitized[i - 1] !== '\\')) {
+      inDoubleQuote = !inDoubleQuote;
+      fixedJson += char;
+    }
+    // Replace single quotes with double quotes, but only if not inside a double-quoted string
+    else if (char === "'" && !inDoubleQuote) {
+      fixedJson += '"';
+    }
+    // Add the character as is
+    else {
+      fixedJson += char;
+    }
+  }
+  
+  // Fix property names without quotes
+  fixedJson = fixedJson.replace(/([{,]\s*)(\w+)(\s*:)/g, '$1"$2"$3');
+  
+  // Fix trailing commas in arrays and objects
+  fixedJson = fixedJson.replace(/,(\s*[\]}])/g, '$1');
+  
+  return fixedJson;
+}
+
+// Helper function for aggressive JSON fixing attempts
+function aggressiveJsonFix(jsonString: string): string {
+  // Replace all single quotes
+  let fixed = jsonString.replace(/'/g, '"');
+  
+  // Fix property names
+  fixed = fixed.replace(/([{,]\s*)([a-zA-Z0-9_]+)(\s*:)/g, '$1"$2"$3');
+  
+  // Fix trailing commas
+  fixed = fixed.replace(/,(\s*[\]}])/g, '$1');
+  
+  // Replace any function references
+  fixed = fixed.replace(/"formatter"\s*:\s*"?function.*?}?"?/g, '"formatter": null');
+  fixed = fixed.replace(/"function.*?}"/g, '"null"');
+  
+  return fixed;
+}
+
+// Helper function to sanitize chart data
+function sanitizeChartData(charts: ChartData[]): ChartData[] {
+  return charts.map(chart => {
+    // Ensure required properties exist
+    if (!chart.type) chart.type = 'bar';
+    if (!chart.title) chart.title = 'Financial Data';
+    if (!chart.description) chart.description = 'Financial data visualization';
+    
+    // Ensure data structure is valid
+    if (!chart.data) {
+      chart.data = {
+        labels: ['Data'],
+        datasets: [{
+          label: 'Values',
+          data: [0],
+          backgroundColor: ['rgba(54, 162, 235, 0.5)']
+        }]
+      };
+    }
+    
+    // Remove any formatter properties
+    if (chart.options?.plugins?.datalabels?.formatter) {
+      delete chart.options.plugins.datalabels.formatter;
+    }
+    
+    return chart;
+  });
+}
+
+// Helper function to provide fallback charts
+function getFallbackCharts(errorMessage?: string): ChartData[] {
+  return [{
+    type: 'bar',
+    title: 'Financial Data Overview',
+    description: errorMessage ? `Error: ${errorMessage}` : 'Unable to generate detailed charts from the provided data',
+    data: {
+      labels: ['Financial Data'],
+      datasets: [{
+        label: 'Data Visualization',
+        data: [100],
+        backgroundColor: ['rgba(75, 192, 192, 0.5)']
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      },
+      plugins: {
+        title: {
+          display: true,
+          text: 'Fallback Chart'
+        }
+      }
+    }
+  }];
+} 

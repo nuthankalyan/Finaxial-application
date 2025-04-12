@@ -277,13 +277,14 @@
 
 .allTabContents {
   position: relative;
-  background-color: #111827;
+  background-color: white;
   border-radius: 0 0.5rem 0.5rem 0.5rem;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .tabContentWrapper {
   padding: 1.5rem;
+  background-color: white;
 }
 
 .tabTransitionOverlay {
@@ -533,65 +534,6 @@
   cursor: not-allowed;
 }
 
-/* Dark mode styles for email components */
-@media (prefers-color-scheme: dark) {
-  .emailButton {
-    background-color: #10b981;
-  }
-  
-  .emailButton:hover {
-    background-color: #059669;
-  }
-  
-  .emailButton:disabled {
-    background-color: #6b7280;
-  }
-  
-  .modalContent {
-    background-color: #1f2937;
-    border: 1px solid #374151;
-  }
-  
-  .modalContent h3 {
-    color: #f9fafb;
-  }
-  
-  .formGroup label {
-    color: #d1d5db;
-  }
-  
-  .formGroup input {
-    background-color: #374151;
-    border-color: #4b5563;
-    color: #f9fafb;
-  }
-  
-  .formGroup input:focus {
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
-  }
-  
-  .formGroup input:disabled {
-    background-color: #4b5563;
-    color: #9ca3af;
-  }
-  
-  .cancelButton {
-    background-color: #374151;
-    color: #d1d5db;
-    border-color: #4b5563;
-  }
-  
-  .cancelButton:hover:not(:disabled) {
-    background-color: #4b5563;
-    border-color: #6b7280;
-  }
-  
-  .formError {
-    color: #f87171;
-  }
-}
-
 /* Button spinner animation */
 .buttonSpinner {
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -637,137 +579,6 @@
 .errorState p {
   color: #4b5563;
   margin-bottom: 1.5rem;
-}
-
-/* Dark mode styles */
-@media (prefers-color-scheme: dark) {
-  .container {
-    background-color: #111827;
-    color: #f9fafb;
-  }
-  
-  .sidebar {
-    background-color: #1f2937;
-    border-color: #374151;
-  }
-  
-  .sidebarTitle {
-    border-color: #374151;
-  }
-  
-  .insightItem {
-    background-color: #273549;
-    border-color: transparent;
-  }
-  
-  .insightItem:hover {
-    background-color: #374151;
-    border-color: #4b5563;
-  }
-  
-  .insightItem p {
-    color: #9ca3af;
-  }
-  
-  .noInsights {
-    color: #9ca3af;
-  }
-  
-  .header {
-    background-color: #1f2937;
-    border-color: #374151;
-  }
-  
-  .backButton {
-    border-color: #4b5563;
-    color: #d1d5db;
-  }
-  
-  .backButton:hover {
-    background-color: #374151;
-    border-color: #6b7280;
-  }
-  
-  .workspaceTitle h1 {
-    color: #f9fafb;
-  }
-  
-  .workspaceDate {
-    color: #9ca3af;
-  }
-  
-  .uploadButton {
-    background-color: #4f46e5;
-  }
-  
-  .uploadButton:hover {
-    background-color: #4338ca;
-  }
-  
-  .tabsContainer {
-    border-color: #374151;
-  }
-  
-  .tabButton {
-    color: #9ca3af;
-  }
-  
-  .tabButton:hover {
-    color: #6366f1;
-  }
-  
-  .activeTab {
-    color: #6366f1;
-    border-bottom-color: #6366f1;
-  }
-  
-  .tabContent {
-    background-color: #1f2937;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-  }
-  
-  .summaryContent h3,
-  .insightsContent h3,
-  .recommendationsContent h3 {
-    color: #f9fafb;
-  }
-  
-  .summaryContent p,
-  .insightsContent li,
-  .recommendationsContent li {
-    color: #d1d5db;
-  }
-  
-  .saveButton {
-    background-color: #4f46e5;
-  }
-  
-  .saveButton:hover {
-    background-color: #4338ca;
-  }
-  
-  .saveButton:disabled {
-    background-color: #6b7280;
-  }
-  
-  .spinner {
-    border: 3px solid rgba(255, 255, 255, 0.1);
-    border-top: 3px solid #6366f1;
-  }
-  
-  .errorState h2 {
-    color: #f87171;
-  }
-  
-  .errorState p {
-    color: #d1d5db;
-  }
-  
-  .disclaimerBox {
-    background-color: rgba(30, 41, 59, 0.8);
-    border-color: #1e40af;
-    color: #93c5fd;
-  }
 }
 
 /* Notification */
@@ -844,21 +655,7 @@
   }
 }
 
-/* Dark mode notification */
-@media (prefers-color-scheme: dark) {
-  .notificationSuccess {
-    background-color: #064e3b;
-    border-left: 4px solid #10b981;
-    color: #d1fae5;
-  }
-  
-  .notificationError {
-    background-color: #7f1d1d;
-    border-left: 4px solid #ef4444;
-    color: #fee2e2;
-  }
-}
-
+/* Remove dark mode notification styles */
 .formAdvanced {
   margin-bottom: 1rem;
 }
@@ -897,23 +694,6 @@
 
 .checkboxLabel input {
   width: auto;
-}
-
-:global(.dark) .advancedToggle {
-  color: #9ca3af;
-}
-
-:global(.dark) .advancedToggle:hover {
-  color: #6366f1;
-}
-
-:global(.dark) .advancedOptions {
-  background-color: #1f2937;
-  border-color: #374151;
-}
-
-:global(.dark) .checkboxLabel {
-  color: #d1d5db;
 }
 
 /* Insight Details Modal */
@@ -972,6 +752,7 @@
   display: flex;
   border-bottom: 1px solid #e5e7eb;
   padding: 0 1.25rem;
+  background-color: white;
 }
 
 .modalTab {
@@ -1010,6 +791,7 @@
   padding: 1.25rem;
   flex: 1;
   overflow-y: auto;
+  background-color: white;
 }
 
 .insightSummary,
@@ -1048,6 +830,7 @@
 
 .visualizationsContainer {
   height: 600px;
+  background-color: white;
 }
 
 .modalFooter {
