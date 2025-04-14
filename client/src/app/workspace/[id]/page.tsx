@@ -16,6 +16,7 @@ import autoTable from 'jspdf-autotable';
 import { sendPdfReportByEmail } from '../../services/emailService';
 import { Chart as ChartJS, ChartTypeRegistry } from 'chart.js/auto';
 import { buildApiUrl } from '../../utils/apiConfig';
+import FinancialAssistant, { Message as AssistantMessage } from '../../components/FinancialAssistant';
 
 interface Workspace {
   _id: string;
@@ -166,6 +167,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [insights, setInsights] = useState<FinancialInsights | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [csvContent, setCsvContent] = useState<string | null>(null);
   const [savedInsights, setSavedInsights] = useState<SavedInsight[]>([]);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('summary');
@@ -200,10 +202,13 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   // Add new state to track selected insight for details modal
   const [selectedInsight, setSelectedInsight] = useState<SavedInsight | null>(null);
   const [showInsightDetails, setShowInsightDetails] = useState(false);
-  const [detailsTab, setDetailsTab] = useState<'insights' | 'visualizations'>('insights');
+  const [detailsTab, setDetailsTab] = useState<'insights' | 'visualizations' | 'assistantChat'>('insights');
 
   // Add new state for data validation popup
   const [showDataValidationError, setShowDataValidationError] = useState(false);
+
+  // Add new state for assistant chat
+  const [assistantMessages, setAssistantMessages] = useState<AssistantMessage[]>([]);
 
   useEffect(() => {
     // Check if user is authenticated
@@ -302,6 +307,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
 
   const handleFileUpload = async (csvContent: string, name: string) => {
     setFileName(name);
+    setCsvContent(csvContent);
     
     // Check if the uploaded data is financial in nature
     if (!isFinancialData(csvContent)) {
@@ -320,6 +326,14 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     setInsights(null);
     setCharts(null);
     setIsViewingHistory(false);
+    
+    // Reset assistant messages when new file is uploaded
+    setAssistantMessages([{
+      id: '1',
+      text: 'Hello! I\'m your financial assistant. Ask me anything about your uploaded financial data.',
+      sender: 'assistant',
+      timestamp: new Date()
+    }]);
     
     try {
       // First, analyze the data to get insights
@@ -377,6 +391,10 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     }
   };
   
+  const handleAssistantMessagesChange = (messages: AssistantMessage[]) => {
+    setAssistantMessages(messages);
+  };
+
   const saveInsightsToDatabase = async () => {
     if (!insights || !fileName) return;
     
@@ -398,6 +416,15 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         ? insights.recommendations.join('\n\n') 
         : insights.recommendations;
       
+      // Convert assistant messages to a format suitable for storing
+      const assistantChatHistory = assistantMessages.length > 0 
+        ? assistantMessages.map(msg => ({
+            text: msg.text,
+            sender: msg.sender,
+            timestamp: msg.timestamp.toISOString()
+          }))
+        : [];
+      
       const response = await fetch(buildApiUrl(`api/workspaces/${id}/insights`), {
         method: 'POST',
         headers: {
@@ -410,6 +437,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           insights: insightsString,
           recommendations: recommendationsString,
           charts: charts,  // Save the chart data
+          assistantChat: assistantChatHistory, // Add the assistant chat history
           rawResponse: insights.rawResponse
         }),
       });
@@ -430,7 +458,8 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         recommendations: Array.isArray(data.data.recommendations) 
           ? data.data.recommendations 
           : data.data.recommendations.split('\n\n').filter(Boolean),
-        charts: data.data.charts || null
+        charts: data.data.charts || null,
+        assistantChat: data.data.assistantChat || [] // Make sure assistantChat is included
       };
       
       // Add the newly saved insight to the savedInsights state
@@ -449,6 +478,8 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       setFileName(null);
       setCharts(null);
       
+      // Don't reset assistant messages here - keep the conversation going
+      // This allows users to continue their conversation with the assistant after saving
     } catch (err: any) {
       setError(`Failed to save insights: ${err.message}`);
       setNotification({
@@ -493,6 +524,37 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       setCharts(insight.charts);
     } else {
       setCharts(null);
+    }
+
+    // Restore assistant chat messages if available
+    if (insight.assistantChat && Array.isArray(insight.assistantChat)) {
+      // Convert stored chat data back to Message objects with proper Date objects
+      const restoredMessages = insight.assistantChat.map(msg => ({
+        id: Date.now().toString(36) + Math.random().toString(36).substr(2), // Generate new IDs
+        text: msg.text,
+        sender: msg.sender as 'user' | 'assistant',
+        timestamp: new Date(msg.timestamp)
+      }));
+      
+      // If we have messages, set them, otherwise initialize with default welcome message
+      if (restoredMessages.length > 0) {
+        setAssistantMessages(restoredMessages);
+      } else {
+        setAssistantMessages([{
+          id: '1',
+          text: 'Hello! I\'m your financial assistant. Ask me anything about your uploaded financial data.',
+          sender: 'assistant',
+          timestamp: new Date()
+        }]);
+      }
+    } else {
+      // Reset to default if no chat history
+      setAssistantMessages([{
+        id: '1',
+        text: 'Hello! I\'m your financial assistant. Ask me anything about your uploaded financial data.',
+        sender: 'assistant',
+        timestamp: new Date()
+      }]);
     }
     
     // Scroll to the content area when viewing saved insights
@@ -1045,6 +1107,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                 >
                   Visualizations
                 </button>
+                <button 
+                  className={`${styles.tabButton} ${activeTab === 'assistant' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('assistant')}
+                >
+                  Assistant
+                </button>
               </div>
             </div>
 
@@ -1121,6 +1189,20 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         charts={charts} 
                         fileName={fileName}
                         isLoading={generatingCharts}
+                      />
+                    </div>
+                  </div>
+
+                  <div 
+                    className={styles.tabContentWrapper} 
+                    style={{ display: activeTab === 'assistant' ? 'block' : 'none' }}
+                  >
+                    <div className={styles.assistantContent}>
+                      <FinancialAssistant 
+                        csvData={csvContent ? csvContent : null}
+                        fileName={fileName}
+                        isEnabled={!!insights}
+                        onMessagesChange={handleAssistantMessagesChange}
                       />
                     </div>
                   </div>
@@ -1274,6 +1356,14 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     Visualizations
                   </button>
                 )}
+                {selectedInsight.assistantChat && Array.isArray(selectedInsight.assistantChat) && selectedInsight.assistantChat.length > 0 && (
+                  <button 
+                    className={`${styles.modalTab} ${detailsTab === 'assistantChat' ? styles.activeModalTab : ''}`}
+                    onClick={() => setDetailsTab('assistantChat')}
+                  >
+                    Chat History
+                  </button>
+                )}
               </div>
               
               <div className={styles.modalContent}>
@@ -1310,12 +1400,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         <h4>Recommendations</h4>
                         <ul>
                           {Array.isArray(selectedInsight.recommendations) 
-                            ? selectedInsight.recommendations.map((rec, index) => (
-                                <li key={index}>{rec}</li>
+                            ? selectedInsight.recommendations.map((recommendation, index) => (
+                                <li key={index}>{recommendation}</li>
                               ))
                             : typeof selectedInsight.recommendations === 'string'
-                              ? selectedInsight.recommendations.split('\n\n').map((rec, index) => (
-                                  <li key={index}>{rec}</li>
+                              ? selectedInsight.recommendations.split('\n\n').map((recommendation, index) => (
+                                  <li key={index}>{recommendation}</li>
                                 ))
                               : <li>No recommendations available</li>
                           }
@@ -1324,7 +1414,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     </motion.div>
                   )}
                   
-                  {detailsTab === 'visualizations' && selectedInsight.charts && Array.isArray(selectedInsight.charts) && (
+                  {detailsTab === 'visualizations' && selectedInsight.charts && Array.isArray(selectedInsight.charts) && selectedInsight.charts.length > 0 && (
                     <motion.div
                       key="details-visualizations"
                       initial={{ opacity: 0 }}
@@ -1332,10 +1422,38 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       exit={{ opacity: 0 }}
                       className={styles.visualizationsContainer}
                     >
-                      <VisualizationHistory
+                      <VisualizationPanel 
                         charts={selectedInsight.charts}
                         fileName={selectedInsight.fileName}
+                        isLoading={false}
                       />
+                    </motion.div>
+                  )}
+                  
+                  {detailsTab === 'assistantChat' && selectedInsight.assistantChat && Array.isArray(selectedInsight.assistantChat) && selectedInsight.assistantChat.length > 0 && (
+                    <motion.div
+                      key="details-assistantChat"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className={styles.assistantChatContainer}
+                    >
+                      <div className={styles.chatHistory}>
+                        <h4>Chat History</h4>
+                        {selectedInsight.assistantChat.map((message, index) => (
+                          <div key={index} className={`${styles.chatMessage} ${message.sender === 'user' ? styles.userMessage : styles.assistantMessage}`}>
+                            <div className={styles.messageHeader}>
+                              <strong>{message.sender === 'user' ? 'You' : 'Assistant'}</strong>
+                              <span className={styles.timestamp}>
+                                {new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                              </span>
+                            </div>
+                            <div className={styles.messageContent}>
+                              {message.text}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     </motion.div>
                   )}
                 </AnimatePresence>

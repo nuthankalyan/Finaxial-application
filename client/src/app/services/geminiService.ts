@@ -374,4 +374,59 @@ function getFallbackCharts(errorMessage?: string): ChartData[] {
       }
     }
   }];
-} 
+}
+
+export const askFinancialQuestion = async (csvContent: string, question: string): Promise<string> => {
+  try {
+    // Initialize the Gemini API client
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('Gemini API key is not configured');
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    // Construct a prompt that instructs the model to answer questions about the CSV data
+    const prompt = `
+You are a financial assistant with expertise in analyzing financial data. You are given a CSV dataset and a specific question about this data.
+Your goal is to provide a clear, informative, and accurate answer based solely on the data provided.
+
+CSV DATA:
+${csvContent}
+
+USER QUESTION:
+${question}
+
+Analyze the data carefully to answer the question. Follow these guidelines:
+1. Only provide information that can be directly inferred from the data
+2. If the question cannot be answered from the data, acknowledge the limitations
+3. Use specific numbers and metrics from the data when relevant
+4. Keep your answer concise and focused on the question
+5. If appropriate, suggest related insights that might be helpful
+
+IMPORTANT FORMATTING INSTRUCTIONS:
+- Format your response with a clear, readable structure
+- Use appropriate line breaks between paragraphs
+- For lists, use proper bullet points with "-" or numerical points with "1."
+- For important sections, use header formatting with "# Section Title"
+- When presenting numerical data, use tables with proper formatting:
+  | Column 1 | Column 2 | Column 3 |
+  |----------|----------|----------|
+  | Value 1  | Value 2  | Value 3  |
+- For any code snippets or formulas, wrap them in triple backticks: \`\`\`code\`\`\`
+- Use consistent paragraph spacing and indentation
+
+Remember that you're helping someone understand their financial data, so aim to be educational and helpful with a well-formatted response.
+`;
+
+    // Generate content from the model
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error: any) {
+    console.error('Error asking financial question with Gemini:', error);
+    throw new Error(`Failed to process your question: ${error.message}`);
+  }
+}; 

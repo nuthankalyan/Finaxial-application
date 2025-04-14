@@ -16,6 +16,11 @@ export interface SavedInsight {
   charts?: any;  // Add charts data
   rawResponse: string;
   createdAt: string;
+  assistantChat?: Array<{
+    text: string;
+    sender: string;
+    timestamp: string;
+  }>;
 }
 
 interface InsightsListProps {

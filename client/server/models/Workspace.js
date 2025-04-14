@@ -17,6 +17,12 @@ const InsightSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  charts: {
+    type: mongoose.Schema.Types.Mixed  // This allows any JSON structure
+  },
+  assistantChat: {
+    type: mongoose.Schema.Types.Mixed  // Store the chat history as Mixed type
+  },
   rawResponse: {
     type: String
   },
