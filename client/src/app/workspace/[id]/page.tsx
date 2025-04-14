@@ -1203,6 +1203,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         fileName={fileName}
                         isEnabled={!!insights}
                         onMessagesChange={handleAssistantMessagesChange}
+                        initialMessages={assistantMessages}
                       />
                     </div>
                   </div>

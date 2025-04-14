@@ -17,17 +17,20 @@ interface FinancialAssistantProps {
   fileName: string | null;
   isEnabled: boolean;
   onMessagesChange?: (messages: Message[]) => void;
+  initialMessages?: Message[];
 }
 
-const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileName, isEnabled, onMessagesChange }) => {
-  const [messages, setMessages] = useState<Message[]>([
-    {
-      id: '1',
-      text: 'Hello! I\'m your financial assistant. Ask me anything about your uploaded financial data.',
-      sender: 'assistant',
-      timestamp: new Date()
-    }
-  ]);
+const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileName, isEnabled, onMessagesChange, initialMessages }) => {
+  const [messages, setMessages] = useState<Message[]>(
+    initialMessages && initialMessages.length > 0
+    ? initialMessages
+    : [{
+        id: '1',
+        text: 'Hello! I\'m your financial assistant. Ask me anything about your uploaded financial data.',
+        sender: 'assistant',
+        timestamp: new Date()
+      }]
+  );
   const [inputValue, setInputValue] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
