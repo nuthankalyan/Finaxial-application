@@ -983,8 +983,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     className={styles.insightItem}
                     whileHover={{ scale: 1.02 }}
                     whileTap={{ scale: 0.98 }}
+                    onClick={() => openInsightDetails(insight)}
                   >
-                    <div className={styles.insightContent} onClick={() => handleViewInsight(insight)}>
+                    <div className={styles.insightContent}>
                       <h4>{insight.fileName}</h4>
                       <p>{formatDate(insight.createdAt)}</p>
                     </div>
@@ -994,6 +995,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         onClick={(e) => {
                           e.stopPropagation();
                           openInsightDetails(insight);
+                          setDetailsTab('visualizations');
                         }}
                         title="View Visualizations"
                       >
@@ -1467,14 +1469,348 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                 >
                   Close
                 </button>
-                <button 
-                  className={styles.modalViewButton}
+                
+                <button
+                  className={styles.modalExportButton}
                   onClick={() => {
-                    handleViewInsight(selectedInsight);
-                    setShowInsightDetails(false);
+                    // Instead of setting state and exporting after delay, directly generate PDF from selectedInsight
+                    if (!selectedInsight) return;
+                    
+                    setExporting(true);
+                    
+                    try {
+                      // Create temporary insights object for PDF generation
+                      const tempInsights = {
+                        summary: selectedInsight.summary,
+                        insights: Array.isArray(selectedInsight.insights) 
+                          ? selectedInsight.insights
+                          : typeof selectedInsight.insights === 'string'
+                            ? selectedInsight.insights.split('\n\n').filter(Boolean)
+                            : [],
+                        recommendations: Array.isArray(selectedInsight.recommendations)
+                          ? selectedInsight.recommendations
+                          : typeof selectedInsight.recommendations === 'string'
+                            ? selectedInsight.recommendations.split('\n\n').filter(Boolean)
+                            : [],
+                        rawResponse: selectedInsight.rawResponse
+                      };
+                      
+                      // Create a new PDF document
+                      const doc = new jsPDF();
+                      
+                      // Set document properties
+                      doc.setProperties({
+                        title: `Financial Insights - ${selectedInsight.fileName}`,
+                        subject: 'Financial Analysis Report',
+                        author: 'Finaxial App',
+                        creator: 'Finaxial App'
+                      });
+                      
+                      // Define PDF layout constants
+                      const footerPosition = 280;
+                      const footerMargin = 15; // Margin above footer to prevent content overflow
+                      
+                      // Add title
+                      doc.setFontSize(20);
+                      doc.setTextColor(33, 37, 41);
+                      doc.text(`Financial Insights Report`, 15, 20);
+                      
+                      // Add file info
+                      doc.setFontSize(12);
+                      doc.setTextColor(100, 100, 100);
+                      doc.text(`File: ${selectedInsight.fileName}`, 15, 30);
+                      doc.text(`Generated: ${new Date().toLocaleString()}`, 15, 36);
+                      
+                      // Add divider
+                      doc.setDrawColor(200, 200, 200);
+                      doc.line(15, 40, 195, 40);
+                      
+                      // Add summary section
+                      doc.setFontSize(16);
+                      doc.setTextColor(33, 37, 41);
+                      doc.text('Summary', 15, 50);
+                      
+                      // Split summary into lines to fit page width
+                      doc.setFontSize(11);
+                      doc.setTextColor(75, 85, 99);
+                      const textLines = doc.splitTextToSize(tempInsights.summary, 170);
+                      doc.text(textLines, 15, 60);
+                      
+                      const summaryEndY = Math.min(60 + textLines.length * 5, 260);
+                      
+                      // Add key insights section
+                      doc.setFontSize(16);
+                      doc.setTextColor(33, 37, 41);
+                      doc.text('Key Insights', 15, summaryEndY + 10);
+                      
+                      // Format insights as a table
+                      const insightsData = Array.isArray(tempInsights.insights) 
+                        ? tempInsights.insights.map((insight, index) => [`${index + 1}.`, insight]) 
+                        : [['', 'No insights available']];
+                      
+                      autoTable(doc, {
+                        startY: summaryEndY + 15,
+                        head: [['#', 'Insight']],
+                        body: insightsData,
+                        theme: 'grid',
+                        headStyles: { 
+                          fillColor: [79, 70, 229],
+                          textColor: 255
+                        },
+                        styles: {
+                          overflow: 'linebreak',
+                          cellWidth: 'auto'
+                        },
+                        columnStyles: {
+                          0: { cellWidth: 10 },
+                          1: { cellWidth: 'auto' }
+                        },
+                        margin: { bottom: footerMargin + 10 }
+                      });
+                      
+                      // Check if we need a new page for recommendations
+                      if (doc.lastAutoTable && doc.lastAutoTable.finalY > 220) {
+                        doc.addPage();
+                        // Reset Y position for new page
+                        doc.lastAutoTable.finalY = 20;
+                      }
+                      
+                      // Add recommendations section
+                      doc.setFontSize(16);
+                      doc.setTextColor(33, 37, 41);
+                      
+                      const yPosition = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : summaryEndY + 130;
+                      doc.text('Recommendations', 15, yPosition);
+                      
+                      // Format recommendations as a table
+                      const recommendationsData = Array.isArray(tempInsights.recommendations) 
+                        ? tempInsights.recommendations.map((recommendation, index) => [`${index + 1}.`, recommendation]) 
+                        : [['', 'No recommendations available']];
+                      
+                      autoTable(doc, {
+                        startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : yPosition + 5,
+                        head: [['#', 'Recommendation']],
+                        body: recommendationsData,
+                        theme: 'grid',
+                        headStyles: { 
+                          fillColor: [79, 70, 229],
+                          textColor: 255
+                        },
+                        styles: {
+                          overflow: 'linebreak',
+                          cellWidth: 'auto'
+                        },
+                        columnStyles: {
+                          0: { cellWidth: 10 },
+                          1: { cellWidth: 'auto' }
+                        },
+                        margin: { bottom: footerMargin + 10 }
+                      });
+                      
+                      // Add visualizations section if charts are available
+                      if (selectedInsight.charts && Array.isArray(selectedInsight.charts) && selectedInsight.charts.length > 0) {
+                        // Add a new page for charts
+                        doc.addPage();
+                        
+                        // Add visualizations section title
+                        doc.setFontSize(16);
+                        doc.setTextColor(33, 37, 41);
+                        doc.text('Visualizations', 15, 20);
+                        
+                        let currentY = 30;
+                        const chartWidth = 180;
+                        const chartHeight = 100;
+                        
+                        // Loop through charts (max 2 per page)
+                        selectedInsight.charts.forEach((chart, index) => {
+                          // Calculate estimated height for this chart (title + chart + description)
+                          const estimatedHeight = 8 + chartHeight + 20; // Basic height without description
+                          
+                          // Check if we need a new page based on vertical space
+                          if (currentY + estimatedHeight > footerPosition - footerMargin) {
+                            doc.addPage();
+                            currentY = 30;
+                          } else if (index > 0 && index % 2 === 0) {
+                            // Create a new page after every 2 charts (original logic)
+                            doc.addPage();
+                            currentY = 30;
+                          }
+                          
+                          // Add chart title
+                          doc.setFontSize(14);
+                          doc.setTextColor(33, 37, 41);
+                          doc.text(chart.title, 15, currentY);
+                          currentY += 8;
+                          
+                          try {
+                            // Create a temporary canvas for chart rendering
+                            const tempCanvas = document.createElement('canvas');
+                            tempCanvas.width = chartWidth * 5;  // Higher resolution for better quality
+                            tempCanvas.height = chartHeight * 5;
+                            tempCanvas.style.width = `${chartWidth}px`;
+                            tempCanvas.style.height = `${chartHeight}px`;
+                            document.body.appendChild(tempCanvas);
+                            
+                            // Create chart instance
+                            const chartInstance = new ChartJS(tempCanvas, {
+                              type: chart.type as keyof ChartTypeRegistry,
+                              data: chart.data,
+                              options: {
+                                ...chart.options,
+                                responsive: false,
+                                animation: false,
+                                plugins: {
+                                  legend: {
+                                    display: true,
+                                    position: 'bottom'
+                                  },
+                                  title: {
+                                    display: false
+                                  }
+                                }
+                              }
+                            });
+                            
+                            // Render chart and add to PDF
+                            chartInstance.render();
+                            const imageData = tempCanvas.toDataURL('image/png', 1.0);
+                            doc.addImage(imageData, 'PNG', 15, currentY, chartWidth, chartHeight);
+                            
+                            // Clean up
+                            chartInstance.destroy();
+                            document.body.removeChild(tempCanvas);
+                            
+                            // Add chart description
+                            currentY += chartHeight + 10;
+                            doc.setFontSize(10);
+                            doc.setTextColor(75, 85, 99);
+                            const descriptionLines = doc.splitTextToSize(chart.description, 170);
+                            doc.text(descriptionLines, 15, currentY);
+                            
+                            // Update Y position for next chart
+                            currentY += descriptionLines.length * 5 + 20;
+                          } catch (chartError) {
+                            console.error('Error rendering chart in PDF:', chartError);
+                            // Add error message instead of chart
+                            doc.setFontSize(10);
+                            doc.setTextColor(220, 53, 69);
+                            doc.text(`Could not render chart: ${chart.title}`, 15, currentY);
+                            currentY += 20;
+                          }
+                        });
+                      }
+                      
+                      // Add footer with app name
+                      const pageCount = doc.getNumberOfPages();
+                      for (let i = 1; i <= pageCount; i++) {
+                        doc.setPage(i);
+                        
+                        // Add footer line to visually separate content from footer
+                        doc.setDrawColor(200, 200, 200);
+                        doc.line(15, footerPosition - footerMargin, 195, footerPosition - footerMargin);
+                        
+                        // Add footer text
+                        doc.setFontSize(8);
+                        doc.setTextColor(150, 150, 150);
+                        doc.text('Finaxial App - Financial Insights Report', 15, footerPosition);
+                        doc.text(`Page ${i} of ${pageCount}`, 180, footerPosition);
+                      }
+                      
+                      // Save the PDF with a unique filename
+                      doc.save(`financial-insights-${selectedInsight.fileName.replace(/\.[^/.]+$/, '')}.pdf`);
+                      
+                      // Show success notification
+                      setNotification({
+                        show: true,
+                        type: 'success',
+                        title: 'PDF Generated',
+                        message: 'Report has been downloaded successfully.'
+                      });
+                    } catch (err: any) {
+                      console.error('Error generating PDF from modal:', err);
+                      
+                      // Show error notification
+                      setNotification({
+                        show: true,
+                        type: 'error',
+                        title: 'PDF Generation Failed',
+                        message: err.message || 'Failed to generate PDF report'
+                      });
+                    } finally {
+                      setExporting(false);
+                      setShowInsightDetails(false);
+                    }
                   }}
                 >
-                  View in Main Area
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={styles.modalFooterIcon} 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                  </svg>
+                  Export PDF
+                </button>
+                
+                <button
+                  className={styles.modalEmailButton}
+                  onClick={() => {
+                    // Handle email functionality properly
+                    if (!selectedInsight) return;
+                    
+                    // Set the current insights state for email functionality
+                    setInsights({
+                      summary: selectedInsight.summary,
+                      insights: Array.isArray(selectedInsight.insights) 
+                        ? selectedInsight.insights
+                        : typeof selectedInsight.insights === 'string'
+                          ? selectedInsight.insights.split('\n\n').filter(Boolean)
+                          : [],
+                      recommendations: Array.isArray(selectedInsight.recommendations)
+                        ? selectedInsight.recommendations
+                        : typeof selectedInsight.recommendations === 'string'
+                          ? selectedInsight.recommendations.split('\n\n').filter(Boolean)
+                          : [],
+                      rawResponse: selectedInsight.rawResponse
+                    });
+                    
+                    setFileName(selectedInsight.fileName);
+                    
+                    // Also set charts data if available
+                    if (selectedInsight.charts && Array.isArray(selectedInsight.charts)) {
+                      setCharts(selectedInsight.charts);
+                    }
+                    
+                    // Close the details modal first, then show email modal
+                    setShowInsightDetails(false);
+                    
+                    // Use a timeout to ensure state updates before showing email modal
+                    setTimeout(() => {
+                      setShowEmailModal(true);
+                    }, 100);
+                  }}
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={styles.modalFooterIcon} 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                    <polyline points="22,6 12,13 2,6"></polyline>
+                  </svg>
+                  Send via Email
                 </button>
               </div>
             </motion.div>
