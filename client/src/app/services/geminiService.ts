@@ -376,6 +376,110 @@ function getFallbackCharts(errorMessage?: string): ChartData[] {
   }];
 }
 
+export const generateStory = async (
+  csvContent: string, 
+  insights: { summary: string; insights: string[]; recommendations: string[] },
+  style: 'business' | 'casual' | 'dramatic' = 'business'
+): Promise<string> => {
+  try {
+    // Initialize the Gemini API client
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('Gemini API key is not configured');
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    // Format insights and recommendations as bullet points
+    const formattedInsights = insights.insights
+      .map(insight => `- ${insight}`)
+      .join('\n');
+    
+    const formattedRecommendations = insights.recommendations
+      .map(rec => `- ${rec}`)
+      .join('\n');
+
+    // Define style-specific instructions
+    let styleInstructions = '';
+    
+    switch (style) {
+      case 'business':
+        styleInstructions = `
+Use a clear, professional tone appropriate for a business audience.
+Focus on data-driven insights and business impacts.
+Use industry terminology where appropriate.
+Structure the narrative in a logical, straightforward manner.
+Keep the language concise and factual while still telling a compelling story.`;
+        break;
+      
+      case 'casual':
+        styleInstructions = `
+Use a conversational, approachable tone that a non-technical audience would understand.
+Avoid jargon and explain financial concepts in simple terms.
+Use analogies and real-world examples to illustrate data points.
+Add a touch of humor where appropriate to keep the reader engaged.
+Make the financial story feel personal and relatable.`;
+        break;
+      
+      case 'dramatic':
+        styleInstructions = `
+Create a narrative with emotional impact and dramatic elements.
+Frame the financial data as a story with challenges, turning points, and resolutions.
+Use vivid language and metaphors to bring the numbers to life.
+Structure the narrative with a clear beginning, middle, and end.
+Employ storytelling techniques like foreshadowing and tension/release.
+Still maintain accuracy while being more creative with the presentation.`;
+        break;
+    }
+
+    // Construct the prompt
+    const prompt = `
+You are an expert financial storyteller who transforms complex financial data and insights into engaging narratives. Your task is to create a compelling story based on the provided financial data analysis.
+
+FINANCIAL DATA CSV:
+${csvContent}
+
+SUMMARY:
+${insights.summary}
+
+KEY INSIGHTS:
+${formattedInsights}
+
+RECOMMENDATIONS:
+${formattedRecommendations}
+
+STYLE INSTRUCTIONS:
+${styleInstructions}
+
+STORY STRUCTURE:
+1. Create a narrative that weaves together the key insights and recommendations.
+2. Break the story into 4-6 clear sections, each with its own heading (using ## for headers).
+3. Include an introduction that sets the context.
+4. Highlight opportunities, challenges, and key trends from the data.
+5. End with a conclusion that ties back to the recommendations.
+
+FORMAT GUIDELINES:
+- Use ## headers to separate major sections
+- Keep paragraphs short and readable (3-5 sentences maximum)
+- Use plain, descriptive language for non-technical stakeholders
+- Insert intentional line breaks between paragraphs for readability
+- Label sections in a way that clearly indicates their content (e.g., "## The Challenge", "## Future Opportunities")
+
+Your story should make the financial data engaging and understandable to stakeholders who don't have technical expertise. Focus on the business narrative rather than technical details, but ensure all insights are backed by the data.
+`;
+
+    // Generate content from the model
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error: any) {
+    console.error('Error generating story with Gemini:', error);
+    throw new Error(`Failed to generate story: ${error.message}`);
+  }
+};
+
 export const askFinancialQuestion = async (csvContent: string, question: string): Promise<string> => {
   try {
     // Initialize the Gemini API client
@@ -388,8 +492,16 @@ export const askFinancialQuestion = async (csvContent: string, question: string)
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
+    // Check if the question is asking for SQL query
+    const isAskingForSql = question.toLowerCase().includes('sql') || 
+                          question.toLowerCase().includes('query') ||
+                          question.toLowerCase().includes('queries') ||
+                          question.toLowerCase().includes('database') ||
+                          question.toLowerCase().includes('write a query') ||
+                          question.toLowerCase().includes('show me a query');
+
     // Construct a prompt that instructs the model to answer questions about the CSV data
-    const prompt = `
+    let prompt = `
 You are a financial assistant with expertise in analyzing financial data. You are given a CSV dataset and a specific question about this data.
 Your goal is to provide a clear, informative, and accurate answer based solely on the data provided.
 
@@ -420,6 +532,53 @@ IMPORTANT FORMATTING INSTRUCTIONS:
 
 Remember that you're helping someone understand their financial data, so aim to be educational and helpful with a well-formatted response.
 `;
+
+    // If the user is asking for SQL, add specific instructions
+    if (isAskingForSql) {
+      prompt = `
+You are a financial SQL expert who helps convert CSV data into database tables and writes SQL queries. You are given a CSV dataset and a request related to SQL queries.
+Your goal is to provide SQL queries that would extract the requested information if this data were in a database.
+
+CSV DATA:
+${csvContent}
+
+USER QUESTION:
+${question}
+
+First, ALWAYS assume the CSV data has been loaded into a single database table. Analyze the CSV headers and provide:
+
+1. A CREATE TABLE statement that reflects the structure of the CSV data
+2. An appropriate SQL query that answers the user's question 
+3. A brief explanation of what the query does and how it relates to the user's question
+4. IMPORTANT: A sample of what the expected query results would look like, formatted as a markdown table with 3-5 rows of sample data
+
+IMPORTANT FORMATTING RULES:
+- ALWAYS wrap SQL code in triple backticks with the sql language identifier: \`\`\`sql
+- Include ALL SQL statements (both CREATE TABLE and the query)
+- Make SQL code properly formatted with appropriate indentation and line breaks
+- Use proper SQL syntax highlighting conventions
+- Make sure column names match those from the CSV (treat the headers as column names)
+- Include comments in the SQL explaining important parts
+- After providing the SQL, briefly explain what the results would show
+- ALWAYS include a section titled "# Expected Results" with a properly formatted markdown table showing 3-5 rows of sample results from the query
+
+SQL GUIDELINES:
+- Use standard SQL syntax
+- Include proper JOIN operations if needed
+- Use appropriate GROUP BY, ORDER BY and aggregate functions when relevant
+- If needed, use WITH clauses for more complex queries
+- Include appropriate WHERE conditions to filter data
+
+SAMPLE RESULTS GUIDELINES:
+- Use realistic values derived from the actual CSV data
+- Format the results in a clean, readable markdown table
+- Include all columns that would appear in the actual query results
+- Show 3-5 representative rows that best illustrate the query's purpose
+- If the query uses aggregation, show appropriate summary rows
+
+Remember to make your SQL queries production-ready and optimized. Use best practices and provide clear, readable code.
+`;
+    }
 
     // Generate content from the model
     const result = await model.generateContent(prompt);

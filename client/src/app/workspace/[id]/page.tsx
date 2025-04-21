@@ -17,6 +17,7 @@ import { sendPdfReportByEmail } from '../../services/emailService';
 import { Chart as ChartJS, ChartTypeRegistry } from 'chart.js/auto';
 import { buildApiUrl } from '../../utils/apiConfig';
 import FinancialAssistant, { Message as AssistantMessage } from '../../components/FinancialAssistant';
+import StoryMode from '../../components/StoryMode';
 
 interface Workspace {
   _id: string;
@@ -209,6 +210,63 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
 
   // Add new state for assistant chat
   const [assistantMessages, setAssistantMessages] = useState<AssistantMessage[]>([]);
+  
+  // Simple helper function to format chat messages for display
+  const formatChatMessage = (text: string): React.ReactNode => {
+    // Check for code blocks
+    if (text.includes('```')) {
+      // Split text by code blocks
+      const parts = text.split(/```([\s\S]*?)```/);
+      return (
+        <>
+          {parts.map((part, index) => {
+            // Even indices are regular text, odd indices are code blocks
+            if (index % 2 === 0) {
+              return part ? <p key={index} className={styles.messageParagraph}>{part}</p> : null;
+            } else {
+              return (
+                <pre key={index} className={styles.codeBlock}>
+                  <code>{part}</code>
+                </pre>
+              );
+            }
+          })}
+        </>
+      );
+    }
+    
+    // Check for SQL queries
+    if (text.toLowerCase().includes('select') && text.toLowerCase().includes('from')) {
+      const lines = text.split('\n');
+      // Find SQL-like lines
+      const formattedLines = lines.map((line, index) => {
+        if (line.toLowerCase().includes('select') || line.toLowerCase().includes('from') || 
+            line.toLowerCase().includes('where') || line.toLowerCase().includes('group by') ||
+            line.toLowerCase().includes('order by')) {
+          return <div key={index} className={styles.sqlLine}>{line}</div>;
+        }
+        return <div key={index}>{line}</div>;
+      });
+      
+      return <div className={styles.formattedText}>{formattedLines}</div>;
+    }
+    
+    // Format lists
+    if (text.includes('\n- ') || text.includes('\n* ')) {
+      const lines = text.split('\n');
+      const formattedLines = lines.map((line, index) => {
+        if (line.startsWith('- ') || line.startsWith('* ')) {
+          return <li key={index}>{line.substring(2)}</li>;
+        }
+        return line ? <p key={index}>{line}</p> : null;
+      });
+      
+      return <div className={styles.formattedText}>{formattedLines}</div>;
+    }
+    
+    // Default formatting with proper line breaks
+    return <div className={styles.formattedText}>{text}</div>;
+  };
 
   useEffect(() => {
     // Check if user is authenticated
@@ -1110,6 +1168,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                   Visualizations
                 </button>
                 <button 
+                  className={`${styles.tabButton} ${activeTab === 'storyMode' ? styles.activeTab : ''}`}
+                  onClick={() => setActiveTab('storyMode')}
+                >
+                  Story Mode
+                </button>
+                <button 
                   className={`${styles.tabButton} ${activeTab === 'assistant' ? styles.activeTab : ''}`}
                   onClick={() => setActiveTab('assistant')}
                 >
@@ -1191,6 +1255,21 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         charts={charts} 
                         fileName={fileName}
                         isLoading={generatingCharts}
+                      />
+                    </div>
+                  </div>
+
+                  <div 
+                    className={styles.tabContentWrapper} 
+                    style={{ display: activeTab === 'storyMode' ? 'block' : 'none' }}
+                  >
+                    <div className={styles.storyModeContent}>
+                      <StoryMode 
+                        csvData={csvContent}
+                        fileName={fileName}
+                        insights={insights}
+                        isEnabled={!!insights}
+                        chartData={charts || []}
                       />
                     </div>
                   </div>
@@ -1428,7 +1507,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       <VisualizationPanel 
                         charts={selectedInsight.charts}
                         fileName={selectedInsight.fileName}
-                        isLoading={false}
+                        isLoading={generatingCharts}
                       />
                     </motion.div>
                   )}
@@ -1443,19 +1522,38 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     >
                       <div className={styles.chatHistory}>
                         <h4>Chat History</h4>
-                        {selectedInsight.assistantChat.map((message, index) => (
-                          <div key={index} className={`${styles.chatMessage} ${message.sender === 'user' ? styles.userMessage : styles.assistantMessage}`}>
-                            <div className={styles.messageHeader}>
-                              <strong>{message.sender === 'user' ? 'You' : 'Assistant'}</strong>
-                              <span className={styles.timestamp}>
-                                {new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
-                              </span>
-                            </div>
-                            <div className={styles.messageContent}>
-                              {message.text}
-                            </div>
-                          </div>
-                        ))}
+                        <div className={styles.messagesWrapper}>
+                          <AnimatePresence>
+                            {selectedInsight.assistantChat.length === 0 ? (
+                              <div className={styles.emptyChat}>
+                                <p>No chat history available for this analysis.</p>
+                              </div>
+                            ) : (
+                              selectedInsight.assistantChat.map((message, index) => (
+                                <motion.div
+                                  key={index}
+                                  className={`${styles.chatMessage} ${message.sender === 'user' ? styles.userMessage : styles.assistantMessage}`}
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  transition={{ duration: 0.3, delay: index * 0.05 }}
+                                >
+                                  <div className={styles.messageContent}>
+                                    {message.sender === 'assistant' ? (
+                                      <div className={styles.formattedText}>
+                                        {formatChatMessage(message.text)}
+                                      </div>
+                                    ) : (
+                                      message.text
+                                    )}
+                                  </div>
+                                  <div className={styles.messageTime}>
+                                    {new Date(message.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+                                  </div>
+                                </motion.div>
+                              ))
+                            )}
+                          </AnimatePresence>
+                        </div>
                       </div>
                     </motion.div>
                   )}

@@ -4,6 +4,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './FinancialAssistant.module.css';
 import { askFinancialQuestion } from '../services/geminiService';
+import SqlCodeBlock from './SqlCodeBlock';
+import { formatMessage } from '../utils/messageFormatter';
 
 export interface Message {
   id: string;
@@ -35,6 +37,13 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
   const [isProcessing, setIsProcessing] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  
+  // Add toast notification state
+  const [showToast, setShowToast] = useState(false);
+  const [toastMessage, setToastMessage] = useState('');
+  
+  // Add state to track which SQL query is running
+  const [runningSqlId, setRunningSqlId] = useState<string | null>(null);
 
   // Suggested questions
   const suggestedQuestions = [
@@ -44,6 +53,26 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
     "Explain the financial performance",
     "Calculate revenue growth rate"
   ];
+
+  // SQL-specific suggested questions
+  const sqlSuggestedQuestions = [
+    "Write a SQL query to find the highest values",
+    "Create a SQL query to calculate monthly averages",
+    "SQL query to group and summarize this financial data",
+    "Show me SQL to filter data by date range",
+    "Generate SQL for financial trend analysis"
+  ];
+
+  // Determine which set of suggestions to show
+  const [showSqlSuggestions, setShowSqlSuggestions] = useState(false);
+  
+  // Toggle between regular and SQL suggestions
+  const toggleSuggestionType = () => {
+    setShowSqlSuggestions(!showSqlSuggestions);
+  };
+
+  // Determine which suggestions to display
+  const currentSuggestions = showSqlSuggestions ? sqlSuggestedQuestions : suggestedQuestions;
 
   useEffect(() => {
     scrollToBottom();
@@ -127,171 +156,87 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
     }
   };
 
-  const formatMessage = (text: string): React.ReactNode => {
-    if (!text || text === '...') return text;
-
-    // Function to convert asterisk/dash lists to properly formatted HTML lists
-    const formatLists = (content: string): React.ReactNode[] => {
-      const lines = content.split('\n');
-      const result: React.ReactNode[] = [];
-      let inList = false;
-      let listItems: string[] = [];
-      let listType: 'ul' | 'ol' = 'ul';
-      
-      lines.forEach((line, index) => {
-        const trimmedLine = line.trim();
+  // Helper function to copy text to clipboard
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text).then(
+      () => {
+        // Show toast notification
+        setToastMessage('SQL copied to clipboard');
+        setShowToast(true);
         
-        // Check if this is a list item (starts with -, *, •, or 1., 2., etc.)
-        const isUnorderedListItem = /^[-*•]/.test(trimmedLine);
-        const isOrderedListItem = /^\d+\./.test(trimmedLine);
+        // Hide toast after 2 seconds
+        setTimeout(() => {
+          setShowToast(false);
+        }, 2000);
         
-        if (isUnorderedListItem || isOrderedListItem) {
-          // Start a new list if we're not in one
-          if (!inList) {
-            inList = true;
-            listType = isUnorderedListItem ? 'ul' : 'ol';
-          }
-          
-          // Add the content after the list marker
-          const content = trimmedLine.replace(/^[-*•]\s*|\d+\.\s*/, '');
-          listItems.push(content);
-        } else {
-          // If we were in a list and now we're not, add the list to results
-          if (inList) {
-            result.push(
-              listType === 'ul' 
-                ? <ul key={`ul-${index}`} className={styles.messageList}>{listItems.map((item, i) => <li key={i}>{item}</li>)}</ul>
-                : <ol key={`ol-${index}`} className={styles.messageList}>{listItems.map((item, i) => <li key={i}>{item}</li>)}</ol>
-            );
-            listItems = [];
-            inList = false;
-          }
-          
-          // Add non-list line as paragraph (if not empty)
-          if (trimmedLine) {
-            // Check if it's a header (starts with # or ##)
-            if (/^#{1,3}\s/.test(trimmedLine)) {
-              const headerContent = trimmedLine.replace(/^#{1,3}\s/, '');
-              result.push(<h4 key={index} className={styles.messageHeader}>{headerContent}</h4>);
-            } else {
-              result.push(<p key={index} className={styles.messageParagraph}>{trimmedLine}</p>);
-            }
-          } else if (index > 0 && index < lines.length - 1 && lines[index-1].trim() && lines[index+1].trim()) {
-            // Add space between paragraphs (only if there's content before and after)
-            result.push(<div key={`space-${index}`} className={styles.messageSpace} />);
-          }
-        }
-      });
-      
-      // If we end with a list, make sure to add it
-      if (inList) {
-        result.push(
-          listType === 'ul' 
-            ? <ul className={styles.messageList}>{listItems.map((item, i) => <li key={i}>{item}</li>)}</ul>
-            : <ol className={styles.messageList}>{listItems.map((item, i) => <li key={i}>{item}</li>)}</ol>
-        );
+        console.log('Text copied to clipboard');
+      },
+      (err) => {
+        // Show error toast
+        setToastMessage('Failed to copy to clipboard');
+        setShowToast(true);
+        
+        // Hide toast after 2 seconds
+        setTimeout(() => {
+          setShowToast(false);
+        }, 2000);
+        
+        console.error('Could not copy text: ', err);
       }
-      
-      return result;
-    };
+    );
+  };
 
-    // Handle tables (if present)
-    if (text.includes('|') && text.includes('\n')) {
-      // Try to detect if there's a table in the text
-      const lines = text.split('\n');
-      const tableStartIndex = lines.findIndex(line => line.includes('|') && line.includes('-'));
-      
-      if (tableStartIndex > 0) {
-        // There's likely a table - handle everything before it normally
-        const beforeTable = lines.slice(0, tableStartIndex - 1).join('\n');
-        const tableSection = lines.slice(tableStartIndex - 1);
-        
-        // Process the table
-        const tableRows = [];
-        let inTable = false;
-        let headers: string[] = [];
-        
-        for (let i = 0; i < tableSection.length; i++) {
-          const line = tableSection[i].trim();
-          
-          if (line.includes('|')) {
-            if (!inTable) {
-              // This is the header row
-              headers = line.split('|')
-                .map(cell => cell.trim())
-                .filter(cell => cell);
-              inTable = true;
-            } else if (line.includes('-')) {
-              // This is the separator row, skip it
-              continue;
-            } else {
-              // This is a data row
-              const cells = line.split('|')
-                .map(cell => cell.trim())
-                .filter(cell => cell);
-              
-              if (cells.length > 0) {
-                tableRows.push(cells);
-              }
-            }
-          }
-        }
-        
-        // Only proceed with table if we have headers and rows
-        if (headers.length > 0 && tableRows.length > 0) {
-          return (
-            <>
-              {formatLists(beforeTable)}
-              <div className={styles.messageTableContainer}>
-                <table className={styles.messageTable}>
-                  <thead>
-                    <tr>
-                      {headers.map((header, i) => (
-                        <th key={i}>{header}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {tableRows.map((row, i) => (
-                      <tr key={i}>
-                        {row.map((cell, j) => (
-                          <td key={j}>{cell}</td>
-                        ))}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          );
-        }
-      }
-    }
+  // Helper function to simulate running an SQL query
+  const simulateQueryExecution = (sqlQuery: string, queryId: string) => {
+    // Set this query as running
+    setRunningSqlId(queryId);
     
-    // Format code blocks
-    if (text.includes('```')) {
-      const parts = text.split(/```([^`]*?)```/g);
-      const result: React.ReactNode[] = [];
-      
-      parts.forEach((part, index) => {
-        if (index % 2 === 0) {
-          // This is regular text, format it normally
-          result.push(...formatLists(part));
-        } else {
-          // This is a code block
-          result.push(
-            <pre key={`code-${index}`} className={styles.messageCode}>
-              <code>{part}</code>
-            </pre>
-          );
-        }
-      });
-      
-      return <>{result}</>;
-    }
+    // Show toast notification that query is running
+    setToastMessage('Running SQL query...');
+    setShowToast(true);
     
-    // Default formatting for text without tables or code blocks
-    return <>{formatLists(text)}</>;
+    // Simulate query execution time (1-2 seconds)
+    const executionTime = 1000 + Math.random() * 1000;
+    
+    setTimeout(() => {
+      // Query execution completed
+      setRunningSqlId(null);
+      setShowToast(false);
+      
+      // Show completion toast
+      setTimeout(() => {
+        setToastMessage('Query executed successfully');
+        setShowToast(true);
+        
+        // Hide completion toast after 2 seconds
+        setTimeout(() => {
+          setShowToast(false);
+        }, 2000);
+      }, 100);
+    }, executionTime);
+  };
+
+  // SQL keywords to highlight
+  const sqlKeywords = [
+    'SELECT', 'FROM', 'WHERE', 'GROUP BY', 'ORDER BY', 'HAVING', 'JOIN', 'LEFT JOIN', 
+    'RIGHT JOIN', 'INNER JOIN', 'OUTER JOIN', 'CROSS JOIN', 'ON', 'AS', 'DISTINCT', 'AND', 
+    'OR', 'NOT', 'IN', 'BETWEEN', 'LIKE', 'IS NULL', 'IS NOT NULL', 'CREATE TABLE', 
+    'INSERT INTO', 'UPDATE', 'DELETE', 'DROP', 'ALTER', 'ADD', 'COLUMN', 'SET',
+    'ASC', 'DESC', 'WITH', 'UNION', 'ALL', 'LIMIT', 'OFFSET'
+  ];
+
+  // SQL functions to highlight
+  const sqlFunctions = [
+    'COUNT', 'SUM', 'AVG', 'MIN', 'MAX', 'ROUND', 'CAST', 'COALESCE', 
+    'CONCAT', 'SUBSTRING', 'LENGTH', 'UPPER', 'LOWER', 'TRIM', 'DATE', 
+    'TO_CHAR', 'TO_DATE', 'EXTRACT', 'CASE', 'WHEN', 'THEN', 'ELSE', 'END'
+  ];
+  
+  // Extract SQL code from content
+  const extractSqlQuery = (content: string): string | null => {
+    const sqlRegex = /```sql([\s\S]*?)```/gi;
+    const match = sqlRegex.exec(content);
+    return match ? match[1].trim() : null;
   };
 
   if (!isEnabled) {
@@ -346,7 +291,7 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
                     <span></span>
                   </div>
                 ) : message.sender === 'assistant' ? (
-                  formatMessage(message.text)
+                  formatMessage(message.text, styles, setToastMessage, setShowToast, copyToClipboard)
                 ) : (
                   message.text
                 )}
@@ -360,12 +305,39 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Toast notification */}
+      <AnimatePresence>
+        {showToast && (
+          <motion.div 
+            className={styles.toast}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 20 }}
+            transition={{ duration: 0.2 }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12"></polyline>
+            </svg>
+            <span>{toastMessage}</span>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Only show suggested questions if there are no user messages yet */}
       {!messages.some(message => message.sender === 'user') && (
         <div className={styles.suggestedQuestions}>
-          <p>Suggested questions:</p>
+          <div className={styles.suggestedQuestionsHeader}>
+            <p>Suggested questions:</p>
+            <button
+              className={styles.suggestionTypeToggle}
+              onClick={toggleSuggestionType}
+              title={showSqlSuggestions ? "Show regular questions" : "Show SQL questions"}
+            >
+              {showSqlSuggestions ? "Regular Questions" : "SQL Queries"}
+            </button>
+          </div>
           <div className={styles.questionButtons}>
-            {suggestedQuestions.map((question, index) => (
+            {currentSuggestions.map((question, index) => (
               <button
                 key={index}
                 className={styles.questionButton}
