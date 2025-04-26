@@ -98,17 +98,17 @@ export default function VisualizationHistory({ charts, fileName }: Visualization
     
     switch (chart.type) {
       case 'bar':
-        return <Bar data={chart.data} options={processedOptions} />;
+        return <Bar data={chart.data} options={processedOptions} className="chart-canvas" />;
       case 'line':
-        return <Line data={chart.data} options={processedOptions} />;
+        return <Line data={chart.data} options={processedOptions} className="chart-canvas" />;
       case 'pie':
-        return <Pie data={chart.data} options={processedOptions} />;
+        return <Pie data={chart.data} options={processedOptions} className="chart-canvas" />;
       case 'doughnut':
-        return <Doughnut data={chart.data} options={processedOptions} />;
+        return <Doughnut data={chart.data} options={processedOptions} className="chart-canvas" />;
       case 'radar':
-        return <Radar data={chart.data} options={processedOptions} />;
+        return <Radar data={chart.data} options={processedOptions} className="chart-canvas" />;
       default:
-        return <Bar data={chart.data} options={processedOptions} />;
+        return <Bar data={chart.data} options={processedOptions} className="chart-canvas" />;
     }
   };
 

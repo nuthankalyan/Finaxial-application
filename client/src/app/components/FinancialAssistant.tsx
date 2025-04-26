@@ -3,15 +3,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './FinancialAssistant.module.css';
-import { askFinancialQuestion } from '../services/geminiService';
+import { askFinancialQuestionCached } from '../services/geminiService';
 import SqlCodeBlock from './SqlCodeBlock';
 import { formatMessage } from '../utils/messageFormatter';
+import { queryCache } from '../utils/cacheManager';
+import { generateChatPDF } from '../utils/pdfGenerator';
 
 export interface Message {
   id: string;
   text: string;
   sender: 'user' | 'assistant';
   timestamp: Date;
+  fromCache?: boolean;
 }
 
 interface FinancialAssistantProps {
@@ -45,6 +48,9 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
   // Add state to track which SQL query is running
   const [runningSqlId, setRunningSqlId] = useState<string | null>(null);
 
+  // Add state to track cache stats
+  const [cacheStats, setCacheStats] = useState({ count: 0, sizeKB: 0 });
+
   // Suggested questions
   const suggestedQuestions = [
     "What are the key trends in this data?",
@@ -74,6 +80,10 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
   // Determine which suggestions to display
   const currentSuggestions = showSqlSuggestions ? sqlSuggestedQuestions : suggestedQuestions;
 
+  // Add state to track visualizations for PDF export
+  const [chartCanvases, setChartCanvases] = useState<HTMLCanvasElement[]>([]);
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -83,6 +93,25 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
       onMessagesChange(messages);
     }
   }, [messages, onMessagesChange]);
+
+  // Add effect to update cache stats periodically
+  useEffect(() => {
+    const updateCacheStats = () => {
+      setCacheStats(queryCache.getStats());
+    };
+    
+    // Update stats initially and on any storage change
+    updateCacheStats();
+    window.addEventListener('storage', updateCacheStats);
+    
+    // Set up a timer to update stats every minute
+    const intervalId = setInterval(updateCacheStats, 60000);
+    
+    return () => {
+      window.removeEventListener('storage', updateCacheStats);
+      clearInterval(intervalId);
+    };
+  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -118,8 +147,20 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
         timestamp: new Date()
       }]);
       
-      // Get response from Gemini
-      const response = await askFinancialQuestion(csvData, userMessage.text);
+      // Track if response came from cache for UI indication
+      let startTime = Date.now();
+      let fromCache = false;
+      
+      // Get response from Gemini with caching
+      const response = await askFinancialQuestionCached(csvData, userMessage.text);
+      
+      // Check if response was returned too quickly (indicating cache hit)
+      // We check for 300ms as a fast threshold that indicates a cache hit
+      // This is a fallback in case the cache service doesn't properly set the fromCache flag
+      fromCache = (Date.now() - startTime) < 300;
+      
+      // Update cache stats
+      setCacheStats(queryCache.getStats());
       
       // Remove typing indicator and add actual response
       setMessages(prev => {
@@ -128,9 +169,17 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
           id: generateMessageId(),
           text: response,
           sender: 'assistant',
-          timestamp: new Date()
+          timestamp: new Date(),
+          fromCache
         }];
       });
+      
+      // If from cache, show a toast notification
+      if (fromCache) {
+        setToastMessage('Response loaded from cache');
+        setShowToast(true);
+        setTimeout(() => setShowToast(false), 2000);
+      }
     } catch (error) {
       console.error('Error asking question:', error);
       
@@ -239,6 +288,48 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
     return match ? match[1].trim() : null;
   };
 
+  // Helper function to clear the cache
+  const clearCache = () => {
+    queryCache.clear();
+    setCacheStats({ count: 0, sizeKB: 0 });
+    setToastMessage('Cache cleared successfully');
+    setShowToast(true);
+    setTimeout(() => setShowToast(false), 2000);
+  };
+
+  // Add function to export chat history to PDF
+  const exportChatToPDF = async () => {
+    if (messages.length <= 1) {
+      setToastMessage('No conversation to export');
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+      return;
+    }
+    
+    setIsExportingPDF(true);
+    setToastMessage('Preparing PDF export...');
+    setShowToast(true);
+    
+    try {
+      // Generate the PDF without visualizations
+      await generateChatPDF(
+        messages, 
+        undefined, // Pass undefined for visualizations to not include them
+        fileName || undefined,
+        { includeCharts: false } // Explicitly set to not include charts
+      );
+      
+      setToastMessage('Chat history exported to PDF');
+    } catch (error) {
+      console.error('Error exporting to PDF:', error);
+      setToastMessage('Failed to export chat history');
+    } finally {
+      setShowToast(true);
+      setTimeout(() => setShowToast(false), 2000);
+      setIsExportingPDF(false);
+    }
+  };
+
   if (!isEnabled) {
     return (
       <div className={styles.disabledContainer}>
@@ -268,8 +359,57 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h3>Financial Assistant</h3>
+        <div className={styles.headerTop}>
+          <h3>Financial Assistant</h3>
+          
+          <div className={styles.headerActions}>
+            {messages.length > 1 && (
+              <button
+                className={styles.exportButton}
+                onClick={exportChatToPDF}
+                disabled={isExportingPDF}
+                title="Export conversation to PDF"
+              >
+                {isExportingPDF ? (
+                  <div className={styles.buttonSpinner}></div>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                    <polyline points="14 2 14 8 20 8"></polyline>
+                    <line x1="12" y1="18" x2="12" y2="12"></line>
+                    <line x1="9" y1="15" x2="15" y2="15"></line>
+                  </svg>
+                )}
+                <span>Export Chat PDF</span>
+              </button>
+            )}
+          </div>
+        </div>
+        
         {fileName && <span className={styles.datasetName}>Using data from: {fileName}</span>}
+        
+        {/* Add cache stats display */}
+        {cacheStats.count > 0 && (
+          <div className={styles.cacheStats}>
+            <span title="Number of cached responses">
+              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"/>
+              </svg>
+              {cacheStats.count} cached
+            </span>
+            <button 
+              className={styles.clearCacheBtn} 
+              onClick={clearCache}
+              title="Clear response cache"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 6h18"></path>
+                <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+              </svg>
+            </button>
+          </div>
+        )}
       </div>
 
       <div className={styles.messagesContainer}>
@@ -291,7 +431,18 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
                     <span></span>
                   </div>
                 ) : message.sender === 'assistant' ? (
-                  formatMessage(message.text, styles, setToastMessage, setShowToast, copyToClipboard)
+                  <>
+                    {formatMessage(message.text, styles, setToastMessage, setShowToast, copyToClipboard)}
+                    {message.fromCache && (
+                      <div className={styles.cacheIndicator} title="Response loaded from cache">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10"></circle>
+                          <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                        <span>Cached</span>
+                      </div>
+                    )}
+                  </>
                 ) : (
                   message.text
                 )}
@@ -327,7 +478,7 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
       {!messages.some(message => message.sender === 'user') && (
         <div className={styles.suggestedQuestions}>
           <div className={styles.suggestedQuestionsHeader}>
-            <p>Suggested questions:</p>
+          <p>Suggested questions:</p>
             <button
               className={styles.suggestionTypeToggle}
               onClick={toggleSuggestionType}

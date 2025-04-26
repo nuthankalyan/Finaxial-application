@@ -111,17 +111,17 @@ const ChartRenderer = ({ chart }: { chart: ChartData }) => {
     // Render appropriate chart based on type
     switch (chart.type.toLowerCase()) {
       case 'bar':
-        return <Bar data={chart.data} options={options} />;
+        return <Bar data={chart.data} options={options} className="chart-canvas" />;
       case 'line':
-        return <Line data={chart.data} options={options} />;
+        return <Line data={chart.data} options={options} className="chart-canvas" />;
       case 'pie':
-        return <Pie data={chart.data} options={options} />;
+        return <Pie data={chart.data} options={options} className="chart-canvas" />;
       case 'doughnut':
-        return <Doughnut data={chart.data} options={options} />;
+        return <Doughnut data={chart.data} options={options} className="chart-canvas" />;
       case 'radar':
-        return <Radar data={chart.data} options={options} />;
+        return <Radar data={chart.data} options={options} className="chart-canvas" />;
       default:
-        return <Bar data={chart.data} options={options} />;
+        return <Bar data={chart.data} options={options} className="chart-canvas" />;
     }
   } catch (error) {
     console.error('Error rendering chart:', error);

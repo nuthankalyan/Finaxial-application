@@ -159,17 +159,17 @@ const PresentationSlide: React.FC<{
     
     switch (chartInfo.type) {
       case 'line':
-        return <Line data={chartInfo.data} options={chartOptions} />;
+        return <Line data={chartInfo.data} options={chartOptions} className="chart-canvas" />;
       case 'bar':
-        return <Bar data={chartInfo.data} options={chartOptions} />;
+        return <Bar data={chartInfo.data} options={chartOptions} className="chart-canvas" />;
       case 'pie':
-        return <Pie data={chartInfo.data} options={chartOptions} />;
+        return <Pie data={chartInfo.data} options={chartOptions} className="chart-canvas" />;
       case 'doughnut':
-        return <Doughnut data={chartInfo.data} options={chartOptions} />;
+        return <Doughnut data={chartInfo.data} options={chartOptions} className="chart-canvas" />;
       case 'radar':
-        return <Radar data={chartInfo.data} options={chartOptions} />;
+        return <Radar data={chartInfo.data} options={chartOptions} className="chart-canvas" />;
       default:
-        return <Bar data={chartInfo.data} options={chartOptions} />;
+        return <Bar data={chartInfo.data} options={chartOptions} className="chart-canvas" />;
     }
   };
 

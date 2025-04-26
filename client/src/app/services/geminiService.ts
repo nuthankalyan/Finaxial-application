@@ -1,6 +1,7 @@
 'use client';
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { queryCache, createQueryCacheKey } from '../utils/cacheManager';
 
 export interface FinancialInsights {
   summary: string;
@@ -586,6 +587,35 @@ Remember to make your SQL queries production-ready and optimized. Use best pract
     return response.text();
   } catch (error: any) {
     console.error('Error asking financial question with Gemini:', error);
+    throw new Error(`Failed to process your question: ${error.message}`);
+  }
+}; 
+
+/**
+ * Cached version of askFinancialQuestion that checks the cache first before calling the API
+ */
+export const askFinancialQuestionCached = async (csvContent: string, question: string): Promise<string> => {
+  try {
+    // Create a cache key for this query + data combination
+    const cacheKey = createQueryCacheKey(csvContent, question);
+    
+    // Check if we have a cached response
+    const cachedResponse = queryCache.get<string>(cacheKey);
+    if (cachedResponse) {
+      console.log('Using cached response for query:', question);
+      return cachedResponse;
+    }
+    
+    // No cached response, call the API
+    console.log('Cache miss, fetching fresh response for query:', question);
+    const response = await askFinancialQuestion(csvContent, question);
+    
+    // Cache the response for future use
+    queryCache.set(cacheKey, response);
+    
+    return response;
+  } catch (error: any) {
+    console.error('Error in cached financial question service:', error);
     throw new Error(`Failed to process your question: ${error.message}`);
   }
 }; 
