@@ -209,11 +209,11 @@ export const generateChatPDF = async (
         );
         
         // Calculate column widths based on content
-        const columnWidths = {};
+        const columnWidths: Record<string, number> = {};
         let totalWidth = 0;
         
         // Function to get approximate text width
-        const getTextWidth = (text, fontSize = 8) => {
+        const getTextWidth = (text: string, fontSize = 8) => {
           return text.length * (fontSize * 0.5);
         };
         
@@ -230,8 +230,8 @@ export const generateChatPDF = async (
           });
           
           // Set column width with some padding
-          columnWidths[idx] = maxWidth + 10;
-          totalWidth += columnWidths[idx];
+          columnWidths[idx.toString()] = maxWidth + 10;
+          totalWidth += columnWidths[idx.toString()];
         });
         
         // Scale widths if total is too large
@@ -261,11 +261,11 @@ export const generateChatPDF = async (
             fontStyle: 'bold',
             halign: 'center'
           },
-          columnStyles: Object.keys(columnWidths).reduce((styles, idx) => {
+          columnStyles: Object.keys(columnWidths).reduce<Record<string, any>>((styles, idx) => {
             // Check if the column appears to contain numbers
             const isNumericColumn = formattedRows.length > 0 &&
               formattedRows.every(row => 
-                !row[idx] || /^[\$]?[0-9,.]+$/.test(row[idx].trim())
+                !row[parseInt(idx)] || /^[\$]?[0-9,.]+$/.test(row[parseInt(idx)].trim())
               );
             
             styles[idx] = {
