@@ -6,6 +6,7 @@ import styles from './InsightsList.module.css';
 import InsightsPanel from './InsightsPanel';
 import VisualizationPanel from './VisualizationPanel';
 import { FinancialInsights } from '../services/geminiService';
+import InsightCards, { InsightCardData } from './InsightCards';
 
 export interface SavedInsight {
   _id: string;
@@ -16,6 +17,7 @@ export interface SavedInsight {
   charts?: any;  // Add charts data
   rawResponse: string;
   createdAt: string;
+  insightCards?: InsightCardData[];  // Add insightCards data
   assistantChat?: Array<{
     text: string;
     sender: string;
@@ -151,6 +153,13 @@ export default function InsightsList({ savedInsights, currentInsight, currentFil
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                       >
+                        {/* Display insight cards if they exist */}
+                        {insight.insightCards && insight.insightCards.length > 0 && (
+                          <div className={styles.insightCardsContainer}>
+                            <InsightCards cards={insight.insightCards} />
+                          </div>
+                        )}
+                        
                         <InsightsPanel 
                           insights={{
                             summary: insight.summary,
@@ -159,6 +168,7 @@ export default function InsightsList({ savedInsights, currentInsight, currentFil
                             rawResponse: insight.rawResponse
                           }}
                           fileName={insight.fileName}
+                          savedInsightCards={insight.insightCards}
                         />
                       </motion.div>
                     )}

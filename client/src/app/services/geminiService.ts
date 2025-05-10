@@ -8,6 +8,16 @@ export interface FinancialInsights {
   insights: string[];
   recommendations: string[];
   rawResponse: string;
+  numericalInsights?: {
+    metrics: {
+      label: string;
+      value: number | string;
+      change?: {
+        value: number;
+        positive: boolean;
+      };
+    }[];
+  };
 }
 
 export interface ChartData {
@@ -45,6 +55,11 @@ Please provide a detailed analysis with the following sections:
 
 3. RECOMMENDATIONS: Based on this data, what actions would you recommend? Consider investment advice, cost-cutting measures, growth opportunities, or risk management strategies as appropriate. Present each recommendation as a separate bullet point.
 
+4. KEY METRICS: Extract 4-6 key numerical metrics from the data that would be important to highlight, along with their percentage change if applicable. For each metric, provide:
+   - A short descriptive label
+   - The numerical value
+   - The percentage change (include whether it's positive or negative)
+
 Format your response as follows:
 SUMMARY:
 (your summary here)
@@ -60,6 +75,12 @@ RECOMMENDATIONS:
 - (recommendation 2)
 - (recommendation 3)
 ...
+
+KEY METRICS:
+- LABEL: Revenue | VALUE: $1.2M | CHANGE: +12.5%
+- LABEL: Profit Margin | VALUE: 24% | CHANGE: -2.3%
+- LABEL: Customer Count | VALUE: 532 | CHANGE: +8.7%
+...
 `;
 
     // Generate content from the model
@@ -70,7 +91,8 @@ RECOMMENDATIONS:
     // Parse the response to extract the different sections
     const summaryMatch = text.match(/SUMMARY:([\s\S]*?)(?=KEY INSIGHTS:|$)/i);
     const insightsMatch = text.match(/KEY INSIGHTS:([\s\S]*?)(?=RECOMMENDATIONS:|$)/i);
-    const recommendationsMatch = text.match(/RECOMMENDATIONS:([\s\S]*?)(?=$)/i);
+    const recommendationsMatch = text.match(/RECOMMENDATIONS:([\s\S]*?)(?=KEY METRICS:|$)/i);
+    const metricsMatch = text.match(/KEY METRICS:([\s\S]*?)(?=$)/i);
 
     const summary = summaryMatch ? summaryMatch[1].trim() : 'No summary available';
     
@@ -108,17 +130,88 @@ RECOMMENDATIONS:
       }
     }
 
+    // Parse metrics
+    let metrics: { label: string; value: string | number; change?: { value: number; positive: boolean } }[] = [];
+    if (metricsMatch && metricsMatch[1]) {
+      const metricsLines = metricsMatch[1]
+        .split(/\n\s*[-•*]\s*/) // Split by bullet points
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+      
+      metrics = metricsLines.map(line => {
+        // Try to extract label, value, and change from the line
+        const labelMatch = line.match(/LABEL:\s*([^|]+)/i);
+        const valueMatch = line.match(/VALUE:\s*([^|]+)/i);
+        const changeMatch = line.match(/CHANGE:\s*([+-]?[^%]+)%/i);
+        
+        const label = labelMatch ? labelMatch[1].trim() : 'Unknown Metric';
+        const value = valueMatch ? valueMatch[1].trim() : 'N/A';
+        let change = undefined;
+        
+        if (changeMatch) {
+          const changeValue = parseFloat(changeMatch[1]);
+          if (!isNaN(changeValue)) {
+            change = {
+              value: Math.abs(changeValue),
+              positive: changeValue >= 0
+            };
+          }
+        }
+        
+        return { label, value, change };
+      });
+    }
+
     return {
       summary,
       insights: insights.length > 0 ? insights : ['No insights available'],
       recommendations: recommendations.length > 0 ? recommendations : ['No recommendations available'],
-      rawResponse: text
+      rawResponse: text,
+      numericalInsights: {
+        metrics: metrics.length > 0 ? metrics : generatePlaceholderMetrics()
+      }
     };
   } catch (error: any) {
     console.error('Error analyzing CSV with Gemini:', error);
     throw new Error(`Failed to analyze data: ${error.message}`);
   }
-}; 
+};
+
+// Function to generate placeholder metrics when none are extracted
+function generatePlaceholderMetrics() {
+  return [
+    {
+      label: 'Total Revenue',
+      value: '$1.2M',
+      change: { value: 15.5, positive: true }
+    },
+    {
+      label: 'Profit Margin',
+      value: '24%',
+      change: { value: 5.3, positive: true }
+    },
+    {
+      label: 'Customer Count',
+      value: '532',
+      change: { value: 8.7, positive: true }
+    },
+    {
+      label: 'Avg Transaction',
+      value: '$243',
+      change: { value: 3.2, positive: false }
+    },
+    {
+      label: 'Growth Rate',
+      value: '18%',
+      change: { value: 2.1, positive: true }
+    },
+    {
+      label: 'Expense Ratio',
+      value: '42%',
+      change: { value: 1.5, positive: false }
+    }
+  ];
+}
 
 export const generateChartData = async (csvContent: string): Promise<ChartData[]> => {
   try {

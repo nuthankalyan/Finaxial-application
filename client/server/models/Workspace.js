@@ -20,6 +20,9 @@ const InsightSchema = new mongoose.Schema({
   charts: {
     type: mongoose.Schema.Types.Mixed  // This allows any JSON structure
   },
+  insightCards: {
+    type: mongoose.Schema.Types.Mixed  // Store the numerical insight cards as Mixed type
+  },
   assistantChat: {
     type: mongoose.Schema.Types.Mixed  // Store the chat history as Mixed type
   },

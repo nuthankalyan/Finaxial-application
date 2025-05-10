@@ -5,13 +5,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import ReactMarkdown from 'react-markdown';
 import { FinancialInsights } from '../services/geminiService';
 import styles from './InsightsPanel.module.css';
+import InsightCards, { InsightCardData } from './InsightCards';
 
 interface InsightsPanelProps {
   insights: FinancialInsights | null;
   fileName: string | null;
+  savedInsightCards?: InsightCardData[];
 }
 
-export default function InsightsPanel({ insights, fileName }: InsightsPanelProps) {
+export default function InsightsPanel({ insights, fileName, savedInsightCards }: InsightsPanelProps) {
   const [activeTab, setActiveTab] = useState<'summary' | 'insights' | 'recommendations'>('summary');
 
   if (!insights) {
@@ -34,6 +36,27 @@ export default function InsightsPanel({ insights, fileName }: InsightsPanelProps
   const contentVariants = {
     hidden: { opacity: 0, x: 20 },
     visible: { opacity: 1, x: 0, transition: { duration: 0.3 } },
+  };
+
+  // Get numerical insights from the data
+  const getNumericalInsights = (): InsightCardData[] => {
+    // If saved insight cards are provided, use them
+    if (savedInsightCards && savedInsightCards.length > 0) {
+      return savedInsightCards;
+    }
+    
+    // Otherwise, generate from the insights data
+    if (!insights.numericalInsights || !insights.numericalInsights.metrics || insights.numericalInsights.metrics.length === 0) {
+      // If no metrics are available, return an empty array
+      return [];
+    }
+    
+    // Map the metrics to the format required by InsightCards
+    return insights.numericalInsights.metrics.map(metric => ({
+      value: metric.value,
+      label: metric.label,
+      change: metric.change
+    }));
   };
 
   return (
@@ -122,6 +145,9 @@ export default function InsightsPanel({ insights, fileName }: InsightsPanelProps
               exit="hidden"
               className={styles.tabContent}
             >
+              {/* Numerical Insight Cards */}
+              <InsightCards cards={getNumericalInsights()} />
+              
               <div className={styles.iconContainer}>
                 <svg xmlns="http://www.w3.org/2000/svg" className={styles.icon} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="22 12 16 12 14 15 10 15 8 12 2 12"></polyline>

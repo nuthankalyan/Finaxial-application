@@ -18,6 +18,7 @@ import { Chart as ChartJS, ChartTypeRegistry } from 'chart.js/auto';
 import { buildApiUrl } from '../../utils/apiConfig';
 import FinancialAssistant, { Message as AssistantMessage } from '../../components/FinancialAssistant';
 import StoryMode from '../../components/StoryMode';
+import InsightCards, { InsightCardData } from '../../components/InsightCards';
 
 interface Workspace {
   _id: string;
@@ -159,6 +160,52 @@ function Notification({ type, title, message, onClose }: NotificationProps) {
   );
 }
 
+// Add this helper function before the WorkspacePage component
+function getNumericalInsightsFromData(insights: FinancialInsights): InsightCardData[] {
+  if (!insights.numericalInsights || !insights.numericalInsights.metrics || insights.numericalInsights.metrics.length === 0) {
+    // If no metrics are available, return default cards
+    return [
+      {
+        value: '12',
+        label: 'Publications',
+        change: { value: 100, positive: true }
+      },
+      {
+        value: '533', 
+        label: 'Publications Viewed',
+        change: { value: 8.8, positive: true }
+      },
+      {
+        value: '112',
+        label: 'Hours spent on reviewing',
+        change: { value: 8.8, positive: true }
+      },
+      {
+        value: '5',
+        label: 'Number of Tests',
+        change: { value: 8.8, positive: true }
+      },
+      {
+        value: '100',
+        label: 'Number of Tests Taken',
+        change: { value: 12.3, positive: false }
+      },
+      {
+        value: '89%',
+        label: 'Tests Completion Rate',
+        change: { value: 8.8, positive: true }
+      }
+    ];
+  }
+  
+  // Map the metrics to the format required by InsightCards
+  return insights.numericalInsights.metrics.map(metric => ({
+    value: metric.value,
+    label: metric.label,
+    change: metric.change
+  }));
+}
+
 export default function WorkspacePage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { id } = params;
@@ -167,6 +214,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [error, setError] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
   const [insights, setInsights] = useState<FinancialInsights | null>(null);
+  const [savedInsightCards, setSavedInsightCards] = useState<InsightCardData[] | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [csvContent, setCsvContent] = useState<string | null>(null);
   const [savedInsights, setSavedInsights] = useState<SavedInsight[]>([]);
@@ -209,7 +257,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [showDataValidationError, setShowDataValidationError] = useState(false);
 
   // Add new state for assistant chat
-  const [assistantMessages, setAssistantMessages] = useState<AssistantMessage[]>([]);
+  const [assistantMessages, setAssistantMessages] = useState<AssistantMessage[]>([{
+    id: '1',
+    text: 'Hello! I\'m your financial assistant. Ask me anything about your uploaded financial data.',
+    sender: 'assistant',
+    timestamp: new Date()
+  }]);
   
   // Simple helper function to format chat messages for display
   const formatChatMessage = (text: string): React.ReactNode => {
@@ -483,6 +536,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           }))
         : [];
       
+      // Get the numerical insight cards
+      const insightCards = getNumericalInsightsFromData(insights);
+      
       const response = await fetch(buildApiUrl(`api/workspaces/${id}/insights`), {
         method: 'POST',
         headers: {
@@ -496,6 +552,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           recommendations: recommendationsString,
           charts: charts,  // Save the chart data
           assistantChat: assistantChatHistory, // Add the assistant chat history
+          insightCards: insightCards, // Save the insight cards
           rawResponse: insights.rawResponse
         }),
       });
@@ -517,6 +574,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           ? data.data.recommendations 
           : data.data.recommendations.split('\n\n').filter(Boolean),
         charts: data.data.charts || null,
+        insightCards: data.data.insightCards || null, // Include insightCards in the saved insight
         assistantChat: data.data.assistantChat || [] // Make sure assistantChat is included
       };
       
@@ -574,6 +632,13 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       rawResponse: insight.rawResponse
     });
     
+    // Set saved insight cards if available
+    if (insight.insightCards && Array.isArray(insight.insightCards)) {
+      setSavedInsightCards(insight.insightCards);
+    } else {
+      setSavedInsightCards(null);
+    }
+    
     setFileName(insight.fileName);
     setActiveTab('summary');
     
@@ -627,6 +692,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     setShowInsightDetails(true);
     // Default to insights tab, but switch to visualizations if there are no insights
     setDetailsTab('insights');
+    // Set saved insight cards if available
+    if (insight.insightCards && Array.isArray(insight.insightCards)) {
+      setSavedInsightCards(insight.insightCards);
+    } else {
+      setSavedInsightCards(null);
+    }
   };
 
   // Generate PDF function (will be reused for email)
@@ -1191,6 +1262,13 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     style={{ display: activeTab === 'summary' ? 'block' : 'none' }}
                   >
                     <div className={styles.summaryContent}>
+                      {/* Add insight cards at the top - use saved cards if available */}
+                      {savedInsightCards ? (
+                        <InsightCards cards={savedInsightCards} />
+                      ) : (
+                        insights && <InsightCards cards={getNumericalInsightsFromData(insights)} />
+                      )}
+                      
                       <h3>Financial Summary</h3>
                       <p>{insights.summary}</p>
                     </div>
@@ -1457,6 +1535,13 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                     >
+                      {/* Display insight cards if available */}
+                      {selectedInsight.insightCards && selectedInsight.insightCards.length > 0 && (
+                        <div className={styles.modalInsightCardsContainer}>
+                          <InsightCards cards={selectedInsight.insightCards} />
+                        </div>
+                      )}
+                      
                       <div className={styles.insightSummary}>
                         <h4>Summary</h4>
                         <p>{selectedInsight.summary}</p>

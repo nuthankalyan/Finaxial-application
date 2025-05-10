@@ -169,7 +169,7 @@ exports.deleteWorkspace = async (req, res) => {
 // @access  Private
 exports.saveInsights = async (req, res) => {
   try {
-    const { fileName, summary, insights, recommendations, charts, assistantChat, rawResponse } = req.body;
+    const { fileName, summary, insights, recommendations, charts, assistantChat, insightCards, rawResponse } = req.body;
     
     if (!fileName || !summary || !insights || !recommendations) {
       return res.status(400).json({
@@ -204,6 +204,7 @@ exports.saveInsights = async (req, res) => {
       recommendations,
       charts,
       assistantChat,
+      insightCards,
       rawResponse,
       createdAt: Date.now()
     });

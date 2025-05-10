@@ -141,6 +141,11 @@
   border-radius: 1px;
 }
 
+.insightCardsContainer {
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 0;
+}
+
 @media (prefers-color-scheme: dark) {
   .title {
     color: #f3f4f6;
