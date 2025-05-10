@@ -735,18 +735,64 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       doc.setDrawColor(200, 200, 200);
       doc.line(15, 40, 195, 40);
       
+      // Variables for positioning
+      let currentY = 50;
+      let summaryEndY = 0;
+      
+      // Get insight cards - use saved ones if available, otherwise generate from insights
+      const insightCardsData = savedInsightCards || getNumericalInsightsFromData(insights);
+      
+      // Add Key Metrics section for insight cards
+      if (insightCardsData && insightCardsData.length > 0) {
+        doc.setFontSize(16);
+        doc.setTextColor(33, 37, 41);
+        doc.text('Key Metrics', 15, currentY);
+        
+        // Create a table for insight cards
+        const cardsTableData = insightCardsData.map(card => {
+          const changeText = card.change ? 
+            `${card.change.positive ? '+' : '-'}${Math.abs(card.change.value)}%` : 
+            'N/A';
+          return [card.label, card.value.toString(), changeText];
+        });
+        
+        autoTable(doc, {
+          startY: currentY + 5,
+          head: [['Metric', 'Value', 'Change']],
+          body: cardsTableData,
+          theme: 'grid',
+          headStyles: { 
+            fillColor: [79, 70, 229],
+            textColor: 255
+          },
+          columnStyles: {
+            0: { cellWidth: 'auto' },
+            1: { cellWidth: 40, halign: 'center' },
+            2: { cellWidth: 40, halign: 'center' }
+          },
+          styles: {
+            cellPadding: 5,
+            fontSize: 10
+          },
+          margin: { bottom: 10 }
+        });
+        
+        // Update current Y position after drawing the insight cards table
+        currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 85;
+      }
+      
       // Add summary section
       doc.setFontSize(16);
       doc.setTextColor(33, 37, 41);
-      doc.text('Summary', 15, 50);
+      doc.text('Summary', 15, currentY);
       
       // Split summary into lines to fit page width
       doc.setFontSize(11);
       doc.setTextColor(75, 85, 99);
       const textLines = doc.splitTextToSize(insights.summary, 170);
-      doc.text(textLines, 15, 60);
+      doc.text(textLines, 15, currentY + 10);
       
-      const summaryEndY = Math.min(60 + textLines.length * 5, 260);
+      summaryEndY = Math.min(currentY + 10 + textLines.length * 5, 260);
       
       // Add key insights section
       doc.setFontSize(16);
@@ -1708,18 +1754,62 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       doc.setDrawColor(200, 200, 200);
                       doc.line(15, 40, 195, 40);
                       
+                      // Variables for positioning
+                      let currentY = 50;
+                      let summaryEndY = 0;
+                      
+                      // Add insight cards section if available
+                      if (selectedInsight.insightCards && Array.isArray(selectedInsight.insightCards) && selectedInsight.insightCards.length > 0) {
+                        // Add Key Metrics section for insight cards
+                        doc.setFontSize(16);
+                        doc.setTextColor(33, 37, 41);
+                        doc.text('Key Metrics', 15, currentY);
+                        
+                        // Create a table for insight cards
+                        const cardsTableData = selectedInsight.insightCards.map(card => {
+                          const changeText = card.change ? 
+                            `${card.change.positive ? '+' : '-'}${Math.abs(card.change.value)}%` : 
+                            'N/A';
+                          return [card.label, card.value.toString(), changeText];
+                        });
+                        
+                        autoTable(doc, {
+                          startY: currentY + 5,
+                          head: [['Metric', 'Value', 'Change']],
+                          body: cardsTableData,
+                          theme: 'grid',
+                          headStyles: { 
+                            fillColor: [79, 70, 229],
+                            textColor: 255
+                          },
+                          columnStyles: {
+                            0: { cellWidth: 'auto' },
+                            1: { cellWidth: 40, halign: 'center' },
+                            2: { cellWidth: 40, halign: 'center' }
+                          },
+                          styles: {
+                            cellPadding: 5,
+                            fontSize: 10
+                          },
+                          margin: { bottom: 10 }
+                        });
+                        
+                        // Update current Y position after drawing the insight cards table
+                        currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 85;
+                      }
+                      
                       // Add summary section
                       doc.setFontSize(16);
                       doc.setTextColor(33, 37, 41);
-                      doc.text('Summary', 15, 50);
+                      doc.text('Summary', 15, currentY);
                       
                       // Split summary into lines to fit page width
                       doc.setFontSize(11);
                       doc.setTextColor(75, 85, 99);
                       const textLines = doc.splitTextToSize(tempInsights.summary, 170);
-                      doc.text(textLines, 15, 60);
+                      doc.text(textLines, 15, currentY + 10);
                       
-                      const summaryEndY = Math.min(60 + textLines.length * 5, 260);
+                      summaryEndY = Math.min(currentY + 10 + textLines.length * 5, 260);
                       
                       // Add key insights section
                       doc.setFontSize(16);
