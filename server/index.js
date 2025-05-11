@@ -37,6 +37,7 @@ app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/workspaces', require('./routes/workspaceRoutes'));
 app.use('/api/email', require('./routes/emailRoutes')); // Add email routes
 app.use('/api/vector', require('./routes/vectorSearchRoutes')); // Add vector search routes
+app.use('/api/activity', require('./routes/userActivityRoutes')); // Add user activity routes
 
 // Test route
 app.get('/', (req, res) => {

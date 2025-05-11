@@ -19,6 +19,9 @@ import { buildApiUrl } from '../../utils/apiConfig';
 import FinancialAssistant, { Message as AssistantMessage } from '../../components/FinancialAssistant';
 import StoryMode from '../../components/StoryMode';
 import InsightCards, { InsightCardData } from '../../components/InsightCards';
+import { logReportGeneration } from '../../services/activityService';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 interface Workspace {
   _id: string;
@@ -701,7 +704,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   };
 
   // Generate PDF function (will be reused for email)
-  const generatePdf = (): jsPDF | null => {
+  const generatePdf = async (): Promise<jsPDF | null> => {
     if (!insights || !fileName) return null;
     
     try {
@@ -972,34 +975,40 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         doc.text(`Page ${i} of ${pageCount}`, 180, footerPosition);
       }
       
+      // Log the report generation activity
+      try {
+        await logReportGeneration(params.id, selectedInsight?._id || 'workspace-summary', 'pdf');
+      } catch (error) {
+        console.error('Failed to log report generation:', error);
+        // Continue with PDF generation even if logging fails
+      }
+      
       return doc;
-    } catch (err: any) {
-      console.error('Error generating PDF:', err);
-      setError(`Failed to generate PDF: ${err.message}`);
-      setNotification({
-        show: true,
-        type: 'error',
-        title: 'PDF Generation Failed',
-        message: err.message || 'Failed to generate PDF report'
-      });
+    } catch (error) {
+      console.error('Error generating PDF:', error);
       return null;
     }
   };
 
+  // Export PDF handler
   const exportToPdf = async () => {
-    if (!insights || !fileName) return;
-    
     setExporting(true);
     
     try {
-      const doc = generatePdf();
-      if (doc) {
+      const doc = await generatePdf();
+      
+      if (doc && fileName) {
         // Save the PDF
-        doc.save(`financial-insights-${fileName.replace(/\.[^/.]+$/, '')}.pdf`);
+        doc.save(`${fileName.replace(/\.[^/.]+$/, '')}-report.pdf`);
+        
+        // Show success message
+        toast.success('PDF exported successfully');
+      } else {
+        toast.error('Failed to generate PDF');
       }
-    } catch (err: any) {
-      console.error('Error exporting PDF:', err);
-      setError(`Failed to export as PDF: ${err.message}`);
+    } catch (error) {
+      console.error('Error exporting PDF:', error);
+      toast.error('Failed to export PDF');
     } finally {
       setExporting(false);
     }
@@ -1011,7 +1020,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     setSending(true);
     
     try {
-      const doc = generatePdf();
+      const doc = await generatePdf();
       if (!doc) {
         throw new Error('Failed to generate PDF');
       }
@@ -1138,372 +1147,375 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   }
 
   return (
-    <div className={styles.container}>
-      <div className={styles.workspaceLayout}>
-        {/* Sidebar with history */}
-        <motion.div 
-          className={styles.sidebar}
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <h2 className={styles.sidebarTitle}>History</h2>
-          <div className={styles.previousInsights}>
-            <h3>Previously generated insights</h3>
-            {savedInsights.length > 0 ? (
-              <div className={styles.insightsList}>
-                {savedInsights.map((insight) => (
-                  <motion.div 
-                    key={insight._id}
-                    className={styles.insightItem}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={() => openInsightDetails(insight)}
-                  >
-                    <div className={styles.insightContent}>
-                      <h4>{insight.fileName}</h4>
-                      <p>{formatDate(insight.createdAt)}</p>
-                    </div>
-                    {insight.charts && Array.isArray(insight.charts) && insight.charts.length > 0 && (
-                      <button 
-                        className={styles.viewVisualizations}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openInsightDetails(insight);
-                          setDetailsTab('visualizations');
-                        }}
-                        title="View Visualizations"
-                      >
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          viewBox="0 0 24 24" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          strokeWidth="2" 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round"
-                          className={styles.visualizationIcon}
-                        >
-                          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="3" y1="9" x2="21" y2="9"></line>
-                          <line x1="9" y1="21" x2="9" y2="9"></line>
-                        </svg>
-                      </button>
-                    )}
-                  </motion.div>
-                ))}
-              </div>
-            ) : (
-              <p className={styles.noInsights}>No insights generated yet</p>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Main content area */}
-        <div className={styles.mainContent}>
-          {/* Header */}
+    <div className={styles.workspaceContainer}>
+      <ToastContainer position="top-right" autoClose={3000} />
+      <div className={styles.container}>
+        <div className={styles.workspaceLayout}>
+          {/* Sidebar with history */}
           <motion.div 
-            className={styles.header}
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
+            className={styles.sidebar}
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <Link href="/dashboard">
-              <motion.button 
-                className={styles.backButton}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-              >
-                &larr; back to dashboard
-              </motion.button>
-            </Link>
-            
-            <div className={styles.workspaceTitle}>
-              <h1>{workspace?.name || 'Session name'}</h1>
-            </div>
-            
-            <div className={styles.workspaceDate}>
-              <p>Created: {workspace ? formatDate(workspace.createdAt) : '—'}</p>
-              <p>Last updated: {workspace ? formatDate(workspace.updatedAt) : '—'}</p>
-            </div>
-          </motion.div>
-
-          {/* Upload area */}
-          <motion.div 
-            className={styles.uploadArea}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.1 }}
-          >
-            <div className={styles.disclaimerBox}>
-              Disclaimer: This product can be leveraged to different business needs and doesn't limit to financial industry only
-            </div>
-            
-            <div id="csv-uploader" className={styles.uploaderContainer}>
-              <CsvUploader 
-                onFileUpload={handleFileUpload} 
-                isLoading={analyzing}
-              />
-            </div>
-          </motion.div>
-
-          {/* Content Tabs */}
-          <motion.div 
-            className={styles.contentArea}
-            ref={contentRef}
-            initial={{ opacity: 0 }}
-            animate={{ 
-              opacity: insights ? 1 : 0,
-              height: insights ? 'auto' : '0'
-            }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className={styles.tabsContainer}>
-              <div className={styles.tabs}>
-                <button 
-                  className={`${styles.tabButton} ${activeTab === 'summary' ? styles.activeTab : ''}`}
-                  onClick={() => setActiveTab('summary')}
-                >
-                  Summary
-                </button>
-                <button 
-                  className={`${styles.tabButton} ${activeTab === 'insights' ? styles.activeTab : ''}`}
-                  onClick={() => setActiveTab('insights')}
-                >
-                  Insights
-                </button>
-                <button 
-                  className={`${styles.tabButton} ${activeTab === 'recommendations' ? styles.activeTab : ''}`}
-                  onClick={() => setActiveTab('recommendations')}
-                >
-                  Recommendations
-                </button>
-                <button 
-                  className={`${styles.tabButton} ${activeTab === 'visualizations' ? styles.activeTab : ''}`}
-                  onClick={() => setActiveTab('visualizations')}
-                >
-                  Visualizations
-                </button>
-                <button 
-                  className={`${styles.tabButton} ${activeTab === 'storyMode' ? styles.activeTab : ''}`}
-                  onClick={() => setActiveTab('storyMode')}
-                >
-                  Story Mode
-                </button>
-                <button 
-                  className={`${styles.tabButton} ${activeTab === 'assistant' ? styles.activeTab : ''}`}
-                  onClick={() => setActiveTab('assistant')}
-                >
-                  Assistant
-                </button>
-              </div>
-            </div>
-
-            {/* Tab content - using display property instead of conditional rendering to preserve state */}
-            {insights && (
-              <>
-                <div className={styles.allTabContents}>
-                  <div 
-                    className={styles.tabContentWrapper} 
-                    style={{ display: activeTab === 'summary' ? 'block' : 'none' }}
-                  >
-                    <div className={styles.summaryContent}>
-                      {/* Add insight cards at the top - use saved cards if available */}
-                      {savedInsightCards ? (
-                        <InsightCards cards={savedInsightCards} />
-                      ) : (
-                        insights && <InsightCards cards={getNumericalInsightsFromData(insights)} />
+            <h2 className={styles.sidebarTitle}>History</h2>
+            <div className={styles.previousInsights}>
+              <h3>Previously generated insights</h3>
+              {savedInsights.length > 0 ? (
+                <div className={styles.insightsList}>
+                  {savedInsights.map((insight) => (
+                    <motion.div 
+                      key={insight._id}
+                      className={styles.insightItem}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={() => openInsightDetails(insight)}
+                    >
+                      <div className={styles.insightContent}>
+                        <h4>{insight.fileName}</h4>
+                        <p>{formatDate(insight.createdAt)}</p>
+                      </div>
+                      {insight.charts && Array.isArray(insight.charts) && insight.charts.length > 0 && (
+                        <button 
+                          className={styles.viewVisualizations}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openInsightDetails(insight);
+                            setDetailsTab('visualizations');
+                          }}
+                          title="View Visualizations"
+                        >
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                            className={styles.visualizationIcon}
+                          >
+                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                            <line x1="3" y1="9" x2="21" y2="9"></line>
+                            <line x1="9" y1="21" x2="9" y2="9"></line>
+                          </svg>
+                        </button>
                       )}
-                      
-                      <h3>Financial Summary</h3>
-                      <p>{insights.summary}</p>
-                    </div>
-                  </div>
-                  
-                  <div 
-                    className={styles.tabContentWrapper} 
-                    style={{ display: activeTab === 'insights' ? 'block' : 'none' }}
-                  >
-                    <div className={styles.insightsContent}>
-                      <h3>Key Insights</h3>
-                      {Array.isArray(insights?.insights) && insights.insights.length > 0 ? (
-                        <ul>
-                          {insights.insights.map((insight, index) => (
-                            <motion.li 
-                              key={index}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ duration: 0.3, delay: index * 0.1 }}
-                            >
-                              {insight}
-                            </motion.li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>No insights available for this analysis.</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div 
-                    className={styles.tabContentWrapper} 
-                    style={{ display: activeTab === 'recommendations' ? 'block' : 'none' }}
-                  >
-                    <div className={styles.recommendationsContent}>
-                      <h3>Recommendations</h3>
-                      {Array.isArray(insights?.recommendations) && insights.recommendations.length > 0 ? (
-                        <ul>
-                          {insights.recommendations.map((recommendation, index) => (
-                            <motion.li 
-                              key={index}
-                              initial={{ opacity: 0, x: -10 }}
-                              animate={{ opacity: 1, x: 0 }}
-                              transition={{ duration: 0.3, delay: index * 0.1 }}
-                            >
-                              {recommendation}
-                            </motion.li>
-                          ))}
-                        </ul>
-                      ) : (
-                        <p>No recommendations available for this analysis.</p>
-                      )}
-                    </div>
-                  </div>
-                  
-                  <div 
-                    className={styles.tabContentWrapper} 
-                    style={{ display: activeTab === 'visualizations' ? 'block' : 'none' }}
-                  >
-                    <div className={styles.visualizationsContent}>
-                      <VisualizationPanel 
-                        charts={charts} 
-                        fileName={fileName}
-                        isLoading={generatingCharts}
-                      />
-                    </div>
-                  </div>
-
-                  <div 
-                    className={styles.tabContentWrapper} 
-                    style={{ display: activeTab === 'storyMode' ? 'block' : 'none' }}
-                  >
-                    <div className={styles.storyModeContent}>
-                      <StoryMode 
-                        csvData={csvContent}
-                        fileName={fileName}
-                        insights={insights}
-                        isEnabled={!!insights}
-                        chartData={charts || []}
-                      />
-                    </div>
-                  </div>
-
-                  <div 
-                    className={styles.tabContentWrapper} 
-                    style={{ display: activeTab === 'assistant' ? 'block' : 'none' }}
-                  >
-                    <div className={styles.assistantContent}>
-                      <FinancialAssistant 
-                        csvData={csvContent ? csvContent : null}
-                        fileName={fileName}
-                        isEnabled={!!insights}
-                        onMessagesChange={handleAssistantMessagesChange}
-                        initialMessages={assistantMessages}
-                      />
-                    </div>
-                  </div>
-
-                  {/* For transition effects, use an overlay that slides/fades */}
-                  <motion.div 
-                    className={styles.tabTransitionOverlay}
-                    key={activeTab}
-                    initial={{ opacity: 1 }}
-                    animate={{ opacity: 0 }}
-                    exit={{ opacity: 0 }}
-                    transition={{ duration: 0.3 }}
-                  />
+                    </motion.div>
+                  ))}
                 </div>
+              ) : (
+                <p className={styles.noInsights}>No insights generated yet</p>
+              )}
+            </div>
+          </motion.div>
 
-                {/* Save/Export/Email buttons */}
-                <div className={styles.saveButtonContainer}>
-                  {!isViewingHistory && (
+          {/* Main content area */}
+          <div className={styles.mainContent}>
+            {/* Header */}
+            <motion.div 
+              className={styles.header}
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4 }}
+            >
+              <Link href="/dashboard">
+                <motion.button 
+                  className={styles.backButton}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  &larr; back to dashboard
+                </motion.button>
+              </Link>
+              
+              <div className={styles.workspaceTitle}>
+                <h1>{workspace?.name || 'Session name'}</h1>
+              </div>
+              
+              <div className={styles.workspaceDate}>
+                <p>Created: {workspace ? formatDate(workspace.createdAt) : '—'}</p>
+                <p>Last updated: {workspace ? formatDate(workspace.updatedAt) : '—'}</p>
+              </div>
+            </motion.div>
+
+            {/* Upload area */}
+            <motion.div 
+              className={styles.uploadArea}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.4, delay: 0.1 }}
+            >
+              <div className={styles.disclaimerBox}>
+                Disclaimer: This product can be leveraged to different business needs and doesn't limit to financial industry only
+              </div>
+              
+              <div id="csv-uploader" className={styles.uploaderContainer}>
+                <CsvUploader 
+                  onFileUpload={handleFileUpload} 
+                  isLoading={analyzing}
+                />
+              </div>
+            </motion.div>
+
+            {/* Content Tabs */}
+            <motion.div 
+              className={styles.contentArea}
+              ref={contentRef}
+              initial={{ opacity: 0 }}
+              animate={{ 
+                opacity: insights ? 1 : 0,
+                height: insights ? 'auto' : '0'
+              }}
+              transition={{ duration: 0.5 }}
+            >
+              <div className={styles.tabsContainer}>
+                <div className={styles.tabs}>
+                  <button 
+                    className={`${styles.tabButton} ${activeTab === 'summary' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('summary')}
+                  >
+                    Summary
+                  </button>
+                  <button 
+                    className={`${styles.tabButton} ${activeTab === 'insights' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('insights')}
+                  >
+                    Insights
+                  </button>
+                  <button 
+                    className={`${styles.tabButton} ${activeTab === 'recommendations' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('recommendations')}
+                  >
+                    Recommendations
+                  </button>
+                  <button 
+                    className={`${styles.tabButton} ${activeTab === 'visualizations' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('visualizations')}
+                  >
+                    Visualizations
+                  </button>
+                  <button 
+                    className={`${styles.tabButton} ${activeTab === 'storyMode' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('storyMode')}
+                  >
+                    Story Mode
+                  </button>
+                  <button 
+                    className={`${styles.tabButton} ${activeTab === 'assistant' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('assistant')}
+                  >
+                    Assistant
+                  </button>
+                </div>
+              </div>
+
+              {/* Tab content - using display property instead of conditional rendering to preserve state */}
+              {insights && (
+                <>
+                  <div className={styles.allTabContents}>
+                    <div 
+                      className={styles.tabContentWrapper} 
+                      style={{ display: activeTab === 'summary' ? 'block' : 'none' }}
+                    >
+                      <div className={styles.summaryContent}>
+                        {/* Add insight cards at the top - use saved cards if available */}
+                        {savedInsightCards ? (
+                          <InsightCards cards={savedInsightCards} />
+                        ) : (
+                          insights && <InsightCards cards={getNumericalInsightsFromData(insights)} />
+                        )}
+                        
+                        <h3>Financial Summary</h3>
+                        <p>{insights.summary}</p>
+                      </div>
+                    </div>
+                    
+                    <div 
+                      className={styles.tabContentWrapper} 
+                      style={{ display: activeTab === 'insights' ? 'block' : 'none' }}
+                    >
+                      <div className={styles.insightsContent}>
+                        <h3>Key Insights</h3>
+                        {Array.isArray(insights?.insights) && insights.insights.length > 0 ? (
+                          <ul>
+                            {insights.insights.map((insight, index) => (
+                              <motion.li 
+                                key={index}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                              >
+                                {insight}
+                              </motion.li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p>No insights available for this analysis.</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div 
+                      className={styles.tabContentWrapper} 
+                      style={{ display: activeTab === 'recommendations' ? 'block' : 'none' }}
+                    >
+                      <div className={styles.recommendationsContent}>
+                        <h3>Recommendations</h3>
+                        {Array.isArray(insights?.recommendations) && insights.recommendations.length > 0 ? (
+                          <ul>
+                            {insights.recommendations.map((recommendation, index) => (
+                              <motion.li 
+                                key={index}
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                transition={{ duration: 0.3, delay: index * 0.1 }}
+                              >
+                                {recommendation}
+                              </motion.li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p>No recommendations available for this analysis.</p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div 
+                      className={styles.tabContentWrapper} 
+                      style={{ display: activeTab === 'visualizations' ? 'block' : 'none' }}
+                    >
+                      <div className={styles.visualizationsContent}>
+                        <VisualizationPanel 
+                          charts={charts} 
+                          fileName={fileName}
+                          isLoading={generatingCharts}
+                        />
+                      </div>
+                    </div>
+
+                    <div 
+                      className={styles.tabContentWrapper} 
+                      style={{ display: activeTab === 'storyMode' ? 'block' : 'none' }}
+                    >
+                      <div className={styles.storyModeContent}>
+                        <StoryMode 
+                          csvData={csvContent}
+                          fileName={fileName}
+                          insights={insights}
+                          isEnabled={!!insights}
+                          chartData={charts || []}
+                        />
+                      </div>
+                    </div>
+
+                    <div 
+                      className={styles.tabContentWrapper} 
+                      style={{ display: activeTab === 'assistant' ? 'block' : 'none' }}
+                    >
+                      <div className={styles.assistantContent}>
+                        <FinancialAssistant 
+                          csvData={csvContent ? csvContent : null}
+                          fileName={fileName}
+                          isEnabled={!!insights}
+                          onMessagesChange={handleAssistantMessagesChange}
+                          initialMessages={assistantMessages}
+                        />
+                      </div>
+                    </div>
+
+                    {/* For transition effects, use an overlay that slides/fades */}
+                    <motion.div 
+                      className={styles.tabTransitionOverlay}
+                      key={activeTab}
+                      initial={{ opacity: 1 }}
+                      animate={{ opacity: 0 }}
+                      exit={{ opacity: 0 }}
+                      transition={{ duration: 0.3 }}
+                    />
+                  </div>
+
+                  {/* Save/Export/Email buttons */}
+                  <div className={styles.saveButtonContainer}>
+                    {!isViewingHistory && (
+                      <motion.button
+                        className={styles.saveButton}
+                        onClick={saveInsightsToDatabase}
+                        disabled={saving || exporting || sending}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {saving ? (
+                          <>
+                            <div className={styles.buttonSpinner}></div>
+                            Saving...
+                          </>
+                        ) : (
+                          'Save Insights'
+                        )}
+                      </motion.button>
+                    )}
+                    
                     <motion.button
-                      className={styles.saveButton}
-                      onClick={saveInsightsToDatabase}
+                      className={styles.exportButton}
+                      onClick={exportToPdf}
                       disabled={saving || exporting || sending}
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
                     >
-                      {saving ? (
+                      {exporting ? (
                         <>
                           <div className={styles.buttonSpinner}></div>
-                          Saving...
+                          Exporting...
                         </>
                       ) : (
-                        'Save Insights'
+                        <>
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className={styles.exportIcon} 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                            <polyline points="7 10 12 15 17 10"></polyline>
+                            <line x1="12" y1="15" x2="12" y2="3"></line>
+                          </svg>
+                          Export PDF
+                        </>
                       )}
                     </motion.button>
-                  )}
-                  
-                  <motion.button
-                    className={styles.exportButton}
-                    onClick={exportToPdf}
-                    disabled={saving || exporting || sending}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    {exporting ? (
-                      <>
-                        <div className={styles.buttonSpinner}></div>
-                        Exporting...
-                      </>
-                    ) : (
-                      <>
-                        <svg 
-                          xmlns="http://www.w3.org/2000/svg" 
-                          className={styles.exportIcon} 
-                          viewBox="0 0 24 24" 
-                          fill="none" 
-                          stroke="currentColor" 
-                          strokeWidth="2" 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round"
-                        >
-                          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                          <polyline points="7 10 12 15 17 10"></polyline>
-                          <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                        Export PDF
-                      </>
-                    )}
-                  </motion.button>
-                  
-                  <motion.button
-                    className={styles.emailButton}
-                    onClick={() => setShowEmailModal(true)}
-                    disabled={saving || exporting || sending}
-                    whileHover={{ scale: 1.05 }}
-                    whileTap={{ scale: 0.95 }}
-                  >
-                    <svg 
-                      xmlns="http://www.w3.org/2000/svg" 
-                      className={styles.emailIcon} 
-                      viewBox="0 0 24 24" 
-                      fill="none" 
-                      stroke="currentColor" 
-                      strokeWidth="2" 
-                      strokeLinecap="round" 
-                      strokeLinejoin="round"
+                    
+                    <motion.button
+                      className={styles.emailButton}
+                      onClick={() => setShowEmailModal(true)}
+                      disabled={saving || exporting || sending}
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
                     >
-                      <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                      <polyline points="22,6 12,13 2,6"></polyline>
-                    </svg>
-                    Send via Email
-                  </motion.button>
-                </div>
-              </>
-            )}
-          </motion.div>
+                      <svg 
+                        xmlns="http://www.w3.org/2000/svg" 
+                        className={styles.emailIcon} 
+                        viewBox="0 0 24 24" 
+                        fill="none" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      >
+                        <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+                        <polyline points="22,6 12,13 2,6"></polyline>
+                      </svg>
+                      Send via Email
+                    </motion.button>
+                  </div>
+                </>
+              )}
+            </motion.div>
+          </div>
         </div>
       </div>
 

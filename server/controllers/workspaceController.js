@@ -1,4 +1,5 @@
 const Workspace = require('../models/Workspace');
+const UserActivity = require('../models/UserActivity');
 
 // @desc    Create a new workspace
 // @route   POST /api/workspaces
@@ -213,6 +214,17 @@ exports.saveInsights = async (req, res) => {
     workspace.updatedAt = Date.now();
     await workspace.save();
     
+    // Log insight generation activity
+    await UserActivity.create({
+      user: req.user.id,
+      workspace: workspace._id,
+      activityType: 'insight_generated',
+      metadata: {
+        fileName,
+        insightId: workspace.financialInsights[workspace.financialInsights.length - 1]._id
+      }
+    });
+    
     res.status(201).json({
       success: true,
       data: workspace.financialInsights[workspace.financialInsights.length - 1]
@@ -253,6 +265,66 @@ exports.getInsights = async (req, res) => {
       success: true,
       count: workspace.financialInsights.length,
       data: workspace.financialInsights
+    });
+    
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Log report generation
+// @route   POST /api/workspaces/:id/report
+// @access  Private
+exports.logReportGeneration = async (req, res) => {
+  try {
+    const { insightId, reportType } = req.body;
+    
+    const workspace = await Workspace.findById(req.params.id);
+    
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: 'Workspace not found'
+      });
+    }
+    
+    // Check if user is owner or member
+    if (workspace.owner.toString() !== req.user.id && 
+        !workspace.members.includes(req.user.id)) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this workspace'
+      });
+    }
+    
+    // Find the insight
+    const insight = workspace.financialInsights.id(insightId);
+    
+    if (!insight) {
+      return res.status(404).json({
+        success: false,
+        message: 'Insight not found'
+      });
+    }
+    
+    // Log report generation activity
+    const activity = await UserActivity.create({
+      user: req.user.id,
+      workspace: workspace._id,
+      activityType: 'report_generated',
+      metadata: {
+        fileName: insight.fileName,
+        insightId,
+        reportType
+      }
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: activity
     });
     
   } catch (error) {

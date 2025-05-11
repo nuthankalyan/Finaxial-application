@@ -1,11 +1,12 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './dashboard.module.css';
 import { useAuth } from '../context/AuthContext';
 import { buildApiUrl, fetchWithErrorHandling } from '../utils/apiConfig';
+import { getActivityStats } from '../services/activityService';
 
 interface Workspace {
   _id: string;
@@ -13,6 +14,229 @@ interface Workspace {
   description: string;
   createdAt: string;
   updatedAt: string;
+}
+
+// Activity interfaces for different activity types
+interface Activity {
+  id: string;
+  type: 'workspace_created' | 'report_generated';
+  timestamp: string;
+}
+
+interface WorkspaceActivity extends Activity {
+  type: 'workspace_created';
+  workspace: {
+    id: string;
+    name: string;
+  };
+}
+
+interface ReportActivity extends Activity {
+  type: 'report_generated';
+  workspace: {
+    id: string;
+    name: string;
+  };
+  report: {
+    fileName: string;
+  };
+}
+
+type CombinedActivity = WorkspaceActivity | ReportActivity;
+
+// Business Terms Component
+interface BusinessTerm {
+  term: string;
+  definition: string;
+}
+
+const BUSINESS_TERMS: BusinessTerm[] = [
+  {
+    term: "ROI (Return on Investment)",
+    definition: "A performance measure used to evaluate the efficiency of an investment."
+  },
+  {
+    term: "EBITDA",
+    definition: "Earnings Before Interest, Taxes, Depreciation, and Amortization - a measure of a company's overall financial performance."
+  },
+  {
+    term: "Cash Flow",
+    definition: "The net amount of cash moving into and out of a business."
+  },
+  {
+    term: "Gross Margin",
+    definition: "The difference between revenue and cost of goods sold, divided by revenue."
+  },
+  {
+    term: "KPI (Key Performance Indicator)",
+    definition: "A measurable value that demonstrates how effectively a company is achieving key business objectives."
+  },
+  {
+    term: "Liquidity",
+    definition: "The degree to which an asset can be quickly bought or sold without affecting its price."
+  },
+  {
+    term: "Accounts Receivable",
+    definition: "Money owed to a company by its debtors."
+  },
+  {
+    term: "Accounts Payable",
+    definition: "Money a company owes to its creditors."
+  },
+  {
+    term: "Balance Sheet",
+    definition: "A financial statement that reports a company's assets, liabilities, and shareholders' equity."
+  },
+  {
+    term: "Income Statement",
+    definition: "A financial statement that shows a company's revenues and expenses during a particular period."
+  },
+  {
+    term: "Cash Flow Statement",
+    definition: "A financial statement that shows how changes in balance sheet accounts and income affect cash and cash equivalents."
+  },
+  {
+    term: "P/E Ratio",
+    definition: "Price-to-Earnings Ratio - a company's share price divided by its earnings per share."
+  },
+  {
+    term: "Market Capitalization",
+    definition: "The total market value of a company's outstanding shares."
+  },
+  {
+    term: "Depreciation",
+    definition: "The decrease in the value of assets over time."
+  },
+  {
+    term: "Equity",
+    definition: "The value of an ownership interest in property, including shareholders' equity in a business."
+  }
+];
+
+function BusinessTermsButton() {
+  const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedTerm, setSelectedTerm] = useState<BusinessTerm | null>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
+
+  const filteredTerms = searchTerm 
+    ? BUSINESS_TERMS.filter(term => 
+        term.term.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        term.definition.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    : BUSINESS_TERMS;
+  
+  // Handle click outside to close modal
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    }
+    
+    // Add event listener when modal is open
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    
+    // Cleanup function to remove event listener
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isOpen]);
+  
+  // Handle escape key to close modal
+  useEffect(() => {
+    function handleEscapeKey(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setIsOpen(false);
+      }
+    }
+    
+    // Add event listener when modal is open
+    if (isOpen) {
+      document.addEventListener('keydown', handleEscapeKey);
+    }
+    
+    // Cleanup function to remove event listener
+    return () => {
+      document.removeEventListener('keydown', handleEscapeKey);
+    };
+  }, [isOpen]);
+
+  return (
+    <>
+      
+
+      {isOpen && (
+        <div 
+          className={styles.termsModalOverlay}
+          onClick={() => setIsOpen(false)}
+        >
+          <div 
+            className={styles.termsModal} 
+            onClick={(e) => e.stopPropagation()}
+            ref={modalRef}
+          >
+            <div className={styles.termsModalHeader}>
+              <h3>Common Business Terms</h3>
+              <button 
+                className={styles.closeButton}
+                onClick={() => setIsOpen(false)}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="24" height="24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            
+            <div className={styles.termsSearch}>
+              <input
+                type="text"
+                placeholder="Search terms..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                autoFocus
+              />
+            </div>
+            
+            <div className={styles.termsContent}>
+              <div className={styles.termsList}>
+                {filteredTerms.map((term, index) => (
+                  <div 
+                    key={index} 
+                    className={`${styles.termItem} ${selectedTerm?.term === term.term ? styles.termItemSelected : ''}`}
+                    onClick={() => setSelectedTerm(term)}
+                  >
+                    {term.term}
+                  </div>
+                ))}
+                
+                {filteredTerms.length === 0 && (
+                  <div className={styles.noResults}>
+                    No terms found matching "{searchTerm}"
+                  </div>
+                )}
+              </div>
+              
+              <div className={styles.termDefinition}>
+                {selectedTerm ? (
+                  <>
+                    <h4>{selectedTerm.term}</h4>
+                    <p>{selectedTerm.definition}</p>
+                  </>
+                ) : (
+                  <div className={styles.termPlaceholder}>
+                    <p>Select a term to view its definition</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
+  );
 }
 
 export default function Dashboard() {
@@ -32,6 +256,13 @@ export default function Dashboard() {
   const [deleteConfirmWorkspace, setDeleteConfirmWorkspace] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState('');
   const [activeCard, setActiveCard] = useState<string | null>(null);
+  const [activities, setActivities] = useState<CombinedActivity[]>([]);
+  const [activityStats, setActivityStats] = useState({
+    reportsGenerated: 0,
+    insightsGenerated: 0,
+    reportsChange: 0,
+    insightsChange: 0
+  });
 
   useEffect(() => {
     // If not loading and no user, redirect to login
@@ -247,6 +478,109 @@ export default function Dashboard() {
     setActiveCard(null);
   };
 
+  const formatDateTime = (dateString: string) => {
+    const date = new Date(dateString);
+    
+    // Check if the date is today
+    const today = new Date();
+    const isToday = date.getDate() === today.getDate() && 
+                   date.getMonth() === today.getMonth() && 
+                   date.getFullYear() === today.getFullYear();
+    
+    // Check if the date is yesterday
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const isYesterday = date.getDate() === yesterday.getDate() && 
+                       date.getMonth() === yesterday.getMonth() && 
+                       date.getFullYear() === yesterday.getFullYear();
+    
+    // Format the time
+    const timeString = date.toLocaleTimeString('en-US', {
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true
+    });
+    
+    if (isToday) {
+      return `Today at ${timeString}`;
+    } else if (isYesterday) {
+      return `Yesterday at ${timeString}`;
+    } else {
+      // For older dates, show the date and time
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      }) + ` at ${timeString}`;
+    }
+  };
+
+  // Generate activities from workspaces and reports
+  useEffect(() => {
+    if (workspaces.length > 0) {
+      // Create workspace creation activities
+      const workspaceActivities: WorkspaceActivity[] = workspaces.map(workspace => ({
+        id: `workspace-${workspace._id}`,
+        type: 'workspace_created',
+        timestamp: workspace.createdAt,
+        workspace: {
+          id: workspace._id,
+          name: workspace.name
+        }
+      }));
+
+      // Simulate some report generation activities (in a real app, these would come from the API)
+      // In this example, we'll create a report activity for some of the workspaces
+      const reportActivities: ReportActivity[] = workspaces
+        .slice(0, Math.min(3, workspaces.length)) // Use up to 3 workspaces for demo
+        .map((workspace, index) => {
+          // Create a timestamp a bit after the workspace was created
+          const reportDate = new Date(workspace.createdAt);
+          reportDate.setHours(reportDate.getHours() + 2 + index); // 2+ hours after workspace creation
+          
+          return {
+            id: `report-${workspace._id}-${index}`,
+            type: 'report_generated',
+            timestamp: reportDate.toISOString(),
+            workspace: {
+              id: workspace._id,
+              name: workspace.name
+            },
+            report: {
+              fileName: `financial-data-${index + 1}.csv`
+            }
+          };
+        });
+
+      // Combine all activities and sort by timestamp (newest first)
+      const combinedActivities = [...workspaceActivities, ...reportActivities].sort(
+        (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
+      
+      // Take only the 5 most recent activities
+      setActivities(combinedActivities.slice(0, 5));
+    }
+  }, [workspaces]);
+
+  // Check if there are any activities to show
+  const hasActivities = activities.length > 0;
+
+  // Fetch activity stats
+  useEffect(() => {
+    const fetchActivityStats = async () => {
+      try {
+        const stats = await getActivityStats();
+        setActivityStats(stats);
+      } catch (error) {
+        console.error('Error fetching activity stats:', error);
+      }
+    };
+
+    if (user) {
+      fetchActivityStats();
+    }
+  }, [user]);
+
   if (authLoading) {
     return (
       <div className={styles.loading}>
@@ -298,6 +632,100 @@ export default function Dashboard() {
               <strong>Account Created:</strong> {new Date(user.createdAt).toLocaleDateString()}
             </p>
           </div>
+          <div className={styles.userActions}>
+            <BusinessTermsButton />
+          </div>
+        </div>
+
+        {/* Dashboard Stats */}
+        <div className={styles.dashboardStats}>
+          <div className={styles.statCard}>
+            <h4>Total Sessions</h4>
+            <p className={styles.statValue}>{workspaces.length}</p>
+            <div className={`${styles.statChange} ${styles.statChangePositive}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+              </svg>
+              <span>12% this month</span>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <h4>Data Analyzed</h4>
+            <p className={styles.statValue}>2.4 GB</p>
+            <div className={`${styles.statChange} ${styles.statChangePositive}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clipRule="evenodd" />
+              </svg>
+              <span>8.3% this month</span>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <h4>AI Insights Generated</h4>
+            <p className={styles.statValue}>{activityStats.insightsGenerated}</p>
+            <div className={`${styles.statChange} ${activityStats.insightsChange >= 0 ? styles.statChangePositive : styles.statChangeNegative}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d={activityStats.insightsChange >= 0 
+                  ? "M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" 
+                  : "M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v3.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z"} 
+                  clipRule="evenodd" />
+              </svg>
+              <span>{Math.abs(activityStats.insightsChange)}% this month</span>
+            </div>
+          </div>
+          <div className={styles.statCard}>
+            <h4>Reports Exported</h4>
+            <p className={styles.statValue}>{activityStats.reportsGenerated}</p>
+            <div className={`${styles.statChange} ${activityStats.reportsChange >= 0 ? styles.statChangePositive : styles.statChangeNegative}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d={activityStats.reportsChange >= 0 
+                  ? "M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" 
+                  : "M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v3.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z"} 
+                  clipRule="evenodd" />
+              </svg>
+              <span>{Math.abs(activityStats.reportsChange)}% this month</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Activity Feed */}
+        <div className={styles.activityFeed}>
+          <h3>Recent Activity</h3>
+          
+          {loading ? (
+            <p>Loading activities...</p>
+          ) : !hasActivities ? (
+            <div className={styles.emptyActivity}>
+              <p>No recent activity found. Create your first session to get started!</p>
+            </div>
+          ) : (
+            activities.map((activity) => (
+              <div key={activity.id} className={styles.activityItem}>
+                <div className={styles.activityIcon}>
+                  {activity.type === 'workspace_created' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  )}
+                </div>
+                <div className={styles.activityContent}>
+                  <p className={styles.activityTitle}>
+                    {activity.type === 'workspace_created' ? (
+                      <>New workspace created: "{activity.workspace.name}"</>
+                    ) : (
+                      <>Generated report on {activity.report.fileName} in "{activity.workspace.name}"</>
+                    )}
+                  </p>
+                  <p className={styles.activityTime}>
+                    {formatDateTime(activity.timestamp)}
+                  </p>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         {/* Workspaces Section */}
@@ -323,7 +751,6 @@ export default function Dashboard() {
             <div className={styles.emptyState}>
               <h4>No sessions found</h4>
               <p>Create your first session to get started with Finaxial</p>
-
             </div>
           ) : (
             <div className={styles.workspaceGrid}>
@@ -388,8 +815,6 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-
-        
       </div>
 
       {deleteConfirmWorkspace && (

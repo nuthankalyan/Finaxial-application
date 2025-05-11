@@ -445,18 +445,16 @@
   justify-content: center;
   align-items: center;
   z-index: 50;
-}
+} 
 
 /* Email Modal Content */
 .modalContent {
   padding: 1.5rem 2rem;
-  flex: 1;
-  overflow-y: auto;
   background-color: white;
-  width: 100%;
-  box-shadow: none;
-  max-width: 100%;
-  border-radius: 0;
+  width: auto;
+  max-width: 500px;
+  border-radius: 8px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
 }
 
 .modalContent h3 {
