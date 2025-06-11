@@ -257,6 +257,9 @@ export default function Dashboard() {
   const [editTitle, setEditTitle] = useState('');
   const [activeCard, setActiveCard] = useState<string | null>(null);
   const [activities, setActivities] = useState<CombinedActivity[]>([]);
+  const [activitySidebarOpen, setActivitySidebarOpen] = useState(false);
+  const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
+  const avatarRef = useRef<HTMLDivElement>(null);
   const [activityStats, setActivityStats] = useState({
     reportsGenerated: 0,
     insightsGenerated: 0,
@@ -276,6 +279,20 @@ export default function Dashboard() {
       fetchWorkspaces();
     }
   }, [user, authLoading, router]);
+  
+  // Close avatar dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (avatarRef.current && !avatarRef.current.contains(event.target as Node)) {
+        setAvatarDropdownOpen(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const fetchWorkspaces = async () => {
     try {
@@ -607,34 +624,44 @@ export default function Dashboard() {
     <div className={styles.container}>
       <div className={styles.header}>
         <h1>Finaxial Dashboard</h1>
-        <button onClick={logout} className={styles.logoutButton}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Logout
-        </button>
+        <div className={styles.headerRight}>
+          <div className={styles.avatarContainer} ref={avatarRef}>
+            <div 
+              className={styles.avatar} 
+              onClick={() => setAvatarDropdownOpen(!avatarDropdownOpen)}
+            >
+              {user?.username?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            {avatarDropdownOpen && (
+              <div className={styles.avatarDropdown}>
+                <div className={styles.dropdownItem}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                  </svg>
+                  <span>{user.username}</span>
+                </div>
+                <div className={styles.dropdownItem}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  <span>{formatDate(user.createdAt)}</span>
+                </div>
+                <hr style={{ margin: '0.5rem 0', borderColor: 'var(--border-color)' }} />
+                <div className={styles.dropdownItem} onClick={logout}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
+                  <span>Logout</span>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       <div className={styles.content}>
-        <div className={styles.userCard}>
+        <div className={styles.welcomeSection}>
           <h2>Welcome, {user.username}!</h2>
-          <div className={styles.userInfo}>
-            <p>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-              </svg>
-              <strong>Email:</strong> {user.email}
-            </p>
-            <p>
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <strong>Account Created:</strong> {new Date(user.createdAt).toLocaleDateString()}
-            </p>
-          </div>
-          <div className={styles.userActions}>
-            <BusinessTermsButton />
-          </div>
         </div>
 
         {/* Dashboard Stats */}
@@ -687,60 +714,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Activity Feed */}
-        <div className={styles.activityFeed}>
-          <h3>Recent Activity</h3>
-          
-          {loading ? (
-            <p>Loading activities...</p>
-          ) : !hasActivities ? (
-            <div className={styles.emptyActivity}>
-              <p>No recent activity found. Create your first session to get started!</p>
-            </div>
-          ) : (
-            activities.map((activity) => (
-              <div key={activity.id} className={styles.activityItem}>
-                <div className={styles.activityIcon}>
-                  {activity.type === 'workspace_created' ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                    </svg>
-                  )}
-                </div>
-                <div className={styles.activityContent}>
-                  <p className={styles.activityTitle}>
-                    {activity.type === 'workspace_created' ? (
-                      <>New workspace created: "{activity.workspace.name}"</>
-                    ) : (
-                      <>Generated report on {activity.report.fileName} in "{activity.workspace.name}"</>
-                    )}
-                  </p>
-                  <p className={styles.activityTime}>
-                    {formatDateTime(activity.timestamp)}
-                  </p>
-                </div>
-              </div>
-            ))
-          )}
-        </div>
 
         {/* Workspaces Section */}
         <div className={styles.dashboardSection}>
           <div className={styles.sectionHeader}>
             <h3>Your Workspaces</h3>
-            <button 
-              onClick={() => setModalOpen(true)} 
-              className={styles.createButton}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              Create Session
-            </button>
           </div>
           
           {loading ? (
@@ -754,6 +732,21 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className={styles.workspaceGrid}>
+              {/* Create Workspace Card */}
+              <div 
+                className={`${styles.workspaceCard} ${styles.createCard}`}
+                onClick={() => setModalOpen(true)}
+              >
+                <div className={styles.createCardIcon}>
+                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                  </svg>
+                </div>
+                <h4 className={styles.workspaceTitle}>Create Workspace</h4>
+                
+              </div>
+              
+              {/* Workspace Cards */}
               {workspaces.map((workspace) => (
                 <div 
                   key={workspace._id} 
@@ -799,9 +792,7 @@ export default function Dashboard() {
                   ) : (
                     <h4 className={styles.workspaceTitle}>{workspace.name}</h4>
                   )}
-                  <p className={styles.workspaceDesc}>
-                    {workspace.description || 'No description provided'}
-                  </p>
+                  
                   <div className={styles.workspaceFooter}>
                     <div className={styles.workspaceDate}>
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -814,6 +805,20 @@ export default function Dashboard() {
               ))}
             </div>
           )}
+        </div>
+        
+        {/* Activity Button */}
+        <div className={styles.activityButton}>
+          <button 
+            className={styles.activityButtonInner}
+            onClick={() => setActivitySidebarOpen(true)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            View Activity History
+            {activities.length > 0 && <span className={styles.activityBadge}>{activities.length}</span>}
+          </button>
         </div>
       </div>
 
@@ -896,6 +901,59 @@ export default function Dashboard() {
           </div>
         </div>
       )}
+
+      {/* Activity Sidebar */}
+      <div className={`${styles.activityBackdrop} ${activitySidebarOpen ? styles.open : ''}`} 
+           onClick={() => setActivitySidebarOpen(false)}>
+      </div>
+      <div className={`${styles.activitySidebar} ${activitySidebarOpen ? styles.open : ''}`}>
+        <div className={styles.activitySidebarHeader}>
+          <h3>Activity History</h3>
+          <button 
+            className={styles.closeActivitySidebar}
+            onClick={() => setActivitySidebarOpen(false)}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+        <div className={styles.activitySidebarContent}>
+          {activities.length > 0 ? (
+            activities.map((activity) => (
+              <div key={activity.id} className={styles.activityItem}>
+                <div className={styles.activityIcon}>
+                  {activity.type === 'workspace_created' ? (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  ) : (
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    </svg>
+                  )}
+                </div>
+                <div className={styles.activityContent}>
+                  <p className={styles.activityTitle}>
+                    {activity.type === 'workspace_created' ? (
+                      <>New workspace created: "{activity.workspace.name}"</>
+                    ) : (
+                      <>Generated report on {activity.report.fileName} in "{activity.workspace.name}"</>
+                    )}
+                  </p>
+                  <p className={styles.activityTime}>
+                    {formatDateTime(activity.timestamp)}
+                  </p>
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className={styles.emptyActivity}>
+              <p>No activity records found.</p>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 } 
