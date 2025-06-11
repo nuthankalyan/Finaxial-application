@@ -42,11 +42,15 @@ export default function Header() {
       className={`${styles.header} ${isScrolled ? styles.headerScrolled : ''}`}
     >
       <div className={styles.container}>
-        <div className={styles.flexContainer}>
-          {/* Logo/Brand - Left Side */}
+        <div className={styles.flexContainer}>          {/* Logo/Brand - Left Side */}
           <div className={styles.logoContainer}>
-            <Link href="/">
-              <h1 className={styles.logoText}>Finaxial</h1>
+            <Link href="/" className={styles.logoLink}>
+              <img 
+                src="/finaxial-logooo.png" 
+                alt="Finaxial Logo" 
+                className={styles.logoImage} 
+              />
+             
             </Link>
           </div>
           

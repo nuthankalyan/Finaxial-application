@@ -39,7 +39,22 @@
 }
 
 .logoContainer {
-  flex: 1;
+  /* Reduced from flex: 1 to prevent taking too much width */
+  flex: 0 0 auto;
+  margin-right: 1rem;
+}
+
+.logoLink {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+}
+
+.logoImage {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+  margin: -10px 0;
 }
 
 .logoText {

@@ -623,7 +623,14 @@ export default function Dashboard() {
   return (
     <div className={styles.container}>
       <div className={styles.header}>
-        <h1>Finaxial Dashboard</h1>
+        <div className={styles.headerLeft}>
+          <img 
+            src="/finaxial-logooo.png" 
+            alt="Finaxial Logo" 
+            className={styles.headerLogo} 
+          />
+         
+        </div>
         <div className={styles.headerRight}>
           <div className={styles.avatarContainer} ref={avatarRef}>
             <div 
