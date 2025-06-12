@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const { welcomeEmailTemplate } = require('./emailTemplates');
+const { welcomeEmailTemplate, resetPasswordTemplate } = require('./emailTemplates');
 
 // Create a transporter with SMTP configuration
 const createTransporter = () => {
@@ -112,7 +112,43 @@ const sendWelcomeEmail = async (userEmail, username) => {
   }
 };
 
+// Function to send password reset OTP email
+const sendPasswordResetEmail = async (userEmail, username, otp) => {
+  try {
+    // Validate inputs
+    if (!userEmail || !username || !otp) {
+      throw new Error('Email address, username and OTP are required');
+    }
+
+    const transporter = createTransporter();
+    
+    const mailOptions = {
+      from: {
+        name: 'FinAxial AI',
+        address: process.env.EMAIL_USER || 'finaxialai@gmail.com'
+      },
+      to: userEmail,
+      subject: 'Password Reset - FinAxial AI',
+      html: resetPasswordTemplate(username, otp)
+    };
+
+    console.log('Sending password reset email to:', userEmail);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Password reset email sent successfully. Message ID:', info.messageId);
+    
+    return { 
+      success: true, 
+      messageId: info.messageId,
+      response: info.response
+    };
+  } catch (error) {
+    console.error('Error sending password reset email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendEmailWithPdf,
-  sendWelcomeEmail
+  sendWelcomeEmail,
+  sendPasswordResetEmail
 };

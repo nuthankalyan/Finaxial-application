@@ -1,5 +1,4 @@
 import './globals.css';
-import './fonts.css';
 import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import Script from 'next/script';
