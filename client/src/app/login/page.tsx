@@ -84,12 +84,17 @@ export default function Login() {
             {loading ? 'Logging in...' : 'Log In'}
           </button>
         </form>
-        
-        <div className={styles.links}>
+          <div className={styles.links}>
           <p>
             Don&apos;t have an account?{' '}
             <Link href="/signup" className={styles.link}>
               Sign up
+            </Link>
+          </p>
+          <p>
+            Forgot your password?{' '}
+            <Link href="/forgot-password" className={styles.link}>
+              Reset it here
             </Link>
           </p>
         </div>
