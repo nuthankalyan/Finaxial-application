@@ -20,6 +20,7 @@ const corsOptions = {
     'https://finaxial-application.vercel.app',
     'https://finaxial-client.onrender.com',
     'https://finaxial.onrender.com', // Add potential client URL
+    'https://finaxial-backend.onrender.com', // Backend URL for self-referential requests
     process.env.CLIENT_URL, // For flexibility
   ].filter(Boolean), // Remove any undefined/empty values
   credentials: true,
