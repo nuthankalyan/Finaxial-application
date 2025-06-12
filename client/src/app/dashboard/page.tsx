@@ -732,29 +732,32 @@ export default function Dashboard() {
             <p>Loading workspaces...</p>
           ) : error ? (
             <p className={styles.error}>{error}</p>
-          ) : workspaces.length === 0 ? (
-            <div className={styles.emptyState}>
-              <h4>No sessions found</h4>
-              <p>Create your first session to get started with Finaxial</p>
-            </div>
           ) : (
-            <div className={styles.workspaceGrid}>
-              {/* Create Workspace Card */}
-              <div 
-                className={`${styles.workspaceCard} ${styles.createCard}`}
-                onClick={() => setModalOpen(true)}
-              >
-                <div className={styles.createCardIcon}>
-                  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                  </svg>
+            <div>
+              {workspaces.length === 0 && (
+                <div className={styles.emptyState}>
+                  <h4>No sessions found</h4>
+                  <p>Create your first session by clicking the card below</p>
                 </div>
-                <h4 className={styles.workspaceTitle}>Create Workspace</h4>
-                
-              </div>
+              )}
               
-              {/* Workspace Cards */}
-              {workspaces.map((workspace) => (
+              <div className={styles.workspaceGrid}>
+                {/* Create Workspace Card - Always show this */}
+                <div 
+                  className={`${styles.workspaceCard} ${styles.createCard}`}
+                  onClick={() => setModalOpen(true)}
+                >
+                  <div className={styles.createCardIcon}>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                    </svg>
+                  </div>
+                  <h4 className={styles.workspaceTitle}>Create Workspace</h4>
+                  
+                </div>
+                
+                {/* Workspace Cards */}
+                {workspaces.map((workspace) => (
                 <div 
                   key={workspace._id} 
                   className={styles.workspaceCard}
@@ -810,6 +813,7 @@ export default function Dashboard() {
                   </div>
                 </div>
               ))}
+              </div>
             </div>
           )}
         </div>
