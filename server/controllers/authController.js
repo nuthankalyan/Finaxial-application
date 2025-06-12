@@ -1,5 +1,6 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+const { sendWelcomeEmail } = require('../config/email');
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -28,8 +29,18 @@ exports.signup = async (req, res) => {
     const user = await User.create({
       username,
       email,
-      password
+      password,
+      lastLogin: new Date() // Set initial login time
     });
+
+    // Send welcome email immediately after signup
+    try {
+      await sendWelcomeEmail(email, username);
+      console.log('Welcome email sent successfully to:', email);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Continue with signup process even if email fails
+    }
 
     // Generate token
     const token = generateToken(user._id);
@@ -76,6 +87,18 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Check if this is the user's first login
+    const isFirstLogin = !user.lastLogin;
+
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Send welcome email if this is the first login
+    if (isFirstLogin) {
+      await sendWelcomeEmail(user.email, user.username);
+    }
+
     // Generate token
     const token = generateToken(user._id);
 
@@ -113,4 +136,4 @@ exports.getMe = async (req, res) => {
       message: error.message
     });
   }
-}; 
+};

@@ -711,4 +711,4 @@ export const askFinancialQuestionCached = async (csvContent: string, question: s
     console.error('Error in cached financial question service:', error);
     throw new Error(`Failed to process your question: ${error.message}`);
   }
-}; 
+};

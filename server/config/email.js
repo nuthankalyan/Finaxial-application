@@ -1,21 +1,18 @@
 const nodemailer = require('nodemailer');
+const { welcomeEmailTemplate } = require('./emailTemplates');
 
 // Create a transporter with SMTP configuration
-// Note: For production use, you should store these credentials in environment variables
 const createTransporter = () => {
-  const user = process.env.EMAIL_USER;
-  const pass = process.env.EMAIL_PASS;
+  const user = process.env.EMAIL_USER || 'finaxialai@gmail.com';
+  const pass = process.env.EMAIL_PASS || 'nwolasmoqpwsxllt';
   
   if (!user || !pass) {
-    console.warn('Email credentials missing. Check your .env file.');
+    throw new Error('Email credentials missing. Check your .env file.');
   }
   
   return nodemailer.createTransport({
-    service: 'gmail', // You can use other services like 'outlook', 'yahoo', etc.
-    auth: {
-      user: user || 'your-email@gmail.com',
-      pass: pass || 'your-app-password'
-    }
+    service: 'gmail',
+    auth: { user, pass }
   });
 };
 
@@ -68,6 +65,54 @@ const sendEmailWithPdf = async (recipientEmail, pdfBuffer, fileName, subject, me
   }
 };
 
+// Function to send welcome email
+const sendWelcomeEmail = async (userEmail, username) => {
+  try {
+    // Validate inputs
+    if (!userEmail || !username) {
+      throw new Error('Email address and username are required');
+    }
+
+    const transporter = createTransporter();
+    
+    // Format the current date and time
+    const signupTime = new Date().toLocaleString('en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+      timeZoneName: 'short'
+    });
+    
+    const mailOptions = {
+      from: {
+        name: 'FinAxial AI',
+        address: process.env.EMAIL_USER || 'finaxialai@gmail.com'
+      },
+      to: userEmail,
+      subject: 'Welcome to FinAxial AI',
+      html: welcomeEmailTemplate(username, signupTime)
+    };
+
+    console.log('Sending welcome email to:', userEmail);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Welcome email sent successfully. Message ID:', info.messageId);
+    
+    return { 
+      success: true, 
+      messageId: info.messageId,
+      response: info.response
+    };
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
-  sendEmailWithPdf
-}; 
+  sendEmailWithPdf,
+  sendWelcomeEmail
+};
