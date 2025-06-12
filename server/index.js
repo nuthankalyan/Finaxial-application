@@ -38,6 +38,7 @@ app.use('/api/workspaces', require('./routes/workspaceRoutes'));
 app.use('/api/email', require('./routes/emailRoutes')); // Add email routes
 app.use('/api/vector', require('./routes/vectorSearchRoutes')); // Add vector search routes
 app.use('/api/activity', require('./routes/userActivityRoutes')); // Add user activity routes
+app.use('/api/password', require('./routes/passwordResetRoutes')); // Add password reset routes
 
 // Test route
 app.get('/', (req, res) => {
@@ -47,4 +48,4 @@ app.get('/', (req, res) => {
 // Start server
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
-}); 
+});

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './login.module.css';
 import { useAuth } from '../context/AuthContext';
+import ForgotPasswordModal from '../components/ForgotPasswordModal';
 
 export default function Login() {
   const router = useRouter();
@@ -14,6 +15,8 @@ export default function Login() {
     password: '',
   });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   useEffect(() => {
     if (authError) {
@@ -40,6 +43,10 @@ export default function Login() {
     await login(formData.username, formData.password);
   };
 
+  const togglePasswordVisibility = () => {
+    setShowPassword((prev) => !prev);
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.loginForm}>
@@ -64,16 +71,36 @@ export default function Login() {
           
           <div className={styles.formGroup}>
             <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Enter your password"
-              className={styles.input}
-            />
+            <div className={styles.passwordInputWrapper}>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Enter your password"
+                className={styles.input}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className={styles.passwordToggle}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.forgotPasswordLink}>
+            <button
+              type="button"
+              onClick={() => setShowForgotPassword(true)}
+              className={styles.linkButton}
+            >
+              Forgot Password?
+            </button>
           </div>
           
           <button 
@@ -94,6 +121,10 @@ export default function Login() {
           </p>
         </div>
       </div>
+
+      {showForgotPassword && (
+        <ForgotPasswordModal onClose={() => setShowForgotPassword(false)} />
+      )}
     </div>
   );
-} 
+}
