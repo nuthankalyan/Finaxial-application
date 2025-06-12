@@ -108,4 +108,53 @@
 
 .link:hover {
   text-decoration: underline;
-} 
+}
+.passwordInputWrapper {
+  position: relative;
+  display: flex;
+  width: 100%;
+}
+
+.passwordInputWrapper .input {
+  padding-right: 4.5rem;
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  padding: 0.25rem 0.75rem;
+  background-color: transparent;
+  border: none;
+  font-size: 0.875rem;
+  color: #2563eb;
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.passwordToggle:hover {
+  color: #1d4ed8;
+}
+
+.passwordToggle:focus {
+  outline: none;
+  color: #1d4ed8;
+}
+.forgotPasswordLink {
+  text-align: right;
+  margin-bottom: 1rem;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: #2563eb;
+  font-size: 0.875rem;
+  cursor: pointer;
+  padding: 0;
+}
+
+.linkButton:hover {
+  text-decoration: underline;
+}

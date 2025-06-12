@@ -1,6 +1,10 @@
 const User = require('../models/User');
 const jwt = require('jsonwebtoken');
+<<<<<<< HEAD
 const { sendWelcomeEmail, sendOTPEmail } = require('../config/email');
+=======
+const { sendWelcomeEmail } = require('../config/email');
+>>>>>>> c87b8c1c1ca152f2fc9d41e74f3a9876edde9087
 
 // Generate JWT token
 const generateToken = (id) => {
@@ -33,11 +37,25 @@ exports.signup = async (req, res) => {
       username,
       email,
       password,
+<<<<<<< HEAD
       lastLoginAt: new Date()
     });
 
     // Send welcome email
     await sendWelcomeEmail(email, username);
+=======
+      lastLogin: new Date() // Set initial login time
+    });
+
+    // Send welcome email immediately after signup
+    try {
+      await sendWelcomeEmail(email, username);
+      console.log('Welcome email sent successfully to:', email);
+    } catch (emailError) {
+      console.error('Failed to send welcome email:', emailError);
+      // Continue with signup process even if email fails
+    }
+>>>>>>> c87b8c1c1ca152f2fc9d41e74f3a9876edde9087
 
     // Generate token
     const token = generateToken(user._id);
@@ -88,10 +106,25 @@ exports.login = async (req, res) => {
       await sendWelcomeEmail(user.email, user.username);
     }
 
+<<<<<<< HEAD
     // Update last login time
     user.lastLoginAt = new Date();
     await user.save();
 
+=======
+    // Check if this is the user's first login
+    const isFirstLogin = !user.lastLogin;
+
+    // Update last login time
+    user.lastLogin = new Date();
+    await user.save();
+
+    // Send welcome email if this is the first login
+    if (isFirstLogin) {
+      await sendWelcomeEmail(user.email, user.username);
+    }
+
+>>>>>>> c87b8c1c1ca152f2fc9d41e74f3a9876edde9087
     // Generate token
     const token = generateToken(user._id);
 
@@ -129,6 +162,7 @@ exports.getMe = async (req, res) => {
       message: error.message
     });
   }
+<<<<<<< HEAD
 };
 
 // @desc    Request password reset OTP
@@ -213,4 +247,6 @@ exports.resetPassword = async (req, res) => {
       message: error.message || 'Error in password reset process'
     });
   }
+=======
+>>>>>>> c87b8c1c1ca152f2fc9d41e74f3a9876edde9087
 };

@@ -1,13 +1,27 @@
 const nodemailer = require('nodemailer');
+const { welcomeEmailTemplate } = require('./emailTemplates');
 
 // Create a transporter with SMTP configuration
 const createTransporter = () => {
+<<<<<<< HEAD
   return nodemailer.createTransport({
     service: 'gmail',
     auth: {
       user: 'finaxialai@gmail.com',
       pass: 'nwolasmoqpwsxllt'
     }
+=======
+  const user = process.env.EMAIL_USER || 'finaxialai@gmail.com';
+  const pass = process.env.EMAIL_PASS || 'nwolasmoqpwsxllt';
+  
+  if (!user || !pass) {
+    throw new Error('Email credentials missing. Check your .env file.');
+  }
+  
+  return nodemailer.createTransport({
+    service: 'gmail',
+    auth: { user, pass }
+>>>>>>> c87b8c1c1ca152f2fc9d41e74f3a9876edde9087
   });
 };
 
@@ -159,9 +173,60 @@ const sendEmailWithPdf = async (recipientEmail, pdfBuffer, fileName, subject, me
   }
 };
 
+// Function to send welcome email
+const sendWelcomeEmail = async (userEmail, username) => {
+  try {
+    // Validate inputs
+    if (!userEmail || !username) {
+      throw new Error('Email address and username are required');
+    }
+
+    const transporter = createTransporter();
+    
+    // Format the current date and time
+    const signupTime = new Date().toLocaleString('en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      hour12: true,
+      timeZoneName: 'short'
+    });
+    
+    const mailOptions = {
+      from: {
+        name: 'FinAxial AI',
+        address: process.env.EMAIL_USER || 'finaxialai@gmail.com'
+      },
+      to: userEmail,
+      subject: 'Welcome to FinAxial AI',
+      html: welcomeEmailTemplate(username, signupTime)
+    };
+
+    console.log('Sending welcome email to:', userEmail);
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Welcome email sent successfully. Message ID:', info.messageId);
+    
+    return { 
+      success: true, 
+      messageId: info.messageId,
+      response: info.response
+    };
+  } catch (error) {
+    console.error('Error sending welcome email:', error);
+    throw error;
+  }
+};
+
 module.exports = {
   sendEmailWithPdf,
+<<<<<<< HEAD
   sendWelcomeEmail,
   sendOTPEmail,
   generateOTP
+=======
+  sendWelcomeEmail
+>>>>>>> c87b8c1c1ca152f2fc9d41e74f3a9876edde9087
 };
