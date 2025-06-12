@@ -14,6 +14,7 @@ export default function Login() {
     password: '',
   });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (authError) {
@@ -61,19 +62,34 @@ export default function Login() {
               className={styles.input}
             />
           </div>
-          
           <div className={styles.formGroup}>
-            <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Enter your password"
-              className={styles.input}
-            />
+            <label htmlFor="password">
+              Password
+              <Link href="/forgotpassword" className={styles.forgotPasswordLink}>
+                Forgot password?
+              </Link>
+            </label>
+            <div className={styles.passwordInputWrapper}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Enter your password"
+                className={styles.input}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((v) => !v)}
+                className={styles.passwordToggleButton}
+                tabIndex={-1}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? 'Hide' : 'Show'}
+              </button>
+            </div>
           </div>
           
           <button 
@@ -96,4 +112,4 @@ export default function Login() {
       </div>
     </div>
   );
-} 
+}

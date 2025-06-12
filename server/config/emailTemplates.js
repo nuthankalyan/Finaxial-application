@@ -60,6 +60,64 @@ const welcomeEmailTemplate = (username, signupTime) => `
 </html>
 `;
 
+const resetPasswordTemplate = (username, otp) => `
+<!DOCTYPE html>
+<html>
+<head>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 600px; margin: auto; padding: 20px; }
+        .header { font-size: 24px; color: #2563eb; margin-bottom: 20px; }
+        .content { margin: 20px 0; }
+        .footer { font-size: 14px; color: #666; margin-top: 30px; }
+        .highlight { color: #2563eb; }
+        .otp-box {
+            background-color: #f3f4f6;
+            padding: 20px;
+            border-radius: 8px;
+            font-size: 24px;
+            text-align: center;
+            letter-spacing: 4px;
+            margin: 20px 0;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            Password Reset Request - FinAxial AI
+        </div>
+        <div class="content">
+            <p>Dear ${username},</p>
+            <p>We received a request to reset your password for your FinAxial AI account. Your one-time password (OTP) is:</p>
+            
+            <div class="otp-box">
+                ${otp}
+            </div>
+
+            <p>This OTP will expire in 5 minutes for security reasons. If you did not request this password reset, please ignore this email and ensure your account is secure.</p>
+            
+            <p>For security reasons:</p>
+            <ul>
+                <li>Never share this OTP with anyone</li>
+                <li>Our team will never ask for this code</li>
+                <li>Make sure you're on the official FinAxial AI website</li>
+            </ul>
+        </div>
+        
+        <div class="footer">
+            <p>Best regards,<br>The FinAxial AI Team</p>
+            <p style="font-size: 12px; color: #888;">
+                This is an automated message, please do not reply to this email.
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+`;
+
 module.exports = {
-    welcomeEmailTemplate
+    welcomeEmailTemplate,
+    resetPasswordTemplate
 };
