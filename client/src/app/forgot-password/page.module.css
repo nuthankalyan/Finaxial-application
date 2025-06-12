@@ -99,3 +99,31 @@
 .links a:hover {
   text-decoration: underline;
 }
+
+.passwordGroup {
+  position: relative;
+  width: 100%;
+}
+
+.passwordGroup input {
+  width: 100%;
+  padding-right: 4rem;
+}
+
+.showPasswordButton {
+  position: absolute;
+  right: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #2c3e50;
+  cursor: pointer;
+  padding: 0.5rem;
+  font-size: 0.875rem;
+  transition: color 0.2s;
+}
+
+.showPasswordButton:hover {
+  color: #34495e;
+}

@@ -8,12 +8,12 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Login() {
   const router = useRouter();
-  const { login, error: authError, loading, clearError } = useAuth();
-  const [formData, setFormData] = useState({
+  const { login, error: authError, loading, clearError } = useAuth();  const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (authError) {
@@ -61,19 +61,27 @@ export default function Login() {
               className={styles.input}
             />
           </div>
-          
-          <div className={styles.formGroup}>
+            <div className={styles.formGroup}>
             <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Enter your password"
-              className={styles.input}
-            />
+            <div className={styles.passwordGroup}>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Enter your password"
+                className={styles.input}
+              />
+              <button
+                type="button"
+                className={styles.showPasswordButton}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
           
           <button 

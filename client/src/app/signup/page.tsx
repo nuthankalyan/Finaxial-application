@@ -8,14 +8,15 @@ import { useAuth } from '../context/AuthContext';
 
 export default function Signup() {
   const router = useRouter();
-  const { signup, error: authError, loading, clearError } = useAuth();
-  const [formData, setFormData] = useState({
+  const { signup, error: authError, loading, clearError } = useAuth();  const [formData, setFormData] = useState({
     username: '',
     email: '',
     password: '',
     confirmPassword: '',
   });
   const [error, setError] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     if (authError) {
@@ -84,34 +85,50 @@ export default function Signup() {
               className={styles.input}
             />
           </div>
-          
-          <div className={styles.formGroup}>
+            <div className={styles.formGroup}>
             <label htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              required
-              placeholder="Create a password (min. 6 characters)"
-              className={styles.input}
-              minLength={6}
-            />
+            <div className={styles.passwordGroup}>
+              <input
+                type={showPassword ? "text" : "password"}
+                id="password"
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                required
+                placeholder="Create a password (min. 6 characters)"
+                className={styles.input}
+                minLength={6}
+              />
+              <button
+                type="button"
+                className={styles.showPasswordButton}
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
-          
-          <div className={styles.formGroup}>
+            <div className={styles.formGroup}>
             <label htmlFor="confirmPassword">Confirm Password</label>
-            <input
-              type="password"
-              id="confirmPassword"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              required
-              placeholder="Confirm your password"
-              className={styles.input}
-            />
+            <div className={styles.passwordGroup}>
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                id="confirmPassword"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                required
+                placeholder="Confirm your password"
+                className={styles.input}
+              />
+              <button
+                type="button"
+                className={styles.showPasswordButton}
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              >
+                {showConfirmPassword ? "Hide" : "Show"}
+              </button>
+            </div>
           </div>
           
           <button 
