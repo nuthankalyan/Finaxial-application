@@ -163,26 +163,4 @@
   text-decoration: underline;
 }
 
-.passwordInputWrapper {
-  position: relative;
-}
-
-.passwordToggleButton {
-  position: absolute;
-  right: 12px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  color: #4E71FF;
-  font-weight: 500;
-  cursor: pointer;
-  font-size: 0.95rem;
-  padding: 0;
-  z-index: 2;
-  transition: color 0.2s;
-}
-
-.passwordToggleButton:hover {
-  color: #3b5fff;
-}
+/* Password input styling is now handled by PasswordInput.module.css */

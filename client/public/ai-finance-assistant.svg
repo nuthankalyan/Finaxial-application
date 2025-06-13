@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- Main circular background -->
+    <circle cx="24" cy="24" r="20" fill="#4F46E5" fill-opacity="0.1"/>
+    
+    <!-- Chat bubble with financial graph -->
+    <path d="M14 16H34C35.1 16 36 16.9 36 18V30C36 31.1 35.1 32 34 32H14C12.9 32 12 31.1 12 30V18C12 16.9 12.9 16 14 16Z" 
+          fill="white" stroke="#4F46E5" stroke-width="2"/>
+    
+    <!-- Mini graph lines inside chat -->
+    <path d="M17 24L20 21L23 26L26 23L29 25L32 22" 
+          stroke="#4F46E5" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    
+    <!-- AI Circuit Pattern -->
+    <circle cx="24" cy="36" r="2" fill="#4F46E5"/>
+    <circle cx="18" cy="36" r="1" fill="#4F46E5"/>
+    <circle cx="30" cy="36" r="1" fill="#4F46E5"/>
+    <path d="M18 36H30" stroke="#4F46E5" stroke-width="1.5"/>
+    
+    <!-- Smart indicator dots -->
+    <circle cx="36" cy="12" r="4" fill="#4F46E5"/>
+    <path d="M36 10V14M34 12H38" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+    
+    <!-- Dollar sign indicator -->
+    <path d="M22 19V20M22 20V21M22 20H24C24.5523 20 25 19.5523 25 19C25 18.4477 24.5523 18 24 18H22C21.4477 18 21 17.5523 21 17C21 16.4477 21.4477 16 22 16H24M22 20H20" 
+          stroke="#4F46E5" stroke-width="1.5" stroke-linecap="round"/>
+</svg>

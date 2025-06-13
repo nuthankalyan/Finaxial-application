@@ -507,7 +507,6 @@
   align-items: center;
   z-index: 50;
   pointer-events: all;
-  backdrop-filter: blur(2px);
 }
 
 .confirmBox {
@@ -576,7 +575,6 @@
   justify-content: center;
   align-items: center;
   z-index: 50;
-  backdrop-filter: blur(2px);
   pointer-events: all;
 }
 
@@ -717,176 +715,7 @@
   font-family: inherit;
 }
 
-/* Business Terms Button and Modal Styles */
-.userActions {
-  display: flex;
-  justify-content: flex-start;
-  margin-top: 1.5rem;
-}
 
-.businessTermsButton {
-  padding: 0.625rem 1.25rem;
-  background-color: #10b981;
-  color: white;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 0.9375rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: var(--transition);
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: inherit;
-}
-
-.businessTermsButton:hover {
-  background-color: #059669;
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-sm);
-}
-.termsModalOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-  pointer-events: all;
-  backdrop-filter: blur(2px);
-}
-
-.termsModal {
-  width: 90%;
-  max-width: 800px;
-  max-height: 90vh;
-  background-color: var(--bg-secondary);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  animation: slideUp 0.3s ease-out forwards;
-}
-
-@keyframes slideUp {
-  from {
-    opacity: 0;
-    transform: translateY(20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.termsModalHeader {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 1.25rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.termsModalHeader h3 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.termsSearch {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.termsSearch input {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid var(--border-color);
-  border-radius: var(--radius-sm);
-  font-size: 0.9375rem;
-  outline: none;
-  transition: var(--transition);
-}
-
-.termsSearch input:focus {
-  border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
-}
-
-.termsContent {
-  display: grid;
-  grid-template-columns: 1fr 2fr;
-  height: 500px;
-  overflow: hidden;
-}
-
-.termsList {
-  overflow-y: auto;
-  border-right: 1px solid var(--border-color);
-  height: 100%;
-  padding: 0.5rem 0;
-}
-
-.termItem {
-  padding: 0.75rem 1.5rem;
-  cursor: pointer;
-  transition: var(--transition);
-  font-size: 0.9375rem;
-  border-left: 3px solid transparent;
-}
-
-.termItem:hover {
-  background-color: rgba(79, 70, 229, 0.05);
-}
-
-.termItemSelected {
-  background-color: rgba(79, 70, 229, 0.1);
-  border-left: 3px solid var(--primary-color);
-  font-weight: 600;
-}
-
-.termDefinition {
-  padding: 1.5rem;
-  overflow-y: auto;
-  height: 100%;
-}
-
-.termDefinition h4 {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin-top: 0;
-  margin-bottom: 1rem;
-}
-
-.termDefinition p {
-  font-size: 0.9375rem;
-  line-height: 1.6;
-  color: var(--text-secondary);
-  margin: 0;
-}
-
-.termPlaceholder {
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  color: var(--text-muted);
-}
-
-.noResults {
-  padding: 1.5rem;
-  text-align: center;
-  color: var(--text-muted);
-  font-style: italic;
-}
 
 /* Additional dashboard content to fill empty space */
 .dashboardStats {
@@ -1101,7 +930,6 @@
   z-index: 99;
   opacity: 0;
   pointer-events: none;
-  backdrop-filter: blur(3px);
   transition: all 0.3s ease;
   transform: translateZ(0);
 }
@@ -1213,4 +1041,10 @@
   background-size: 60%;
   background-position: center;
   background-repeat: no-repeat;
+}
+
+.divider {
+  margin: 0.5rem 0;
+  border: none;
+  border-top: 1px solid var(--border-color);
 }

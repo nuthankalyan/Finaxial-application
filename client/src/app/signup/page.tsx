@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './signup.module.css';
 import { useAuth } from '../context/AuthContext';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Signup() {
   const router = useRouter();
@@ -14,10 +15,7 @@ export default function Signup() {
     email: '',
     password: '',
     confirmPassword: '',
-  });
-  const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  });  const [error, setError] = useState('');
 
   useEffect(() => {
     if (authError) {
@@ -86,56 +84,26 @@ export default function Signup() {
               className={styles.input}
             />
           </div>
-          
-          <div className={styles.formGroup}>
+            <div className={styles.formGroup}>
             <label htmlFor="password">Password</label>
-            <div className={styles.passwordInputWrapper}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                placeholder="Create a password (min. 6 characters)"
-                className={styles.input}
-                minLength={6}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className={styles.passwordToggleButton}
-                tabIndex={-1}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
+            <PasswordInput
+              value={formData.password}
+              onChange={handleChange}
+              name="password"
+              placeholder="Create a password (min. 6 characters)"
+              className={styles.input}
+            />
           </div>
           
           <div className={styles.formGroup}>
             <label htmlFor="confirmPassword">Confirm Password</label>
-            <div className={styles.passwordInputWrapper}>
-              <input
-                type={showConfirmPassword ? 'text' : 'password'}
-                id="confirmPassword"
-                name="confirmPassword"
-                value={formData.confirmPassword}
-                onChange={handleChange}
-                required
-                placeholder="Confirm your password"
-                className={styles.input}
-              />
-              <button
-                type="button"
-                onClick={() => setShowConfirmPassword((v) => !v)}
-                className={styles.passwordToggleButton}
-                tabIndex={-1}
-                aria-label={showConfirmPassword ? 'Hide password' : 'Show password'}
-              >
-                {showConfirmPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
+            <PasswordInput
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              name="confirmPassword"
+              placeholder="Confirm your password"
+              className={styles.input}
+            />
           </div>
           
           <button 

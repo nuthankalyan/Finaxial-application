@@ -5,16 +5,15 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import styles from './login.module.css';
 import { useAuth } from '../context/AuthContext';
+import PasswordInput from '../components/PasswordInput';
 
 export default function Login() {
   const router = useRouter();
-  const { login, error: authError, loading, clearError } = useAuth();
-  const [formData, setFormData] = useState({
+  const { login, error: authError, loading, clearError } = useAuth();  const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     if (authError) {
@@ -68,28 +67,13 @@ export default function Login() {
               <Link href="/forgotpassword" className={styles.forgotPasswordLink}>
                 Forgot password?
               </Link>
-            </label>
-            <div className={styles.passwordInputWrapper}>
-              <input
-                type={showPassword ? 'text' : 'password'}
-                id="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                required
-                placeholder="Enter your password"
-                className={styles.input}
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword((v) => !v)}
-                className={styles.passwordToggleButton}
-                tabIndex={-1}
-                aria-label={showPassword ? 'Hide password' : 'Show password'}
-              >
-                {showPassword ? 'Hide' : 'Show'}
-              </button>
-            </div>
+            </label>            <PasswordInput
+              value={formData.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              className={styles.input}
+              name="password"
+            />
           </div>
           
           <button 
