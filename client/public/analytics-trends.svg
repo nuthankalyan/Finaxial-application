@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Line Chart Grid -->
+  <path d="M50 50 L50 250 L350 250" stroke="#E5E7EB" stroke-width="2"/>
+  <path d="M50 50 L350 50" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"/>
+  <path d="M50 100 L350 100" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"/>
+  <path d="M50 150 L350 150" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"/>
+  <path d="M50 200 L350 200" stroke="#E5E7EB" stroke-width="1" stroke-dasharray="4 4"/>
+  
+  <!-- Trend Lines -->
+  <path d="M50 200 L125 150 L200 180 L275 90 L350 120" stroke="#4E71FF" stroke-width="2" fill="none"/>
+  <path d="M50 180 L125 190 L200 150 L275 170 L350 140" stroke="#10B981" stroke-width="2" fill="none"/>
+  <path d="M50 160 L125 170 L200 130 L275 150 L350 80" stroke="#F59E0B" stroke-width="2" fill="none"/>
+  
+  <!-- Data Points -->
+  <circle cx="50" cy="200" r="4" fill="#4E71FF"/>
+  <circle cx="125" cy="150" r="4" fill="#4E71FF"/>
+  <circle cx="200" cy="180" r="4" fill="#4E71FF"/>
+  <circle cx="275" cy="90" r="4" fill="#4E71FF"/>
+  <circle cx="350" cy="120" r="4" fill="#4E71FF"/>
+  
+  <circle cx="50" cy="180" r="4" fill="#10B981"/>
+  <circle cx="125" cy="190" r="4" fill="#10B981"/>
+  <circle cx="200" cy="150" r="4" fill="#10B981"/>
+  <circle cx="275" cy="170" r="4" fill="#10B981"/>
+  <circle cx="350" cy="140" r="4" fill="#10B981"/>
+  
+  <circle cx="50" cy="160" r="4" fill="#F59E0B"/>
+  <circle cx="125" cy="170" r="4" fill="#F59E0B"/>
+  <circle cx="200" cy="130" r="4" fill="#F59E0B"/>
+  <circle cx="275" cy="150" r="4" fill="#F59E0B"/>
+  <circle cx="350" cy="80" r="4" fill="#F59E0B"/>
+</svg>

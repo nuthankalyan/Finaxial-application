@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Widget Settings Panel -->
+  <rect x="20" y="20" width="360" height="260" rx="8" fill="#FFFFFF" stroke="#E5E7EB"/>
+  <rect x="20" y="20" width="360" height="40" rx="8" fill="#F9FAFB"/>
+  <text x="40" y="45" font-family="Inter" font-size="14" fill="#111827">Widget Settings</text>
+  
+  <!-- Chart Type Selection -->
+  <rect x="40" y="80" width="320" height="180" rx="6" fill="#FFFFFF" stroke="#E5E7EB"/>
+  <text x="50" y="100" font-family="Inter" font-size="12" fill="#6B7280">Chart Type</text>
+  
+  <!-- Sample Charts -->
+  <circle cx="100" cy="160" r="30" stroke="#4E71FF" stroke-width="2" fill="none"/>
+  <rect x="160" y="130" width="60" height="60" stroke="#4E71FF" stroke-width="2" fill="none"/>
+  <path d="M260 190 L290 140 L320 170 L350 130" stroke="#4E71FF" stroke-width="2" fill="none"/>
+  
+  <!-- Control Panel -->
+  <rect x="40" y="220" width="320" height="40" rx="6" fill="#F9FAFB"/>
+  <circle cx="60" cy="240" r="8" fill="#4E71FF"/>
+  <circle cx="90" cy="240" r="8" fill="#10B981"/>
+  <circle cx="120" cy="240" r="8" fill="#F59E0B"/>
+</svg>

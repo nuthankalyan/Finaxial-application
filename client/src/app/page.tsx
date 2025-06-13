@@ -1,46 +1,67 @@
 'use client';
 
+import React from 'react';
 import Image from "next/image";
+import Link from "next/link";
 import Header from './components/Header';
 import ClientWrapper from './components/ClientWrapper';
-import styles from "./page.module.css";
-import Link from "next/link";
 import ScrollToTopButton from './components/ScrollToTopButton';
+import styles from "./page.module.css";
 
 export default function Home() {
   return (
-    <main className="flex min-h-screen flex-col items-center relative">
-      {/* Header */}
+    <main className={styles.page}>
       <ClientWrapper>
         <Header />
       </ClientWrapper>
 
-      {/* Hero Section */}
-      <section className="hero-section">
-        <div className="container mx-auto px-4 py-32">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <h1 className="text-5xl md:text-6xl font-bold leading-tight fade-in-up">
-                Financial Insights <span className="text-secondary-300">Automated</span> with AI
-              </h1>
-              <p className="text-xl md:text-2xl text-gray-200 fade-in-up delay-200">
-                Transforming financial data into actionable intelligence for institutions using generative AI.
-              </p>
-              <div className="pt-4 flex flex-wrap gap-4 fade-in-up delay-300">
-                <Link href="/signup">
-                  <button className="btn btn-primary hover-scale">
-                    Get Started
-                  </button>
-                </Link>
-              </div>
+      <section className={styles.heroSection}>
+        <div className={styles.tag}>AUTOMATED FINANCIAL REPORTS SOFTWARE</div>
+        <div className={styles.heroWrapper}>
+          <div className={styles.heroText}>
+            <h1 className={styles.heroTitle}>
+              Digitize & automate financial reports
+            </h1>
+            <p className={styles.heroSubtitle}>
+              Shorten the time for your finance team to collect data, generate bespoke reports and manage everchanging regulations & policies
+            </p>
+            <div className={styles.heroButtons}>              <Link href="/login" className={styles.primaryButton}>
+                Get Started
+              </Link>
+              
             </div>
-            <div className="hidden md:block relative fade-in-left delay-400">
-              <div className="animated-bg w-full h-96 rounded-xl shadow-2xl flex items-center justify-center">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" strokeLinecap="round" strokeLinejoin="round" className="floating">
-                    <path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48 2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48 2.83-2.83" />
-                    <circle cx="12" cy="12" r="3" />
-                  </svg>
+          </div>
+          <div className={styles.heroVisual}>
+            <div className={styles.dashboardPreview}>
+              <div className={styles.dashboardHeader}>
+                <div className={styles.dashboardTitle}>Financial Overview</div>
+                <div className={styles.dashboardDate}>June 2025</div>
+              </div>
+              <div className={styles.dashboardGrid}>
+                <div className={styles.dashboardCard}>
+                  <div className={styles.cardLabel}>Total Revenue</div>
+                  <div className={styles.cardValue}>$847,392</div>
+                  <div className={`${styles.cardTrend} ${styles.positive}`}>+12.8%</div>
+                </div>
+                <div className={styles.dashboardCard}>
+                  <div className={styles.cardLabel}>Expenses</div>
+                  <div className={styles.cardValue}>$235,841</div>
+                  <div className={`${styles.cardTrend} ${styles.negative}`}>-3.2%</div>
+                </div>
+                <div className={styles.dashboardCard}>
+                  <div className={styles.cardLabel}>Net Profit</div>
+                  <div className={styles.cardValue}>$611,551</div>
+                  <div className={`${styles.cardTrend} ${styles.positive}`}>+18.5%</div>
+                </div>
+                <div className={styles.dashboardChart}>
+                  <div className={styles.chartTitle}>Revenue Trend</div>
+                  <div className={styles.chartBars}>
+                    <div className={`${styles.chartBar} ${styles.bar60}`}></div>
+                    <div className={`${styles.chartBar} ${styles.bar75}`}></div>
+                    <div className={`${styles.chartBar} ${styles.bar45}`}></div>
+                    <div className={`${styles.chartBar} ${styles.bar90}`}></div>
+                    <div className={`${styles.chartBar} ${styles.bar85}`}></div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -49,134 +70,228 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section id="features" className="w-full py-24 bg-gray-50 dark:bg-gray-900">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16 fade-in-up">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Powerful AI-Driven Financial Analysis
-            </h2>
-            <p className="text-xl text-gray-600 dark:text-gray-300 max-w-3xl mx-auto">
-              Our platform leverages cutting-edge generative AI to transform raw financial data into valuable insights.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {/* Feature 1 */}
-            <div className="feature-card dark:bg-gray-800 fade-in-up delay-100">
-              <div className="feature-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600 dark:text-primary-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
-                  <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
-                  <path d="M18 12a2 2 0 0 0 0 4h4v-4Z" />
-                </svg>
+      <section className={styles.featuresSection}>
+        <div className={styles.sectionContainer}>
+          <h1 className={styles.mainTitle}>
+            Automate your finance management processes, end-to-end
+          </h1>
+          
+          <div className={styles.featureGrid}>
+            <div className={styles.featureCard}>
+              <div className={styles.featureIcon}>
+                <Image
+                  src="/checklist-icon.svg"
+                  alt="Expense Management"
+                  width={48}
+                  height={48}
+                />
               </div>
-              <h3 className="feature-title">
-                Automated Financial Reporting
-              </h3>
-              <p className="feature-description">
-                Generate comprehensive financial reports automatically with AI that understands complex financial data structures.
+              <h3 className={styles.featureTitle}>Expense saved is income gained</h3>
+              <p className={styles.featureDescription}>
+                Digitize your expense tracking without compromising on how you want to fit it into your process. 
+                Design your own custom finance apps with multi-level approval systems that ensure that spending 
+                is always kept in check.
               </p>
             </div>
 
-            {/* Feature 2 */}
-            <div className="feature-card dark:bg-gray-800 fade-in-up delay-200">
-              <div className="feature-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600 dark:text-primary-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="m2 9 3-3 3 3" />
-                  <path d="M8 6v12" />
-                  <path d="m22 15-3 3-3-3" />
-                  <path d="M16 18V6" />
-                  <rect x="9" y="3" width="6" height="18" rx="2" />
-                </svg>
+            <div className={styles.featureCard}>
+              <div className={styles.featureIcon}>
+                <Image
+                  src="/accounting-icon.svg"
+                  alt="Accounting"
+                  width={48}
+                  height={48}
+                />
               </div>
-              <h3 className="feature-title">
-                Trend Analysis & Forecasting
-              </h3>
-              <p className="feature-description">
-                Identify hidden patterns and predict future financial trends with advanced machine learning algorithms.
+              <h3 className={styles.featureTitle}>All your accounting in one place</h3>
+              <p className={styles.featureDescription}>
+                Manage all your accounting processes, like sales, purchases, etc., in a single custom finance 
+                software, and stay updated with real-time notifications. Gain insights faster with big picture 
+                views of all things finance on color-coded dashboards.
               </p>
             </div>
 
-            {/* Feature 3 */}
-            <div className="feature-card dark:bg-gray-800 fade-in-up delay-300">
-              <div className="feature-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-primary-600 dark:text-primary-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M8 3v4h13" />
-                  <path d="M4 7h4" />
-                  <path d="M22 11H9v4h13" />
-                  <path d="M4 11h4" />
-                  <path d="M8 19H4" />
-                  <path d="M12 19h-4v-4" />
-                </svg>
+            <div className={styles.featureCard}>
+              <div className={styles.featureIcon}>
+                <Image
+                  src="/projects-icon.svg"
+                  alt="Projects"
+                  width={48}
+                  height={48}
+                />
               </div>
-              <h3 className="feature-title">
-                Risk Assessment
-              </h3>
-              <p className="feature-description">
-                Evaluate potential risks with AI-powered analysis that considers multiple factors and historical data points.
+              <h3 className={styles.featureTitle}>Projects to financial projections on the go</h3>
+              <p className={styles.featureDescription}>
+                Be it assigning projects or studying financial projections, take work wherever you want with 
+                ready-made native mobile apps, automatically available with every web-based finance app 
+                developed on Finaxial.
               </p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Testimonial Section */}
-      <section id="testimonials" className="w-full py-24 bg-white dark:bg-gray-800">
-        <div className="container mx-auto px-4 max-w-5xl">
-          <div className="text-center mb-16 fade-in-up">
-            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 dark:text-white mb-4">
-              Trusted by Financial Leaders
-            </h2>
-          </div>
-
-          <div className="testimonial fade-in-up delay-200">
-            <div className="flex flex-col items-center text-center">
-              <div className="feature-icon w-20 h-20 mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-primary-600 dark:text-primary-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                  <path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
-                </svg>
-              </div>
-              <blockquote className="testimonial-text">
-                "Finaxial has transformed how we process and analyze financial data. The AI-driven insights have helped us make better decisions faster than ever before."
-              </blockquote>
-              <div>
-                <p className="font-semibold text-gray-900 dark:text-white">Sarah Johnson</p>
-                <p className="text-gray-600 dark:text-gray-300">CFO, Global Finance Partners</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section id="contact" className="cta-section">
-        <div className="container mx-auto px-4 max-w-5xl text-center">
-          <h2 className="text-3xl md:text-4xl font-bold mb-6 fade-in-up">
-            Ready to Transform Your Financial Insights?
+      {/* Analytics Section */}
+      <section className={styles.analyticsSection}>
+        <div className={styles.sectionContainer}>          <h2 className={styles.sectionTitle}>
+            Gain visibility into financial workload and performance
           </h2>
-          <p className="text-xl text-gray-200 mb-8 max-w-3xl mx-auto fade-in-up delay-100">
-            Join the financial institutions already leveraging our generative AI platform to gain deeper insights and make data-driven decisions.
-          </p>
-          <div className="flex flex-wrap justify-center gap-4 fade-in-up delay-200">
-            <Link href="/signup">
-              <button className="btn btn-primary hover-scale">
-                Get Started Today
-              </button>
+          <div className={styles.analyticsFeatures}>
+            <div className={styles.analyticsFeature}>
+              <div className={styles.featureVisual}>
+                <Image
+                  src="/customizable-reports.svg"
+                  alt="Customizable Reports"
+                  width={400}
+                  height={300}
+                  className={styles.featureImage}
+                />
+              </div>
+              <h3>Customizable Reports</h3>
+              <p>Create your own reports and visualization fit for your team's unique metrics and fields.</p>
+            </div>
+            <div className={styles.analyticsFeature}>
+              <div className={styles.featureVisual}>
+                <Image
+                  src="/template-reports.svg"
+                  alt="Template Reports"
+                  width={400}
+                  height={300}
+                  className={styles.featureImage}
+                />
+              </div>
+              <h3>Template Reports</h3>
+              <p>Leverage our ready-to-use legal reports to measure industry standard metrics and implement faster.</p>
+            </div>
+            <div className={styles.analyticsFeature}>
+              <div className={styles.featureVisual}>
+                <Image
+                  src="/analytics-trends.svg"
+                  alt="Analytics and Trends"
+                  width={400}
+                  height={300}
+                  className={styles.featureImage}
+                />
+              </div>
+              <h3>Analytics and Trends</h3>
+              <p>Use analytics to see trends in matter volume, status and type to identify seasonality and capacity gaps.</p>
+            </div>
+          </div>
+        </div>
+      </section>      {/* Testimonial Section */}
+      <section className={styles.testimonialSection}>
+        <div className={styles.sectionContainer}>
+          <div className={styles.metricsHighlight}>
+            <span className={styles.metricNumber}>60+</span>
+            <span className={styles.metricLabel}>Financial Workflows Automated</span>
+          </div>
+
+          <h2 className={styles.sectionTitle}>
+            Trusted by Leading Companies Worldwide
+          </h2>
+          
+          <div className={styles.trustCardGrid}>
+            <div className={styles.trustCard}>
+              <blockquote className={styles.testimonialQuote}>
+                "Finaxial has revolutionized our financial workflows, making them more efficient and accurate than ever before. The automation capabilities have transformed our entire finance department."
+              </blockquote>
+              <div className={styles.testimonialAuthor}>
+                <span className={styles.authorName}>Sarah Johnson</span>
+                <span className={styles.authorRole}>Chief Financial Officer, Global Finance Partners</span>
+              </div>
+            </div>
+
+            <div className={styles.trustCard}>
+              <blockquote className={styles.testimonialQuote}>
+                "The AI-driven insights have transformed how we process and analyze financial data. We've seen a 40% reduction in processing time and improved accuracy across all reports."
+              </blockquote>
+              <div className={styles.testimonialAuthor}>
+                <span className={styles.authorName}>Michael Chen</span>
+                <span className={styles.authorRole}>Head of Financial Operations, TechCorp International</span>
+              </div>
+            </div>
+
+            <div className={styles.trustCard}>
+              <blockquote className={styles.testimonialQuote}>
+                "A game-changer for our financial operations. The automated workflows and intelligent reporting have helped us scale our operations while maintaining perfect accuracy."
+              </blockquote>
+              <div className={styles.testimonialAuthor}>
+                <span className={styles.authorName}>Emily Wong</span>
+                <span className={styles.authorRole}>Director of Finance, Global Investments Ltd</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section className={styles.faqSection}>
+        <div className={styles.faqContainer}>
+          <div>
+            <h2 className={styles.faqTitle}>Frequently Asked Questions</h2>            <div className={styles.faqList}>
+              <div className={styles.faqQuestion}>
+                <div className={styles.questionContent}>
+                  <h3 className={styles.questionText}>What is Finaxial and how does it work?</h3>
+                  <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className={styles.faqQuestion}>
+                <div className={styles.questionContent}>
+                  <h3 className={styles.questionText}>What types of financial reports and insights can I generate?</h3>
+                  <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className={styles.faqQuestion}>
+                <div className={styles.questionContent}>
+                  <h3 className={styles.questionText}>Can Finaxial integrate with our existing financial systems?</h3>
+                  <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+
+              <div className={styles.faqQuestion}>
+                <div className={styles.questionContent}>
+                  <h3 className={styles.questionText}>How secure is our financial data with Finaxial?</h3>
+                  <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className={styles.contactBox}>
+            <h3 className={styles.contactTitle}>If you have any further questions,</h3>
+            <p className={styles.contactText}>Get in touch with our friendly team.</p>
+            <Link href="/contact" className={styles.contactLink}>
+              Get in touch
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 12H19M19 12L12 5M19 12L12 19" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
             </Link>
           </div>
         </div>
       </section>
 
-      {/* Scroll to top button */}
+      {/* Footer CTA */}
+      <section className={styles.footerCta}>
+        <div className={styles.sectionContainer}>
+          <div className={styles.ctaContent}>            <Link href="/login" className={styles.primaryButton}>
+              Get Started
+            </Link>
+            
+          </div>
+        </div>
+      </section>
+
       <ScrollToTopButton />
-      
-      {/* Set CSS variables for the button */}
-      <style jsx global>{`
-        :root {
-          --primary-color: #3b82f6;
-          --secondary-color: #8b5cf6;
-        }
-      `}</style>
     </main>
   );
 }

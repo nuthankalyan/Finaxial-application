@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="400" height="300" viewBox="0 0 400 300" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Stacked Bar Chart -->
+  <rect x="50" y="50" width="60" height="200" fill="#EEF2FF" stroke="#4E71FF"/>
+  <rect x="50" y="50" width="60" height="80" fill="#4E71FF"/>
+  <rect x="50" y="130" width="60" height="60" fill="#818CF8"/>
+  <rect x="50" y="190" width="60" height="60" fill="#C7D2FE"/>
+  
+  <rect x="130" y="80" width="60" height="170" fill="#EEF2FF" stroke="#4E71FF"/>
+  <rect x="130" y="80" width="60" height="70" fill="#4E71FF"/>
+  <rect x="130" y="150" width="60" height="50" fill="#818CF8"/>
+  <rect x="130" y="200" width="60" height="50" fill="#C7D2FE"/>
+  
+  <rect x="210" y="100" width="60" height="150" fill="#EEF2FF" stroke="#4E71FF"/>
+  <rect x="210" y="100" width="60" height="60" fill="#4E71FF"/>
+  <rect x="210" y="160" width="60" height="40" fill="#818CF8"/>
+  <rect x="210" y="200" width="60" height="50" fill="#C7D2FE"/>
+  
+  <!-- Pie Chart -->
+  <circle cx="330" cy="150" r="50" fill="transparent" stroke="#4E71FF" stroke-width="30" stroke-dasharray="188.5 314.15"/>
+  <circle cx="330" cy="150" r="50" fill="transparent" stroke="#818CF8" stroke-width="30" stroke-dasharray="94.25 314.15" stroke-dashoffset="-188.5"/>
+  <circle cx="330" cy="150" r="50" fill="transparent" stroke="#C7D2FE" stroke-width="30" stroke-dasharray="31.415 314.15" stroke-dashoffset="-282.75"/>
+</svg>

@@ -197,6 +197,8 @@ function BusinessTermsButton() {
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 autoFocus
+                aria-label="Search terms"
+                title="Search for business terms"
               />
             </div>
             
@@ -440,7 +442,8 @@ export default function Dashboard() {
     }
   };
 
-  const handleDeleteWorkspace = async (workspaceId: string) => {
+  const handleDeleteWorkspace = async (workspaceId: string | null) => {
+    if (!workspaceId) return;
     try {
       const token = localStorage.getItem('token');
       const response = await fetch(buildApiUrl(`api/workspaces/${workspaceId}`), {
@@ -632,13 +635,15 @@ export default function Dashboard() {
          
         </div>
         <div className={styles.headerRight}>
-          <div className={styles.avatarContainer} ref={avatarRef}>
-            <div 
+          <div className={styles.avatarContainer} ref={avatarRef}>           
+             <button
               className={styles.avatar} 
               onClick={() => setAvatarDropdownOpen(!avatarDropdownOpen)}
-            >
-              {user?.username?.charAt(0).toUpperCase() || 'U'}
-            </div>
+              aria-label="Toggle user menu"
+              aria-expanded={avatarDropdownOpen}
+              aria-haspopup="menu"
+            >              {user?.username?.charAt(0).toUpperCase() || 'U'}
+            </button>
             {avatarDropdownOpen && (
               <div className={styles.avatarDropdown}>
                 <div className={styles.dropdownItem}>
@@ -653,7 +658,7 @@ export default function Dashboard() {
                   </svg>
                   <span>{formatDate(user.createdAt)}</span>
                 </div>
-                <hr style={{ margin: '0.5rem 0', borderColor: 'var(--border-color)' }} />
+                <hr className={styles.divider} />
                 <div className={styles.dropdownItem} onClick={logout}>
                   <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="18" height="18">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -742,22 +747,22 @@ export default function Dashboard() {
               )}
               
               <div className={styles.workspaceGrid}>
-                {/* Create Workspace Card - Always show this */}
-                <div 
+                {/* Create Workspace Card - Always show this */}                <button 
+                  type="button"
                   className={`${styles.workspaceCard} ${styles.createCard}`}
                   onClick={() => setModalOpen(true)}
+                  aria-label="Create new workspace"
+                  title="Create new workspace"
                 >
                   <div className={styles.createCardIcon}>
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
                     </svg>
                   </div>
                   <h4 className={styles.workspaceTitle}>Create Workspace</h4>
-                  
-                </div>
+                </button>
                 
-                {/* Workspace Cards */}
-                {workspaces.map((workspace) => (
+                {/* Workspace Cards */}                {workspaces.map((workspace) => (
                 <div 
                   key={workspace._id} 
                   className={styles.workspaceCard}
@@ -770,12 +775,12 @@ export default function Dashboard() {
                       className={styles.actionButton}
                       onClick={(e) => startEditing(workspace, e)}
                       aria-label="Edit workspace title"
+                      title="Edit workspace title"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                    </button>
-                    <button 
+                    </button>                    <button 
                       className={`${styles.actionButton} ${styles.deleteButton}`}
                       onClick={(e) => {
                         e.preventDefault();
@@ -783,14 +788,14 @@ export default function Dashboard() {
                         setDeleteConfirmWorkspace(workspace._id);
                       }}
                       aria-label="Delete workspace"
+                      title="Delete workspace"
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                       </svg>
                     </button>
                   </div>
-                  {editingWorkspace === workspace._id ? (
-                    <input
+                  {editingWorkspace === workspace._id ? (                    <input
                       className={styles.editTitleInput}
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
@@ -798,6 +803,9 @@ export default function Dashboard() {
                       onBlur={() => handleTitleBlur(workspace._id)}
                       autoFocus
                       onClick={(e) => e.preventDefault()}
+                      aria-label="Edit workspace title"
+                      title="Edit workspace title"
+                      placeholder="Enter workspace title"
                     />
                   ) : (
                     <h4 className={styles.workspaceTitle}>{workspace.name}</h4>
@@ -819,10 +827,11 @@ export default function Dashboard() {
         </div>
         
         {/* Activity Button */}
-        <div className={styles.activityButton}>
-          <button 
+        <div className={styles.activityButton}>          <button 
             className={styles.activityButtonInner}
             onClick={() => setActivitySidebarOpen(true)}
+            aria-label="Open activity history"
+            title="View activity history"
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -919,12 +928,13 @@ export default function Dashboard() {
       </div>
       <div className={`${styles.activitySidebar} ${activitySidebarOpen ? styles.open : ''}`}>
         <div className={styles.activitySidebarHeader}>
-          <h3>Activity History</h3>
-          <button 
+          <h3>Activity History</h3>          <button 
             className={styles.closeActivitySidebar}
             onClick={() => setActivitySidebarOpen(false)}
+            aria-label="Close activity sidebar"
+            title="Close activity sidebar"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" width="20" height="20" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           </button>
