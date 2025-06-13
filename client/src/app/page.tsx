@@ -73,58 +73,57 @@ export default function Home() {
       <section className={styles.featuresSection}>
         <div className={styles.sectionContainer}>
           <h1 className={styles.mainTitle}>
-            Automate your finance management processes, end-to-end
+            Powerful features to streamline your financial workflows
           </h1>
           
           <div className={styles.featureGrid}>
             <div className={styles.featureCard}>
               <div className={styles.featureIcon}>
                 <Image
-                  src="/checklist-icon.svg"
-                  alt="Expense Management"
+                  src="/email-automation.svg"
+                  alt="Smart Email Reports"
                   width={48}
                   height={48}
                 />
               </div>
-              <h3 className={styles.featureTitle}>Expense saved is income gained</h3>
+              <h3 className={styles.featureTitle}>Smart Email Reports at Your Fingertips</h3>
               <p className={styles.featureDescription}>
-                Digitize your expense tracking without compromising on how you want to fit it into your process. 
-                Design your own custom finance apps with multi-level approval systems that ensure that spending 
-                is always kept in check.
+                Receive automated financial reports directly in your inbox, scheduled to your preferences. 
+                Stay informed with custom alerts and real-time updates on your financial metrics, delivered 
+                seamlessly to your email.
+              </p>
+            </div>
+
+            <div className={styles.featureCard}>              <div className={styles.featureIcon}>
+                <Image
+                  src="/ai-finance-assistant.svg"
+                  alt="AI Financial Assistant"
+                  width={48}
+                  height={48}
+                />
+              </div>
+              <h3 className={styles.featureTitle}>24/7 AI Financial Assistant</h3>
+              <p className={styles.featureDescription}>
+                Get instant answers to your financial queries with our intelligent AI chatbot. From expense 
+                tracking to budget analysis, receive smart insights and recommendations in real-time, 
+                helping you make informed decisions faster.
               </p>
             </div>
 
             <div className={styles.featureCard}>
               <div className={styles.featureIcon}>
                 <Image
-                  src="/accounting-icon.svg"
-                  alt="Accounting"
+                  src="/pdf-export.svg"
+                  alt="PDF Export"
                   width={48}
                   height={48}
                 />
               </div>
-              <h3 className={styles.featureTitle}>All your accounting in one place</h3>
+              <h3 className={styles.featureTitle}>One-Click PDF Reports Export</h3>
               <p className={styles.featureDescription}>
-                Manage all your accounting processes, like sales, purchases, etc., in a single custom finance 
-                software, and stay updated with real-time notifications. Gain insights faster with big picture 
-                views of all things finance on color-coded dashboards.
-              </p>
-            </div>
-
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>
-                <Image
-                  src="/projects-icon.svg"
-                  alt="Projects"
-                  width={48}
-                  height={48}
-                />
-              </div>
-              <h3 className={styles.featureTitle}>Projects to financial projections on the go</h3>
-              <p className={styles.featureDescription}>
-                Be it assigning projects or studying financial projections, take work wherever you want with 
-                ready-made native mobile apps, automatically available with every web-based finance app 
-                developed on Finaxial.
+                Transform your financial data into professional PDF reports with a single click. Generate 
+                beautifully formatted summaries, complete with charts and insights, perfect for 
+                presentations and record-keeping.
               </p>
             </div>
           </div>
