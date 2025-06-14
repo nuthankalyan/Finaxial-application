@@ -850,3 +850,35 @@
     font-size: 1.25rem;
   }
 }
+
+.faqAnswer {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #E5E7EB;
+  color: #4B5563;
+  font-size: 1rem;
+  line-height: 1.6;
+  display: none;
+}
+
+.faqQuestion.active .faqAnswer {
+  display: block;
+}
+
+.faqQuestion.active .chevronIcon {
+  transform: rotate(180deg);
+}
+
+.faqAnswer ul {
+  margin: 0.75rem 0;
+  padding-left: 1.5rem;
+  list-style-type: disc;
+}
+
+.faqAnswer li {
+  margin: 0.5rem 0;
+}
+
+.faqAnswer p {
+  margin: 0 0 0.75rem 0;
+}
