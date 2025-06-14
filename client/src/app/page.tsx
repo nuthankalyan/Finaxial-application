@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import Header from './components/Header';
@@ -9,6 +9,12 @@ import ScrollToTopButton from './components/ScrollToTopButton';
 import styles from "./page.module.css";
 
 export default function Home() {
+  const [activeFaq, setActiveFaq] = useState<number | null>(null);
+
+  const toggleFaq = (index: number) => {
+    setActiveFaq(activeFaq === index ? null : index);
+  };
+
   return (
     <main className={styles.page}>
       <ClientWrapper>
@@ -228,39 +234,98 @@ export default function Home() {
         <div className={styles.faqContainer}>
           <div>
             <h2 className={styles.faqTitle}>Frequently Asked Questions</h2>            <div className={styles.faqList}>
-              <div className={styles.faqQuestion}>
+              <div className={`${styles.faqQuestion} ${activeFaq === 0 ? styles.active : ''}`} onClick={() => toggleFaq(0)}>
                 <div className={styles.questionContent}>
-                  <h3 className={styles.questionText}>What is Finaxial and how does it work?</h3>
+                  <h3 className={styles.questionText}>How does Finaxial analyze my financial data?</h3>
                   <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
+                <div className={styles.faqAnswer}>
+                  <p>Finaxial uses advanced AI and machine learning to analyze your financial data:</p>
+                  <ul>
+                    <li>Upload your CSV files containing financial data</li>
+                    <li>Our AI processes and identifies key patterns and trends</li>
+                    <li>Generates detailed insights and visualizations in real-time</li>
+                    <li>Provides actionable recommendations based on your data</li>
+                    <li>Automatically creates PDF reports for easy sharing</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className={styles.faqQuestion}>
+              <div className={`${styles.faqQuestion} ${activeFaq === 1 ? styles.active : ''}`} onClick={() => toggleFaq(1)}>
                 <div className={styles.questionContent}>
-                  <h3 className={styles.questionText}>What types of financial reports and insights can I generate?</h3>
+                  <h3 className={styles.questionText}>What kind of visualizations does Finaxial provide?</h3>
                   <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
+                <div className={styles.faqAnswer}>
+                  <p>Finaxial offers a comprehensive suite of data visualizations:</p>
+                  <ul>
+                    <li>Interactive charts and graphs for trend analysis</li>
+                    <li>Financial performance dashboards</li>
+                    <li>Customizable report templates</li>
+                    <li>Real-time data monitoring displays</li>
+                    <li>Comparative analysis visualizations</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className={styles.faqQuestion}>
+              <div className={`${styles.faqQuestion} ${activeFaq === 2 ? styles.active : ''}`} onClick={() => toggleFaq(2)}>
                 <div className={styles.questionContent}>
-                  <h3 className={styles.questionText}>Can Finaxial integrate with our existing financial systems?</h3>
+                  <h3 className={styles.questionText}>How do I share reports with my team?</h3>
                   <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
+                <div className={styles.faqAnswer}>
+                  <p>Sharing reports with your team is simple and secure:</p>
+                  <ul>
+                    <li>Export reports in multiple formats (PDF, Excel, etc.)</li>
+                    <li>Share via secure email links</li>
+                    <li>Collaborate in real-time through shared workspaces</li>
+                    <li>Set custom access permissions for team members</li>
+                    <li>Schedule automated report distributions</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className={styles.faqQuestion}>
+              <div className={`${styles.faqQuestion} ${activeFaq === 3 ? styles.active : ''}`} onClick={() => toggleFaq(3)}>
                 <div className={styles.questionContent}>
-                  <h3 className={styles.questionText}>How secure is our financial data with Finaxial?</h3>
+                  <h3 className={styles.questionText}>What makes Finaxial's AI assistant unique?</h3>
                   <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
+                </div>
+                <div className={styles.faqAnswer}>
+                  <p>Our AI assistant stands out with its specialized financial expertise:</p>
+                  <ul>
+                    <li>Deep understanding of financial data and metrics</li>
+                    <li>Natural language processing for complex queries</li>
+                    <li>Personalized insights based on your data patterns</li>
+                    <li>Continuous learning and adaptation</li>
+                    <li>Integration with advanced analytics tools</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div className={`${styles.faqQuestion} ${activeFaq === 4 ? styles.active : ''}`} onClick={() => toggleFaq(4)}>
+                <div className={styles.questionContent}>
+                  <h3 className={styles.questionText}>How do I get started with Finaxial?</h3>
+                  <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  </svg>
+                </div>
+                <div className={styles.faqAnswer}>
+                  <p>Getting started with Finaxial is quick and straightforward:</p>
+                  <ul>
+                    <li>Sign up for a free account</li>
+                    <li>Create your first workspace</li>
+                    <li>Upload your financial data</li>
+                    <li>Access AI-powered insights instantly</li>
+                    <li>Customize your reporting preferences</li>
+                  </ul>
                 </div>
               </div>
             </div>
