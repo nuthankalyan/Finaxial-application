@@ -1024,8 +1024,9 @@ export default function Dashboard() {
       {/* Description Popup */}
       {isDescriptionPopupOpen && (
         <DescriptionPopup 
-          description={selectedDescription}
+          description={selectedDescription || ''}
           onClose={() => setIsDescriptionPopupOpen(false)}
+          isOpen={isDescriptionPopupOpen}
         />
       )}
     </div>
