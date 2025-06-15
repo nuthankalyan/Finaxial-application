@@ -7,6 +7,7 @@ import styles from './dashboard.module.css';
 import { useAuth } from '../context/AuthContext';
 import { buildApiUrl, fetchWithErrorHandling } from '../utils/apiConfig';
 import { getActivityStats } from '../services/activityService';
+import DescriptionPopup from '../components/DescriptionPopup';
 
 interface Workspace {
   _id: string;
@@ -261,6 +262,8 @@ export default function Dashboard() {
   const [activities, setActivities] = useState<CombinedActivity[]>([]);
   const [activitySidebarOpen, setActivitySidebarOpen] = useState(false);
   const [avatarDropdownOpen, setAvatarDropdownOpen] = useState(false);
+  const [selectedDescription, setSelectedDescription] = useState<string | null>(null);
+  const [isDescriptionPopupOpen, setIsDescriptionPopupOpen] = useState(false);
   const avatarRef = useRef<HTMLDivElement>(null);
   const [activityStats, setActivityStats] = useState({
     reportsGenerated: 0,
@@ -773,6 +776,22 @@ export default function Dashboard() {
                   <div className={styles.workspaceActions}>
                     <button 
                       className={styles.actionButton}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedDescription(workspace.description);
+                        setIsDescriptionPopupOpen(true);
+                      }}
+                      aria-label="View workspace description"
+                      title="View workspace description"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      </svg>
+                    </button>
+                    <button 
+                      className={styles.actionButton}
                       onClick={(e) => startEditing(workspace, e)}
                       aria-label="Edit workspace title"
                       title="Edit workspace title"
@@ -818,9 +837,24 @@ export default function Dashboard() {
                       </svg>
                       Created {formatDate(workspace.createdAt)}
                     </div>
+                    <button 
+                      className={styles.descriptionButton}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setSelectedDescription(workspace.description);
+                        setIsDescriptionPopupOpen(true);
+                      }}
+                      aria-label="View workspace description"
+                      title="View workspace description"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h1m4 4h-1v-4h1m-9 8h10a2 2 0 002-2v-3H4v3a2 2 0 002 2zM16 4h-1V2h-4v2H8a2 2 0 00-2 2v3h12V6a2 2 0 00-2-2z" />
+                      </svg>
+                    </button>
                   </div>
                 </div>
-              ))}
+                ))}
               </div>
             </div>
           )}
@@ -926,6 +960,17 @@ export default function Dashboard() {
       <div className={`${styles.activityBackdrop} ${activitySidebarOpen ? styles.open : ''}`} 
            onClick={() => setActivitySidebarOpen(false)}>
       </div>
+      
+      {/* Description Popup */}
+      <DescriptionPopup
+        description={selectedDescription || ''}
+        isOpen={isDescriptionPopupOpen}
+        onClose={() => {
+          setIsDescriptionPopupOpen(false);
+          setSelectedDescription(null);
+        }}
+      />
+      
       <div className={`${styles.activitySidebar} ${activitySidebarOpen ? styles.open : ''}`}>
         <div className={styles.activitySidebarHeader}>
           <h3>Activity History</h3>          <button 
@@ -975,6 +1020,14 @@ export default function Dashboard() {
           )}
         </div>
       </div>
+
+      {/* Description Popup */}
+      {isDescriptionPopupOpen && (
+        <DescriptionPopup 
+          description={selectedDescription}
+          onClose={() => setIsDescriptionPopupOpen(false)}
+        />
+      )}
     </div>
   );
-} 
+}
