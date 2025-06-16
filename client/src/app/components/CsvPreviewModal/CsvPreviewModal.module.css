@@ -1,0 +1,211 @@
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.modalContent {
+  background-color: white;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 1200px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+
+.modalHeader {
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background-color: #f8fafc;
+}
+
+.modalHeader h2 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.fileIcon {
+  font-size: 1.25rem;
+}
+
+.closeButton {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #64748b;
+  padding: 0.5rem;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  line-height: 1;
+}
+
+.closeButton:hover {
+  background-color: #f1f5f9;
+  color: #0f172a;
+}
+
+.tableContainer {
+  flex: 1;
+  overflow: hidden;
+  padding: 1.5rem 2rem;
+  min-height: 200px;
+  max-height: calc(90vh - 180px);
+}
+
+.tableWrapper {
+  overflow: auto;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.previewTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  background-color: white;
+}
+
+.previewTable th {
+  background-color: #f8fafc;
+  padding: 0.875rem 1.5rem;
+  text-align: left;
+  font-weight: 600;
+  color: #334155;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.previewTable td {
+  padding: 0.875rem 1.5rem;
+  color: #475569;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.evenRow {
+  background-color: white;
+}
+
+.oddRow {
+  background-color: #f8fafc;
+}
+
+.previewTable tr:hover td {
+  background-color: #f1f5f9;
+}
+
+.modalFooter {
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  background-color: #f8fafc;
+}
+
+.cancelButton, .uploadButton {
+  padding: 0.625rem 1.25rem;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cancelButton {
+  border: 1px solid #e2e8f0;
+  background-color: white;
+  color: #475569;
+}
+
+.cancelButton:hover:not(:disabled) {
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.uploadButton {
+  border: none;
+  background-color: #2563eb;
+  color: white;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+.uploadButton:hover:not(:disabled) {
+  background-color: #1d4ed8;
+}
+
+.cancelButton:disabled,
+.uploadButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.uploadIcon {
+  font-size: 1.125rem;
+}
+
+.loadingSpinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 640px) {
+  .modalContent {
+    width: 95%;
+    max-height: 95vh;
+  }
+
+  .modalHeader, .modalFooter {
+    padding: 1rem 1.5rem;
+  }
+
+  .tableContainer {
+    padding: 1rem;
+  }
+
+  .previewTable th,
+  .previewTable td {
+    padding: 0.75rem 1rem;
+  }
+}
