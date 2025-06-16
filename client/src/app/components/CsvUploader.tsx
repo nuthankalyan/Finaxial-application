@@ -3,16 +3,34 @@
 import React, { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
+import { CsvPreviewModal } from './CsvPreviewModal/CsvPreviewModal';
 import styles from './CsvUploader.module.css';
 
 interface CsvUploaderProps {
   onFileUpload: (fileContent: string, fileName: string) => void;
   isLoading: boolean;
+  maxPreviewRows?: number;
 }
 
-export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProps) {
+export default function CsvUploader({ onFileUpload, isLoading, maxPreviewRows = 5 }: CsvUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [showPreview, setShowPreview] = useState(false);
+  const [previewData, setPreviewData] = useState<{ content: string; file: File } | null>(null);
+
+  const handleConfirmUpload = useCallback(() => {
+    if (previewData) {
+      onFileUpload(previewData.content, previewData.file.name);
+      setShowPreview(false);
+      setPreviewData(null);
+    }
+  }, [previewData, onFileUpload]);
+
+  const handleCancelUpload = useCallback(() => {
+    setShowPreview(false);
+    setPreviewData(null);
+    setFileName(null);
+  }, []);
 
   const onDrop = useCallback(
     (acceptedFiles: File[]) => {
@@ -27,11 +45,12 @@ export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProp
       
       setFileName(file.name);
       
-      // Read file content
+      // Read file content for preview
       const reader = new FileReader();
       reader.onload = () => {
         const fileContent = reader.result as string;
-        onFileUpload(fileContent, file.name);
+        setPreviewData({ content: fileContent, file });
+        setShowPreview(true);
       };
       reader.onerror = () => {
         setError('Failed to read the file');
@@ -64,8 +83,6 @@ export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProp
     event.preventDefault();
     event.stopPropagation();
     
-    // Extract the dropzone's onDrop handler to call manually
-    const dropzoneProps = getRootProps();
     if (!isLoading && event.dataTransfer.files && event.dataTransfer.files.length > 0) {
       onDrop(Array.from(event.dataTransfer.files));
     }
@@ -73,6 +90,16 @@ export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProp
 
   return (
     <div className={styles.uploaderContainer}>
+      {showPreview && previewData && (
+        <CsvPreviewModal
+          csvData={previewData.content}
+          fileName={previewData.file.name}
+          file={previewData.file}
+          onConfirm={handleConfirmUpload}
+          onCancel={handleCancelUpload}
+          maxRows={maxPreviewRows}
+        />
+      )}
       <motion.div
         className={`${styles.dropzone} ${isDragActive ? styles.active : ''} ${isLoading ? styles.loading : ''}`}
         {...getRootProps({
@@ -146,4 +173,4 @@ export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProp
       )}
     </div>
   );
-} 
+}

@@ -10,13 +10,14 @@
   justify-content: center;
   padding: 2rem;
   border: 2px dashed #d1d5db;
-  border-radius: 0.5rem;
+  border-radius: 0.75rem;
   background-color: #f9fafb;
   cursor: pointer;
   transition: all 0.2s ease;
   min-height: 200px;
   position: relative;
   overflow: hidden;
+  z-index: 1;
 }
 
 .dropzone:hover {
