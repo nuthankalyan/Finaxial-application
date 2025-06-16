@@ -3,7 +3,7 @@ export interface CsvData {
   rows: string[][];
 }
 
-export const parseCsvPreview = (csvContent: string, maxRows: number = 5): CsvData => {
+export const parseCsvPreview = (csvContent: string): CsvData => {
   // Split content into lines and remove empty lines
   const lines = csvContent.split('\n').filter(line => line.trim());
   
@@ -30,28 +30,13 @@ export const parseCsvPreview = (csvContent: string, maxRows: number = 5): CsvDat
       }
     }
     
-    // Add the last cell
-    result.push(cell);
-    
-    return result.map(c => {
-      // Remove quotes from quoted cells
-      if (c.startsWith('"') && c.endsWith('"')) {
-        return c.substring(1, c.length - 1);
-      }
-      return c.trim();
-    });
+    result.push(cell); // Add the last cell
+    return result.map(cell => cell.trim());
   };
 
-  // Get headers
+  // Extract headers and data rows
   const headers = parseCSVLine(lines[0]);
-  
-  // Get preview rows
-  const previewRows = lines
-    .slice(1, maxRows + 1)
-    .map(line => parseCSVLine(line));
+  const rows = lines.slice(1).map(line => parseCSVLine(line));
 
-  return {
-    headers,
-    rows: previewRows
-  };
+  return { headers, rows };
 };

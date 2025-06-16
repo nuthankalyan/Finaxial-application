@@ -83,13 +83,22 @@
   overflow: auto;
   border-radius: 8px;
   border: 1px solid #e2e8f0;
+  max-height: calc(90vh - 250px); /* Set maximum height for vertical scrolling */
+  position: relative;
 }
 
 .previewTable {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate; /* Changed from collapse to separate for sticky header */
+  border-spacing: 0;
   font-size: 0.875rem;
   background-color: white;
+}
+
+.previewTable thead {
+  position: sticky;
+  top: 0;
+  z-index: 1;
 }
 
 .previewTable th {
@@ -98,10 +107,8 @@
   text-align: left;
   font-weight: 600;
   color: #334155;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-  border-bottom: 2px solid #e2e8f0;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Add shadow to header */
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .previewTable td {
