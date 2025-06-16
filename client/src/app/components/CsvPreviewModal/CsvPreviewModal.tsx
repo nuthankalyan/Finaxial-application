@@ -9,7 +9,6 @@ interface CsvPreviewModalProps {
   onConfirm: (file: File) => void;
   onCancel: () => void;
   file: File;
-  maxRows?: number;
 }
 
 export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
@@ -18,10 +17,9 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   onConfirm,
   onCancel,
   file,
-  maxRows = 5
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const { headers, rows } = parseCsvPreview(csvData, maxRows);
+  const { headers, rows } = parseCsvPreview(csvData);
 
   const handleUpload = async () => {
     setIsLoading(true);

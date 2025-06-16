@@ -9,10 +9,9 @@ import styles from './CsvUploader.module.css';
 interface CsvUploaderProps {
   onFileUpload: (fileContent: string, fileName: string) => void;
   isLoading: boolean;
-  maxPreviewRows?: number;
 }
 
-export default function CsvUploader({ onFileUpload, isLoading, maxPreviewRows = 5 }: CsvUploaderProps) {
+export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [showPreview, setShowPreview] = useState(false);
@@ -97,7 +96,6 @@ export default function CsvUploader({ onFileUpload, isLoading, maxPreviewRows = 
           file={previewData.file}
           onConfirm={handleConfirmUpload}
           onCancel={handleCancelUpload}
-          maxRows={maxPreviewRows}
         />
       )}
       <motion.div
