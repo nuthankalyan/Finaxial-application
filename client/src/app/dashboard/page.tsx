@@ -271,6 +271,11 @@ export default function Dashboard() {
     reportsChange: 0,
     insightsChange: 0
   });
+  const [searchQuery, setSearchQuery] = useState('');
+  
+  const filteredWorkspaces = workspaces.filter(workspace => 
+    workspace.name.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   useEffect(() => {
     // If not loading and no user, redirect to login
@@ -734,6 +739,30 @@ export default function Dashboard() {
         <div className={styles.dashboardSection}>
           <div className={styles.sectionHeader}>
             <h3>Your Workspaces</h3>
+            <div className={styles.searchContainer}>
+              <input
+                type="text"
+                placeholder="Search workspaces..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className={styles.searchInput}
+                aria-label="Search workspaces"
+              />
+              <svg 
+                className={styles.searchIcon} 
+                xmlns="http://www.w3.org/2000/svg" 
+                fill="none" 
+                viewBox="0 0 24 24" 
+                stroke="currentColor"
+              >
+                <path 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round" 
+                  strokeWidth={2} 
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+                />
+              </svg>
+            </div>
           </div>
           
           {loading ? (
@@ -742,10 +771,17 @@ export default function Dashboard() {
             <p className={styles.error}>{error}</p>
           ) : (
             <div>
-              {workspaces.length === 0 && (
+              {filteredWorkspaces.length === 0 && searchQuery === '' && (
                 <div className={styles.emptyState}>
                   <h4>No sessions found</h4>
                   <p>Create your first session by clicking the card below</p>
+                </div>
+              )}
+              
+              {filteredWorkspaces.length === 0 && searchQuery !== '' && (
+                <div className={styles.emptyState}>
+                  <h4>No matching workspaces found</h4>
+                  <p>Try different search terms</p>
                 </div>
               )}
               
@@ -765,7 +801,7 @@ export default function Dashboard() {
                   <h4 className={styles.workspaceTitle}>Create Workspace</h4>
                 </button>
                 
-                {/* Workspace Cards */}                {workspaces.map((workspace) => (
+                {/* Workspace Cards */}                {filteredWorkspaces.map((workspace) => (
                 <div 
                   key={workspace._id} 
                   className={styles.workspaceCard}
