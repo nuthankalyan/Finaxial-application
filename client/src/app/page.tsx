@@ -6,6 +6,7 @@ import Link from "next/link";
 import Header from './components/Header';
 import ClientWrapper from './components/ClientWrapper';
 import ScrollToTopButton from './components/ScrollToTopButton';
+import { SparklesCore } from './components/ui/SparklesCore';
 import styles from "./page.module.css";
 
 export default function Home() {
@@ -19,54 +20,63 @@ export default function Home() {
     <main className={styles.page}>
       <ClientWrapper>
         <Header />
-      </ClientWrapper>
-
-      <section className={styles.heroSection}>
-        <div className={styles.tag}>AUTOMATED FINANCIAL REPORTS SOFTWARE</div>
-        <div className={styles.heroWrapper}>
-          <div className={styles.heroText}>
-            <h1 className={styles.heroTitle}>
-              Digitize & automate financial reports
-            </h1>
-            <p className={styles.heroSubtitle}>
-              Shorten the time for your finance team to collect data, generate bespoke reports and manage everchanging regulations & policies
-            </p>
-            <div className={styles.heroButtons}>              <Link href="/login" className={styles.primaryButton}>
-                Get Started
-              </Link>
-              
-            </div>
-          </div>
-          <div className={styles.heroVisual}>
-            <div className={styles.dashboardPreview}>
-              <div className={styles.dashboardHeader}>
-                <div className={styles.dashboardTitle}>Financial Overview</div>
-                <div className={styles.dashboardDate}>June 2025</div>
+      </ClientWrapper>      <section className={styles.heroSection}>        <div className={styles.sparklesWrapper}>
+          <SparklesCore
+            id="tsparticlesfull"
+            background="transparent" 
+            minSize={0.6}
+            maxSize={2.4}
+            particleColor="#FFFFFF"
+            particleDensity={80}
+            speed={2}
+            className={styles.sparklesContainer}
+          />
+          <div className={styles.tag}>AUTOMATED FINANCIAL REPORTS SOFTWARE</div>
+          <div className={styles.heroWrapper}>
+            <div className={styles.heroText}>
+              <h1 className={styles.heroTitle}>
+                Digitize & automate financial reports
+              </h1>
+              <p className={styles.heroSubtitle}>
+                Shorten the time for your finance team to collect data, generate bespoke reports and manage everchanging regulations & policies
+              </p>
+              <div className={styles.heroButtons}>              
+                <Link href="/login" className={styles.primaryButton}>
+                  Get Started
+                </Link>
               </div>
-              <div className={styles.dashboardGrid}>
-                <div className={styles.dashboardCard}>
-                  <div className={styles.cardLabel}>Total Revenue</div>
-                  <div className={styles.cardValue}>$847,392</div>
-                  <div className={`${styles.cardTrend} ${styles.positive}`}>+12.8%</div>
+            </div>
+            <div className={styles.heroVisual}>
+              <div className={styles.dashboardPreview}>
+                <div className={styles.dashboardHeader}>
+                  <div className={styles.dashboardTitle}>Financial Overview</div>
+                  <div className={styles.dashboardDate}>June 2025</div>
                 </div>
-                <div className={styles.dashboardCard}>
-                  <div className={styles.cardLabel}>Expenses</div>
-                  <div className={styles.cardValue}>$235,841</div>
-                  <div className={`${styles.cardTrend} ${styles.negative}`}>-3.2%</div>
-                </div>
-                <div className={styles.dashboardCard}>
-                  <div className={styles.cardLabel}>Net Profit</div>
-                  <div className={styles.cardValue}>$611,551</div>
-                  <div className={`${styles.cardTrend} ${styles.positive}`}>+18.5%</div>
-                </div>
-                <div className={styles.dashboardChart}>
-                  <div className={styles.chartTitle}>Revenue Trend</div>
-                  <div className={styles.chartBars}>
-                    <div className={`${styles.chartBar} ${styles.bar60}`}></div>
-                    <div className={`${styles.chartBar} ${styles.bar75}`}></div>
-                    <div className={`${styles.chartBar} ${styles.bar45}`}></div>
-                    <div className={`${styles.chartBar} ${styles.bar90}`}></div>
-                    <div className={`${styles.chartBar} ${styles.bar85}`}></div>
+                <div className={styles.dashboardGrid}>
+                  <div className={styles.dashboardCard}>
+                    <div className={styles.cardLabel}>Total Revenue</div>
+                    <div className={styles.cardValue}>$847,392</div>
+                    <div className={`${styles.cardTrend} ${styles.positive}`}>+12.8%</div>
+                  </div>
+                  <div className={styles.dashboardCard}>
+                    <div className={styles.cardLabel}>Expenses</div>
+                    <div className={styles.cardValue}>$235,841</div>
+                    <div className={`${styles.cardTrend} ${styles.negative}`}>-3.2%</div>
+                  </div>
+                  <div className={styles.dashboardCard}>
+                    <div className={styles.cardLabel}>Net Profit</div>
+                    <div className={styles.cardValue}>$611,551</div>
+                    <div className={`${styles.cardTrend} ${styles.positive}`}>+18.5%</div>
+                  </div>
+                  <div className={styles.dashboardChart}>
+                    <div className={styles.chartTitle}>Revenue Trend</div>
+                    <div className={styles.chartBars}>
+                      <div className={`${styles.chartBar} ${styles.bar60}`}></div>
+                      <div className={`${styles.chartBar} ${styles.bar75}`}></div>
+                      <div className={`${styles.chartBar} ${styles.bar45}`}></div>
+                      <div className={`${styles.chartBar} ${styles.bar90}`}></div>
+                      <div className={`${styles.chartBar} ${styles.bar85}`}></div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -342,15 +352,27 @@ export default function Home() {
             </Link>
           </div>
         </div>
-      </section>
-
-      {/* Footer CTA */}
+      </section>      {/* Footer CTA */}
       <section className={styles.footerCta}>
-        <div className={styles.sectionContainer}>
-          <div className={styles.ctaContent}>            <Link href="/login" className={styles.primaryButton}>
-              Get Started
-            </Link>
-            
+        <div className={styles.sparklesWrapper}>
+          <SparklesCore
+            id="footerSparkles"
+            background="transparent"
+            minSize={0.4}
+            maxSize={1.8}
+            particleColor="#FFFFFF"
+            particleDensity={60}
+            speed={1.5}
+            className={styles.sparklesContainer}
+          />
+          <div className={styles.sectionContainer}>
+            <div className={styles.ctaContent}>
+              <h2 className={styles.ctaTitle}>Ready to transform your financial workflows?</h2>
+              <p className={styles.ctaText}>Join thousands of companies using Finaxial to automate their financial reporting</p>
+              <Link href="/login" className={styles.primaryButton}>
+                Get Started
+              </Link>
+            </div>
           </div>
         </div>
       </section>

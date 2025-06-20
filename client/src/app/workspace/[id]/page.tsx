@@ -9,7 +9,7 @@ import InsightsPanel from '../../components/InsightsPanel';
 import InsightsList, { SavedInsight } from '../../components/InsightsList';
 import VisualizationPanel from '../../components/VisualizationPanel';
 import VisualizationHistory from '../../components/VisualizationHistory';
-import { analyzeCsvWithGemini, generateChartData, FinancialInsights, ChartData } from '../../services/geminiService';
+import { analyzeCsvWithGemini, generateChartData, analyzeMultipleCsvFiles, generateMultipleFilesChartData, FinancialInsights, ChartData, FileInfo } from '../../services/geminiService';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -211,8 +211,7 @@ function getNumericalInsightsFromData(insights: FinancialInsights): InsightCardD
 
 export default function WorkspacePage({ params }: { params: { id: string } }) {
   const router = useRouter();
-  const { id } = params;
-  const [workspace, setWorkspace] = useState<Workspace | null>(null);
+  const { id } = params;  const [workspace, setWorkspace] = useState<Workspace | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [analyzing, setAnalyzing] = useState(false);
@@ -220,6 +219,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [savedInsightCards, setSavedInsightCards] = useState<InsightCardData[] | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [csvContent, setCsvContent] = useState<string | null>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<FileInfo[]>([]);
   const [savedInsights, setSavedInsights] = useState<SavedInsight[]>([]);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('summary');
@@ -417,14 +417,21 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     // Data is considered financial if it has financial keywords or column patterns
     // and also has a reasonable amount of numeric content
     return (hasFinancialKeywords || hasFinancialColumns) && numericRatio > 0.1;
-  };
-
-  const handleFileUpload = async (csvContent: string, name: string) => {
-    setFileName(name);
-    setCsvContent(csvContent);
+  };  const handleFileUpload = async (filesContent: { content: string; fileName: string }[]) => {
+    if (filesContent.length === 0) return;
     
-    // Check if the uploaded data is financial in nature
-    if (!isFinancialData(csvContent)) {
+    // Set the filename to display - if multiple files, use a descriptive label
+    if (filesContent.length === 1) {
+      setFileName(filesContent[0].fileName);
+      setCsvContent(filesContent[0].content);
+    } else {
+      setFileName(`${filesContent.length} files selected`);
+      // Store the first file's content for any functions that still require a single CSV
+      setCsvContent(filesContent[0].content);
+    }
+    
+    // Check if at least the primary file has financial data
+    if (!isFinancialData(filesContent[0].content)) {
       // Show notification for non-financial data
       setNotification({
         show: true,
@@ -441,23 +448,45 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     setCharts(null);
     setIsViewingHistory(false);
     
-    // Reset assistant messages when new file is uploaded
+    // Reset assistant messages when new files are uploaded
     setAssistantMessages([{
       id: '1',
-      text: 'Hello! I\'m your financial assistant. Ask me anything about your uploaded financial data.',
+      text: `Hello! I'm your financial assistant. You've uploaded ${filesContent.length} ${filesContent.length === 1 ? 'file' : 'files'}. Ask me anything about your financial data.`,
       sender: 'assistant',
       timestamp: new Date()
     }]);
     
-    try {
-      // First, analyze the data to get insights
-      const results = await analyzeCsvWithGemini(csvContent);
+    try {      // Convert the files to FileInfo format for the Gemini service
+      const files: FileInfo[] = filesContent.map(file => ({
+        content: file.content,
+        fileName: file.fileName
+      }));
+      
+      // Store the files for access by other components
+      setUploadedFiles(files);
+
+      // Use multi-file analysis when multiple files are uploaded
+      let results: FinancialInsights;
+      
+      if (files.length > 1) {
+        // Use the multi-file analysis function
+        results = await analyzeMultipleCsvFiles(files);
+        console.log("Analyzed multiple files:", files.map(f => f.fileName).join(", "));
+      } else {
+        // Use the single file function for better optimization with one file
+        results = await analyzeCsvWithGemini(files[0].content);
+        results.fileNames = [files[0].fileName];
+      }
+      
       setInsights(results);
       
       // Generate chart data
       setGeneratingCharts(true);
       try {
-        const chartData = await generateChartData(csvContent);
+        // Use multi-file chart generation when multiple files are uploaded
+        const chartData = files.length > 1 
+          ? await generateMultipleFilesChartData(files)
+          : await generateChartData(files[0].content);
         
         // Check if we received fallback charts (which would mean there was an error)
         const isFallbackChart = chartData.length === 1 && 
@@ -1436,8 +1465,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                   </div>
 
                   {/* Save/Export/Email buttons */}
-                  <div className={styles.saveButtonContainer}>
-                    {!isViewingHistory && (
+                  <div className={styles.saveButtonContainer}>                    {!isViewingHistory && (
                       <motion.button
                         className={styles.saveButton}
                         onClick={saveInsightsToDatabase}
@@ -1453,6 +1481,24 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         ) : (
                           'Save Insights'
                         )}
+                      </motion.button>
+                    )}
+                    
+                    {!isViewingHistory && insights && (
+                      <motion.button
+                        className={styles.reportButton}
+                        onClick={() => {
+                          // Generate a unique report ID based on the file name and current timestamp
+                          const reportId = fileName ? 
+                            `${fileName.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}-${Date.now().toString(36)}` : 
+                            `report-${Date.now().toString(36)}`;
+                          router.push(`/workspace/${params.id}/report/${reportId}`);
+                        }}
+                        disabled={saving || exporting || sending}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        Report
                       </motion.button>
                     )}
                     
@@ -1545,18 +1591,34 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-            >
-              <div className={styles.modalHeader}>
+            >              <div className={styles.modalHeader}>
                 <h3>{selectedInsight.fileName}</h3>
-                <button 
-                  className={styles.closeButton}
-                  onClick={() => setShowInsightDetails(false)}
-                >
-                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                </button>
+                <div className={styles.modalHeaderButtons}>
+                  <button 
+                    className={styles.reportButton}
+                    onClick={() => {
+                      // Generate a unique report ID based on the file name and current timestamp
+                      const reportId = selectedInsight.fileName ? 
+                        `${selectedInsight.fileName.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}-${Date.now().toString(36)}` : 
+                        `report-${Date.now().toString(36)}`;
+                      router.push(`/workspace/${params.id}/report/${reportId}`);
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" width="18" height="18">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+                    </svg>
+                    Report
+                  </button>
+                  <button 
+                    className={styles.closeButton}
+                    onClick={() => setShowInsightDetails(false)}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
               </div>
               
               <div className={styles.modalTabs}>
@@ -1986,7 +2048,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       }
                       
                       // Add footer with app name
-                      const pageCount = doc.getNumberOfPages();
+                                           const pageCount = doc.getNumberOfPages();
                       for (let i = 1; i <= pageCount; i++) {
                         doc.setPage(i);
                         
@@ -2121,4 +2183,4 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       </AnimatePresence>
     </div>
   );
-} 
+}

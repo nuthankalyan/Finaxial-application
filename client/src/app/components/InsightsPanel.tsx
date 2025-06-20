@@ -72,9 +72,13 @@ export default function InsightsPanel({ insights, fileName, savedInsightCards }:
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.3 }}
-        >
-          AI Financial Insights
-          {fileName && <span className={styles.fileName}>for {fileName}</span>}
+        >          AI Financial Insights
+          {fileName && <span className={styles.fileName}>
+            {fileName.includes('files selected') ? fileName : `for ${fileName}`}
+            {insights && insights.fileNames && insights.fileNames.length > 1 && (
+              <span className={styles.multiFileBadge}>{insights.fileNames.length} files analyzed</span>
+            )}
+          </span>}
         </motion.h3>
       </div>
 

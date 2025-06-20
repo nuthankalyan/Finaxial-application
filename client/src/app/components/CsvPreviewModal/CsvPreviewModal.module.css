@@ -49,6 +49,12 @@
   font-size: 1.25rem;
 }
 
+.fileTypeIcon {
+  margin-right: 0.5rem;
+  font-size: 1rem;
+  opacity: 0.8;
+}
+
 .closeButton {
   background: none;
   border: none;
@@ -195,6 +201,133 @@
   to {
     transform: rotate(360deg);
   }
+}
+
+.fileTabs {
+  display: flex;
+  overflow-x: auto;
+  padding: 0.5rem 1rem 0;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e5e7eb;
+  gap: 0.25rem;
+  flex-wrap: nowrap;
+  scrollbar-width: thin;
+}
+
+.fileTabs::-webkit-scrollbar {
+  height: 4px;
+}
+
+.fileTabs::-webkit-scrollbar-thumb {
+  background-color: #cbd5e1;
+  border-radius: 4px;
+}
+
+.fileTab {
+  padding: 0.75rem 1rem;
+  border-radius: 6px 6px 0 0;
+  border: none;
+  border-radius: 10px;
+  background-color: transparent;
+  cursor: pointer;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  outline: none;
+  flex-shrink: 0;
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fileTab:hover {
+  color: #334155;
+  background-color: rgba(241, 245, 249, 0.8);
+}
+
+.activeTab {
+  background-color: white;
+  color: #2563eb;
+  border-color: #e5e7eb;
+  border-bottom-color: white;
+  position: relative;
+  top: 1px;
+  z-index: 1;
+}
+
+.activeTab:hover {
+  color: #1d4ed8;
+  background-color: white;
+}
+
+.loadingTable {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+  font-style: italic;
+}
+
+.sheetTabs {
+  display: flex;
+  overflow-x: auto;
+  
+  background-color: #f3f4f6;
+  padding: 0 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #e5e7eb;
+}
+
+.sheetTabs::-webkit-scrollbar {
+  height: 6px;
+}
+
+.sheetTabs::-webkit-scrollbar-thumb {
+  background-color: #94a3b8;
+  border-radius: 3px;
+}
+
+.sheetTabs::-webkit-scrollbar-track {
+  background-color: #e5e7eb;
+}
+
+.sheetTabsScroll {
+  display: flex;
+  flex-wrap: nowrap;
+}
+
+.sheetTab {
+  padding: 0.75rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #64748b;
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  position: relative;
+}
+
+.sheetTab:hover {
+  color: #334155;
+  background-color: rgba(226, 232, 240, 0.5);
+}
+
+.activeSheetTab {
+  color: #0f172a;
+  font-weight: 600;
+}
+
+.activeSheetTab::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background-color: #3b82f6;
 }
 
 @media (max-width: 640px) {

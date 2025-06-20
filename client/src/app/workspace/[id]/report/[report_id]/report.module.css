@@ -1,0 +1,252 @@
+.reportContainer {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  font-family: var(--font-inter), -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Helvetica Neue', sans-serif;
+  color: #111827;
+  letter-spacing: -0.025em;
+}
+
+/* Main layout */
+.reportLayout {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* Sidebar styles */
+.sidebar {
+  width: 280px;
+  background-color: white;
+  border-right: 1px solid #e5e7eb;
+  padding: 1.5rem;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  flex-shrink: 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  z-index: 10;
+}
+
+.sidebarTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-bottom: 1.5rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.sidebarLogo {
+  width: 24px;
+  height: 24px;
+  color: #4f46e5;
+}
+
+.tabsList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 1.5rem;
+}
+
+.tabItem {
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-weight: 500;
+  font-size: 0.9375rem;
+}
+
+.tabItem:hover {
+  background-color: #f3f4f6;
+}
+
+.tabItemActive {
+  background-color: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.tabItemActive:hover {
+  background-color: #dbeafe;
+}
+
+.tabIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.tabTitle {
+  flex: 1;
+}
+
+/* Main content area */
+.mainContent {
+  flex: 1;
+  padding: 2rem;
+}
+
+.reportHeader {
+  margin-bottom: 2rem;
+}
+
+.reportTitle {
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin-bottom: 0.75rem;
+  color: #111827;
+}
+
+.reportMeta {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  font-size: 0.9375rem;
+  color: #6b7280;
+  margin-bottom: 2rem;
+}
+
+.reportDate {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dateIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.backButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
+  background-color: #fff;
+  border: 1px solid #e5e7eb;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: #f9fafb;
+  color: #4f46e5;
+  border-color: #4f46e5;
+}
+
+.backIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Summary tables styles */
+.summaryTables {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+.tableSection {
+  background-color: white;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.tableHeader {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #111827;
+}
+
+.tableDescription {
+  font-size: 0.9375rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  line-height: 1.5;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th {
+  background-color: #f9fafb;
+  text-align: left;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: #4b5563;
+  font-size: 0.875rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.table td {
+  padding: 1rem;
+  border-bottom: 1px solid #e5e7eb;
+  font-size: 0.9375rem;
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.number {
+  font-family: var(--font-mono), monospace;
+  text-align: right;
+}
+
+.positive {
+  color: #10b981;
+}
+
+.negative {
+  color: #ef4444;
+}
+
+.neutral {
+  color: #6b7280;
+}
+
+.total {
+  font-weight: 600;
+  background-color: #f9fafb;
+}
+
+/* Loading state */
+.loadingContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 0;
+}
+
+.loadingSpinner {
+  width: 40px;
+  height: 40px;
+  border: 3px solid rgba(79, 70, 229, 0.1);
+  border-radius: 50%;
+  border-top-color: #4f46e5;
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 1.5rem;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

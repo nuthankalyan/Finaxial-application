@@ -66,17 +66,119 @@
 }
 
 .fileName {
-  font-size: 1rem;
   font-weight: 500;
-  color: #2563eb;
-  margin: 0.5rem 0 0;
-  padding: 0.375rem 0.75rem;
-  background-color: rgba(37, 99, 235, 0.1);
-  border-radius: 0.25rem;
-  max-width: 100%;
+  color: #1f2937;
+  max-width: 270px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+  display: inline-block;
+}
+
+.filesList {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.uploadedFilesTitle {
+  font-weight: 600;
+  color: #2563eb;
+  margin-bottom: 0.5rem;
+}
+
+.fileTypesInfo {
+  font-size: 0.8rem;
+  font-weight: 400;
+  color: #6b7280;
+  margin-left: 0.5rem;
+}
+
+.fileNamesList {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0;
+  width: 100%;
+  max-width: 500px;
+}
+
+.fileNameItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 0.75rem;
+  background: rgba(37, 99, 235, 0.05);
+  border-radius: 0.375rem;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.removeFileBtn {
+  background: none;
+  border: none;
+  color: #6b7280;
+  cursor: pointer;
+  font-size: 0.75rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  transition: all 0.2s;
+}
+
+.removeFileBtn:hover {
+  background-color: rgba(220, 38, 38, 0.1);
+  color: #dc2626;
+}
+
+.moreFiles {
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-style: italic;
+  padding: 0.5rem;
+}
+
+.dragMoreText {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-top: 0.5rem;
+}
+
+.generateButtonContainer {
+  display: flex;
+  justify-content: center;
+  margin-top: 1.25rem;
+}
+
+.generateButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 500;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.generateButton:hover {
+  background-color: #1d4ed8;
+  transform: translateY(-1px);
+}
+
+.generateButton:disabled {
+  background-color: #93c5fd;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.generateIcon {
+  width: 1rem;
+  height: 1rem;
+  margin-left: 0.5rem;
 }
 
 .error {
@@ -116,4 +218,4 @@
   to {
     transform: rotate(360deg);
   }
-} 
+}
