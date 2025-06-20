@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { CircleCheck } from 'lucide-react';
 import styles from './Onboarding.module.css';
 import { ProgressIndicator } from './ProgressIndicator';
+import { buildApiUrl } from '../../utils/apiConfig';
+import { useAuth } from '../../context/AuthContext';
 
 const onboardingSteps = [
   {
@@ -39,15 +41,17 @@ interface FormErrors {
 export const Onboarding: React.FC = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const router = useRouter();
+  const { user } = useAuth();
   const [formData, setFormData] = useState<FormData>({
     fullName: '',
-    email: '',
+    email: user?.email || '',
     phone: '',
     companyName: '',
     role: '',
     businessEmail: ''
   });
   const [errors, setErrors] = useState<FormErrors>({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const validateForm = (step: number): boolean => {
     const newErrors: FormErrors = {};
 
@@ -94,21 +98,29 @@ export const Onboarding: React.FC = () => {
         [name]: ''
       }));
     }
-  };
-  const handleNext = () => {
+  };  const handleNext = async () => {
     // For step 0 (Welcome), no validation needed
     if (currentStep === 0) {
       setCurrentStep(prev => prev + 1);
       return;
     }
-    
-    // Validate the current step
+      // Validate the current step
     if (validateForm(currentStep)) {
       if (currentStep < onboardingSteps.length - 1) {
         setCurrentStep(prev => prev + 1);
       } else {
-        // Redirect to login page when onboarding is complete
-        router.push('/login');
+        // On the final step, save the onboarding data
+        const success = await saveOnboardingData();
+        
+        if (success) {
+          // Redirect to dashboard when onboarding is complete and saved
+          router.push('/dashboard');
+        } else {
+          // If there was an error saving the data, still try to redirect
+          // to dashboard but log the error
+          console.error('Failed to save onboarding data, redirecting anyway');
+          router.push('/dashboard');
+        }
       }
     }
   };
@@ -116,6 +128,47 @@ export const Onboarding: React.FC = () => {
   const handleBack = () => {
     if (currentStep > 0) {
       setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const saveOnboardingData = async (): Promise<boolean> => {
+    try {
+      setIsSubmitting(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        console.error('No authentication token found');
+        return false;
+      }
+      
+      const response = await fetch(buildApiUrl('/api/auth/complete-onboarding'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          fullName: formData.fullName,
+          phone: formData.phone,
+          companyName: formData.companyName,
+          role: formData.role,
+          businessEmail: formData.businessEmail,
+          onboardingCompleted: true
+        })
+      });
+      
+      if (!response.ok) {
+        const data = await response.json();
+        console.error('Failed to complete onboarding:', data);
+        return false;
+      }
+      
+      return true;
+    } catch (error) {
+      console.error('Error saving onboarding data:', error);
+      return false;
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -255,12 +308,15 @@ export const Onboarding: React.FC = () => {
         return null;
     }
   };
-
   return (
     <div className={styles.container}>
-      <ProgressIndicator steps={onboardingSteps} currentStep={currentStep} />
       <div className={styles.contentContainer}>
         {renderStepContent()}
+        <div className={styles.progressBarWrapper}>
+          <div className={styles.progressBarContainer}>
+            <ProgressIndicator steps={onboardingSteps} currentStep={currentStep} />
+          </div>
+        </div>
         <div className={styles.buttonContainer}>
           {currentStep > 0 && (
             <button onClick={handleBack} className={styles.backButton}>
@@ -269,26 +325,33 @@ export const Onboarding: React.FC = () => {
           )}          <motion.button
             onClick={handleNext}
             className={styles.nextButton}
-            whileHover={{ scale: 1.02 }}
-            whileTap={{ scale: 0.98 }}
+            whileHover={{ scale: isSubmitting ? 1 : 1.02 }}
+            whileTap={{ scale: isSubmitting ? 1 : 0.98 }}
+            disabled={isSubmitting}
           >
             <div className={styles.buttonContent}>
-              {currentStep === onboardingSteps.length - 1 && (
-                <motion.div
-                  initial={{ scale: 0, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
-                  transition={{
-                    type: "spring",
-                    stiffness: 500,
-                    damping: 15,
-                    mass: 0.5,
-                    bounce: 0.4
-                  }}
-                >
-                  <CircleCheck size={16} />
-                </motion.div>
+              {isSubmitting ? (
+                <div className={styles.spinner} />
+              ) : (
+                <>
+                  {currentStep === onboardingSteps.length - 1 && (
+                    <motion.div
+                      initial={{ scale: 0, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 500,
+                        damping: 15,
+                        mass: 0.5,
+                        bounce: 0.4
+                      }}
+                    >
+                      <CircleCheck size={16} />
+                    </motion.div>
+                  )}
+                  {currentStep === onboardingSteps.length - 1 ? 'Finish' : 'Continue'}
+                </>
               )}
-              {currentStep === onboardingSteps.length - 1 ? 'Finish' : 'Continue'}
             </div>
           </motion.button>
         </div>

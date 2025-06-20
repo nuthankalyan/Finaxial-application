@@ -5,7 +5,8 @@ const {
   getMe,
   forgotPassword,
   verifyOTP,
-  resetPassword
+  resetPassword,
+  completeOnboarding
 } = require('../controllers/authController');
 const { protect } = require('../middleware/auth');
 
@@ -17,5 +18,6 @@ router.get('/me', protect, getMe);
 router.post('/forgotpassword', forgotPassword);
 router.post('/verifyotp', verifyOTP);
 router.put('/resetpassword', resetPassword);
+router.post('/complete-onboarding', protect, completeOnboarding);
 
 module.exports = router;

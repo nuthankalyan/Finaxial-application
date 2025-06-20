@@ -129,7 +129,18 @@ exports.getMe = async (req, res) => {
     
     res.status(200).json({
       success: true,
-      data: user
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        phone: user.phone,
+        companyName: user.companyName,
+        role: user.role,
+        businessEmail: user.businessEmail,
+        onboardingCompleted: user.onboardingCompleted,
+        createdAt: user.createdAt
+      }
     });
   } catch (error) {
     res.status(500).json({
@@ -257,6 +268,58 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({
       success: false,
       message: error.message
+    });
+  }
+};
+
+// @desc    Complete user onboarding
+// @route   POST /api/auth/complete-onboarding
+// @access  Private
+exports.completeOnboarding = async (req, res) => {
+  try {
+    const { fullName, phone, companyName, role, businessEmail, onboardingCompleted } = req.body;
+
+    // Find the user by id from the auth middleware
+    const user = await User.findById(req.user.id);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'User not found'
+      });
+    }
+
+    // Update user with onboarding data
+    user.fullName = fullName || user.fullName;
+    user.phone = phone || user.phone;
+    user.companyName = companyName || user.companyName;
+    user.role = role || user.role;
+    user.businessEmail = businessEmail || user.businessEmail;
+    user.onboardingCompleted = onboardingCompleted !== undefined ? onboardingCompleted : user.onboardingCompleted;
+
+    await user.save();
+
+    res.status(200).json({
+      success: true,
+      message: 'Onboarding completed successfully',
+      data: {
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        fullName: user.fullName,
+        companyName: user.companyName,
+        role: user.role,
+        businessEmail: user.businessEmail,
+        onboardingCompleted: user.onboardingCompleted,
+        createdAt: user.createdAt
+      }
+    });
+  } catch (error) {
+    console.error('Error completing onboarding:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error',
+      error: error.message
     });
   }
 };

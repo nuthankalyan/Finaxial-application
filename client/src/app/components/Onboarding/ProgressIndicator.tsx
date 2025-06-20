@@ -17,36 +17,20 @@ interface ProgressIndicatorProps {
 export const ProgressIndicator: React.FC<ProgressIndicatorProps> = ({
   steps,
   currentStep,
-}) => {
-  const getProgressWidth = () => {
+}) => {  const getProgressWidth = () => {
     switch(currentStep) {
       case 0:
         return '24px';
       case 1:
-        return '60px';
+        return '72px';
       case 2:
-        return '96px';
+        return '120px';
       default:
         return '24px';
     }
   };
-
   return (
     <div className={styles.progressContainer}>
-      <div className={styles.stepsInfo}>
-        {steps.map((step, index) => (
-          <div
-            key={step.id}
-            className={`${styles.stepInfo} ${
-              currentStep >= index ? styles.active : ''
-            } ${currentStep > index ? styles.completed : ''}`}
-          >
-            <h3>{step.title}</h3>
-            <p>{step.description}</p>
-          </div>
-        ))}
-      </div>
-
       <div className={styles.dotsContainer}>
         {steps.map((_, index) => (
           <div
