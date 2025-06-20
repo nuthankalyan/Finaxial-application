@@ -1,0 +1,192 @@
+'use client';
+
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import styles from './Onboarding.module.css';
+import { ProgressIndicator } from './ProgressIndicator';
+
+const onboardingSteps = [
+  {
+    id: 1,
+    title: 'Welcome to Finaxial',
+    description: 'Let\'s get started with setting up your financial workspace',
+  },
+  {
+    id: 2,
+    title: 'Personal Information',
+    description: 'Tell us a bit about yourself to personalize your experience',
+  },
+  {
+    id: 3,
+    title: 'Company Information',
+    description: 'Tell us about your company and role',
+  }
+];
+
+export const Onboarding: React.FC = () => {
+  const [currentStep, setCurrentStep] = useState(0);
+  const router = useRouter();
+
+  const handleNext = () => {
+    if (currentStep < onboardingSteps.length - 1) {
+      setCurrentStep(prev => prev + 1);
+    } else {
+      // Redirect to login page when onboarding is complete
+      router.push('/login');
+    }
+  };
+
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(prev => prev - 1);
+    }
+  };
+
+  const renderStepContent = () => {
+    switch (currentStep) {
+      case 0:
+        return (
+          <div className={styles.stepContent}>
+            <h2>Welcome to Finaxial!</h2>
+            <p>We're excited to help you take control of your finances. Let's get your account set up in just a few steps.</p>
+          </div>
+        );
+      case 1:
+        return (
+          <div className={styles.stepContent}>
+            <h2>Personal Information</h2>
+            <div className={styles.form}>
+              <div className={styles.formField}>
+                <label htmlFor="fullName" className={styles.fieldLabel}>
+                  Full Name
+                </label>
+                <div className={styles.fieldInput}>
+                  <input 
+                    type="text" 
+                    name="fullName"
+                    id="fullName"
+                    className={styles.input}
+                    required
+                    aria-label="Full Name"
+                    placeholder="Enter your full name"
+                  />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label htmlFor="email" className={styles.fieldLabel}>
+                  Email Address
+                </label>
+                <div className={styles.fieldInput}>
+                  <input 
+                    type="email" 
+                    name="email"
+                    id="email"
+                    className={styles.input}
+                    required
+                    aria-label="Email Address"
+                    placeholder="Enter your email address"
+                  />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label htmlFor="phone" className={styles.fieldLabel}>
+                  Phone Number
+                </label>
+                <div className={styles.fieldInput}>
+                  <input 
+                    type="tel" 
+                    name="phone"
+                    id="phone"
+                    className={styles.input}
+                    required
+                    aria-label="Phone Number"
+                    placeholder="Enter your phone number"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      case 2:
+        return (
+          <div className={styles.stepContent}>
+            <h2>Company Information</h2>
+            <div className={styles.form}>
+              <div className={styles.formField}>
+                <label htmlFor="companyName" className={styles.fieldLabel}>
+                  Company Name
+                </label>
+                <div className={styles.fieldInput}>
+                  <input
+                    type="text"
+                    name="companyName"
+                    id="companyName"
+                    className={styles.input}
+                    required
+                    aria-label="Company Name"
+                    placeholder="Enter your company name"
+                  />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label htmlFor="role" className={styles.fieldLabel}>
+                  Your Role
+                </label>
+                <div className={styles.fieldInput}>
+                  <input
+                    type="text"
+                    name="role"
+                    id="role"
+                    className={styles.input}
+                    required
+                    aria-label="Your Role"
+                    placeholder="Enter your role in the company"
+                  />
+                </div>
+              </div>
+              <div className={styles.formField}>
+                <label htmlFor="businessEmail" className={styles.fieldLabel}>
+                  Business Email
+                </label>
+                <div className={styles.fieldInput}>
+                  <input
+                    type="email"
+                    name="businessEmail"
+                    id="businessEmail"
+                    className={styles.input}
+                    required
+                    aria-label="Business Email"
+                    placeholder="Enter your business email"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      default:
+        return null;
+    }
+  };
+
+  return (
+    <div className={styles.container}>
+      <ProgressIndicator steps={onboardingSteps} currentStep={currentStep} />
+      <div className={styles.contentContainer}>
+        {renderStepContent()}
+        <div className={styles.buttonContainer}>
+          {currentStep > 0 && (
+            <button onClick={handleBack} className={styles.backButton}>
+              Back
+            </button>
+          )}
+          <button
+            onClick={handleNext}
+            className={styles.nextButton}
+          >
+            {currentStep === onboardingSteps.length - 1 ? 'Finish' : 'Next'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};

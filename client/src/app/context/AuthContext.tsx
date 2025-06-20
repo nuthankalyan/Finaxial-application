@@ -9,6 +9,7 @@ interface UserType {
   username: string;
   email: string;
   createdAt: string;
+  hasCompletedOnboarding?: boolean;
 }
 
 interface AuthContextType {
@@ -185,4 +186,4 @@ export function useAuth() {
   }
   
   return context;
-} 
+}
