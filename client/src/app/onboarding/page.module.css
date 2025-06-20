@@ -1,0 +1,11 @@
+.onboardingPage {
+  min-height: 100vh;
+  background-color: #f9fafb;
+  padding: 2rem 1rem;
+}
+
+@media (min-width: 640px) {
+  .onboardingPage {
+    padding: 4rem 2rem;
+  }
+}

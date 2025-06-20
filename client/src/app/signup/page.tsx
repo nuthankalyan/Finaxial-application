@@ -46,7 +46,13 @@ export default function Signup() {
       return;
     }
     
-    await signup(formData.username, formData.email, formData.password);
+    try {
+      await signup(formData.username, formData.email, formData.password);
+      // Redirect to onboarding after successful signup
+      router.push('/onboarding');
+    } catch (error) {
+      // Error is handled by the AuthContext
+    }
   };
 
   return (
