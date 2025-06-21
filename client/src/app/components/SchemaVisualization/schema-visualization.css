@@ -1,0 +1,8 @@
+/* Add these styles to your global CSS file */
+.react-transform-wrapper {
+  cursor: grab !important;
+}
+
+.react-transform-wrapper:active {
+  cursor: grabbing !important;
+}

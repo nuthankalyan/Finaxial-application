@@ -1,0 +1,153 @@
+.visualizationContainer {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  background-color: #f8fafc;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+}
+
+.transformWrapper {
+  width: 100%;
+  height: 100%;
+}
+
+.transformContent {
+  width: 100%;
+  height: 100%;
+}
+
+.schemaCanvas {
+  background-color: transparent;
+}
+
+.table {
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.1));
+}
+
+.tableHeader {
+  fill: #f1f5f9;
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.tableBody {
+  fill: white;
+  stroke: #e2e8f0;
+  stroke-width: 1;
+}
+
+.tableName {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  fill: #1e293b;
+}
+
+.fieldName {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 12px;
+  fill: #475569;
+}
+
+.fieldType {
+  font-family: monospace;
+  font-size: 12px;
+  fill: #94a3b8;
+  text-anchor: end;
+}
+
+.primaryKey {
+  font-size: 12px;
+  fill: #eab308;
+}
+
+.foreignKey {
+  font-size: 12px;
+  fill: #2563eb;
+}
+
+.relationships {
+  pointer-events: none;
+}
+
+.relationshipPath {
+  fill: none;
+  stroke: #94a3b8;
+  stroke-width: 2;
+  marker-end: url(#arrowhead);
+  transition: stroke 0.2s ease-in-out;
+}
+
+.relationshipPath:hover {
+  stroke: #64748b;
+}
+
+.relationshipPathHighlighted {
+  stroke: #1d4ed8;
+  stroke-width: 3;
+}
+
+.relationshipHitArea {
+  fill: none;
+  stroke: transparent;
+  stroke-width: 10;
+  cursor: pointer;
+}
+
+.arrowhead {
+  fill: #94a3b8;
+  transition: fill 0.2s ease;
+}
+
+.highlighted + .arrowhead {
+  fill: #2563eb;
+}
+
+/* Zoom controls styling */
+.transformWrapper [class*='react-transform-wrapper'] {
+  cursor: grab !important;
+}
+
+.transformWrapper [class*='react-transform-wrapper']:active {
+  cursor: grabbing !important;
+}
+
+/* Add custom scrollbar styling */
+.visualizationContainer::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.visualizationContainer::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.visualizationContainer::-webkit-scrollbar-thumb {
+  background: #94a3b8;
+  border-radius: 4px;
+}
+
+.visualizationContainer::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.relationshipLabel {
+  font-family: monospace;
+  font-size: 12px;
+  fill: #64748b;
+  pointer-events: none;
+  font-weight: 600;
+  background-color: white;
+  padding: 2px 4px;
+}
+
+.junctionTableLabel {
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 10px;
+  fill: #94a3b8;
+  pointer-events: none;
+  font-style: italic;
+}
