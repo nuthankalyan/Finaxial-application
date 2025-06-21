@@ -14,25 +14,27 @@ interface FileData {
 }
 
 interface CsvUploaderProps {
-  onFileUpload: (filesContent: { content: string; fileName: string }[]) => void;
+  onFileUploadAction: (filesContent: { content: string; fileName: string }[]) => void;
   isLoading: boolean;
 }
 
-export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProps) {
+export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+
   const handleConfirmUpload = useCallback(() => {
     if (uploadedFiles.length > 0) {
       const filesForUpload = uploadedFiles.map(file => ({
         content: file.content,
-        fileName: file.file.name
+        fileName: file.file.name,
+        sheets: file.type === 'excel' ? JSON.parse(file.content).sheets : undefined
       }));
-      onFileUpload(filesForUpload);
+      onFileUploadAction(filesForUpload);
       setShowPreview(false);
       setUploadedFiles([]);
     }
-  }, [uploadedFiles, onFileUpload]);
+  }, [uploadedFiles, onFileUploadAction]);
 
   const handleCancelUpload = useCallback(() => {
     setShowPreview(false);
@@ -40,7 +42,9 @@ export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProp
   
   const handleRemoveFile = useCallback((index: number) => {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
-  }, []);  const onDrop = useCallback(
+  }, []);
+
+  const onDrop = useCallback(
     (acceptedFiles: File[]) => {
       setError(null);
       
@@ -71,44 +75,16 @@ export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProp
           
           reader.onload = () => {
             if (isExcel) {
-              try {                // For Excel files
+              try {
+                // For Excel files
                 const arrayBuffer = reader.result as ArrayBuffer;
                 const excelData = parseExcelFile(arrayBuffer);
                 
-                // Combine data from all sheets into a single CSV
-                // Start with the primary sheet data
-                const primarySheetData = excelData.sheets[excelData.primarySheet];
-                let csvContent = '';
-                
-                // If there's only one sheet, handle it simply
-                if (Object.keys(excelData.sheets).length === 1) {
-                  const headers = primarySheetData.headers.join(',');
-                  const rows = primarySheetData.rows.map(row => row.join(','));
-                  csvContent = [headers, ...rows].join('\n');
-                } else {
-                  // For multiple sheets, include sheet name in the data
-                  const allSheetData: string[] = [];
-                  
-                  // Process each sheet
-                  Object.entries(excelData.sheets).forEach(([sheetName, sheetData]) => {
-                    if (sheetData.headers.length === 0) return; // Skip empty sheets
-                    
-                    // Add sheet name as a header row
-                    allSheetData.push(`# Sheet: ${sheetName}`);
-                    
-                    // Add the headers and rows
-                    const headers = sheetData.headers.join(',');
-                    const rows = sheetData.rows.map(row => row.join(','));
-                    allSheetData.push(headers, ...rows, ''); // Empty string for separator
-                  });
-                  
-                  csvContent = allSheetData.join('\n');
-                }
-                
+                // Store the Excel data as a JSON string to preserve sheet structure
                 resolve({ 
-                  content: csvContent, 
+                  content: JSON.stringify(excelData), 
                   file, 
-                  type: 'excel' 
+                  type: 'excel'
                 });
               } catch (error) {
                 reject(new Error(`Failed to parse Excel file: ${file.name}`));
@@ -135,6 +111,7 @@ export default function CsvUploader({ onFileUpload, isLoading }: CsvUploaderProp
       }))
       .then(results => {
         setUploadedFiles(prev => [...prev, ...results]);
+        setShowPreview(true);
       })
       .catch(err => {
         setError(err.message);

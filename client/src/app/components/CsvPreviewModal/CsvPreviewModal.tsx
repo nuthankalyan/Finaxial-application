@@ -35,7 +35,26 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
 
   // Parse all files on component load
   useEffect(() => {
-    const parsed = files.map((file) => parseCsvPreview(file.content));
+    const parsed = files.map((file) => {
+      if (file.type === 'excel') {
+        // Parse Excel data from JSON string
+        const excelData = JSON.parse(file.content);
+        // Convert the sheets object to an array format
+        const sheets = Object.entries(excelData.sheets).map(([name, data]: [string, any]) => ({
+          name,
+          headers: data.headers,
+          rows: data.rows
+        }));
+        // Return the first sheet's data as main data and include all sheets
+        return {
+          headers: excelData.sheets[excelData.primarySheet].headers,
+          rows: excelData.sheets[excelData.primarySheet].rows,
+          sheets: sheets
+        };
+      } else {
+        return parseCsvPreview(file.content);
+      }
+    });
     setParsedFiles(parsed);
   }, [files]);
 
@@ -51,15 +70,15 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   // Helper function to get the currently active sheet data
   const getActiveSheetData = () => {
     const activeFile = parsedFiles[activeTabIndex];
-
+    
     if (activeFile?.sheets && activeFile.sheets.length > 0) {
-      // Return the selected sheet data if multi-sheet file
       return activeFile.sheets[selectedSheetIndex];
     }
-
-    // Return the main file data if not multi-sheet
+    
     return activeFile;
   };
+
+  const activeData = getActiveSheetData();
 
   return (
     <AnimatePresence>
@@ -81,88 +100,89 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
               <span className={styles.fileIcon}>
                 {files.some((file) => file.type === 'excel') &&
                 files.some((file) => file.type === 'csv')
-                  ? '��📄'
+                  ? '📊📄'
                   : files.some((file) => file.type === 'excel')
                   ? '📊'
                   : '📄'}
               </span>
               Data Preview ({files.length} {files.length === 1 ? 'file' : 'files'})
             </h2>
-            <button
-              className={styles.closeButton}
+            <button 
               onClick={onCancel}
-              aria-label="Close preview"
+              className={styles.closeButton}
+              aria-label="Close"
             >
               ×
             </button>
           </div>
-          {/* Tabs for different files */}
-          <div className={styles.fileTabs}>
-            {files.map((file, index) => (
-              <button
-                key={index}
-                className={`${styles.fileTab} ${
-                  activeTabIndex === index ? styles.activeTab : ''
-                }`}
-                onClick={() => setActiveTabIndex(index)}
-              >
-                <span className={styles.fileTypeIcon}>
-                  {file.type === 'excel' ? '📊' : '📄'}
-                </span>
-                {file.file.name}
-              </button>
-            ))}
-          </div>
-          {/* Table display for active tab */}
-          <div className={styles.tableContainer}>
-            {parsedFiles.length > 0 && activeTabIndex < parsedFiles.length ? (
-              <>
-                {/* Sheet tabs - only show if sheets are available */}
-                {parsedFiles[activeTabIndex].sheets &&
-                  parsedFiles[activeTabIndex].sheets.length > 1 && (
-                    <div className={styles.sheetTabs}>
-                      <div className={styles.sheetTabsScroll}>
-                        {parsedFiles[activeTabIndex].sheets?.map((sheet, idx) => (
-                          <button
-                            key={idx}
-                            className={`${styles.sheetTab} ${
-                              idx === selectedSheetIndex ? styles.activeSheetTab : ''
-                            }`}
-                            onClick={() => setSelectedSheetIndex(idx)}
-                          >
-                            {sheet.name}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
-                <div className={styles.tableWrapper}>
-                  <table className={styles.previewTable}>
-                    <thead>
-                      <tr>
-                        {getActiveSheetData().headers.map((header, index) => (
-                          <th key={index}>{header.trim()}</th>
-                        ))}
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {getActiveSheetData().rows.map((row, rowIndex) => (
-                        <tr
-                          key={rowIndex}
-                          className={
-                            rowIndex % 2 === 0
-                              ? styles.evenRow
-                              : styles.oddRow
-                          }
+          <div className={styles.modalBody}>
+            <div className={styles.fileTabs}>
+              {files.map((file, index) => (
+                <button
+                  key={index}
+                  className={`${styles.fileTab} ${
+                    index === activeTabIndex ? styles.activeFileTab : ''
+                  }`}
+                  onClick={() => {
+                    setActiveTabIndex(index);
+                    setSelectedSheetIndex(0);
+                  }}
+                >
+                  <span className={styles.fileTypeIcon}>
+                    {file.type === 'excel' ? '📊' : '📄'}
+                  </span>
+                  {file.file.name}
+                </button>
+              ))}
+            </div>            {activeData ? (
+              <>
+                {/* Show sheet tabs if the active file is Excel and has multiple sheets */}
+                {files[activeTabIndex].type === 'excel' &&
+                 parsedFiles[activeTabIndex]?.sheets &&
+                 parsedFiles[activeTabIndex].sheets.length > 1 && (
+                  <div className={styles.sheetTabs}>
+                    <div className={styles.sheetTabsScroll}>
+                      {parsedFiles[activeTabIndex].sheets?.map((sheet, idx) => (
+                        <button
+                          key={idx}
+                          className={`${styles.sheetTab} ${
+                            idx === selectedSheetIndex ? styles.activeSheetTab : ''
+                          }`}
+                          onClick={() => setSelectedSheetIndex(idx)}
                         >
-                          {row.map((cell, cellIndex) => (
-                            <td key={cellIndex}>{cell}</td>
+                          {sheet.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div className={styles.tableWrapper}>
+                  {activeData && activeData.headers ? (
+                    <table className={styles.previewTable}>
+                      <thead>
+                        <tr>
+                          {activeData.headers.map((header, index) => (
+                            <th key={index}>{header ? header.trim() : ''}</th>
                           ))}
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                      </thead>
+                      <tbody>
+                        {activeData.rows && activeData.rows.map((row, rowIndex) => (
+                          <tr
+                            key={rowIndex}
+                            className={rowIndex % 2 === 0 ? styles.evenRow : styles.oddRow}
+                          >
+                            {row.map((cell, cellIndex) => (
+                              <td key={cellIndex}>{cell || ''}</td>
+                            ))}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  ) : (
+                    <div className={styles.noData}>No data available</div>
+                  )}
                 </div>
               </>
             ) : (
@@ -213,30 +233,64 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
       {/* Schema Visualization Modal */}      <SchemaPreviewModalWrapper
         isOpen={showSchemaVisualization}
         onCloseAction={() => setShowSchemaVisualization(false)}
-        tables={parsedFiles.map((file, index) => ({
-          name: files[index].file.name.replace(/\.[^/.]+$/, ""),
-          fields: file.headers.map(header => {
-            const headerLower = header.trim().toLowerCase();
-            const fieldData = {
-              name: header.trim(),
-              type: inferColumnType(file.rows.map(row => row[file.headers.indexOf(header)])),
-              isPrimary: headerLower === 'id',
-              isForeign: false,
-              references: undefined as { table: string; field: string } | undefined
-            };
-            
-            // Set up foreign key relationships
-            if (headerLower === 'user_id') {
-              fieldData.isForeign = true;
-              fieldData.references = {
-                table: 'User_Financial_Data',
-                field: 'id'
-              };
-            }
-            
-            return fieldData;
-          })
-        }))}
+        tables={(parsedFiles || []).flatMap((file, fileIndex) => {
+          if (!file || !files[fileIndex]) {
+            return [];
+          }
+          if (files[fileIndex].type === 'excel' && file.sheets) {
+            // Create tables for each sheet in Excel files
+            return file.sheets.map(sheet => ({              name: `${files[fileIndex].file.name.replace(/\.[^/.]+$/, "")}_${sheet.name || 'unnamed'}`,
+              fields: (sheet.headers || []).map(header => {
+                if (!header) {
+                  return {
+                    name: 'unnamed',
+                    type: 'string',
+                    isPrimary: false,
+                    isForeign: false,
+                    references: undefined
+                  };
+                }
+                const headerLower = header.trim().toLowerCase();
+                const values = (sheet.rows || []).map(row => 
+                  row ? (row[sheet.headers.indexOf(header)] || '') : ''
+                );
+                return {
+                  name: header.trim(),
+                  type: inferColumnType(values),
+                  isPrimary: headerLower === 'id',
+                  isForeign: false,
+                  references: undefined
+                };
+              })
+            }));
+          } else {            // Create a single table for CSV files
+            return [{
+              name: files[fileIndex].file.name.replace(/\.[^/.]+$/, ""),
+              fields: (file.headers || []).map(header => {
+                if (!header) {
+                  return {
+                    name: 'unnamed',
+                    type: 'string',
+                    isPrimary: false,
+                    isForeign: false,
+                    references: undefined
+                  };
+                }
+                const headerLower = header.trim().toLowerCase();
+                const values = (file.rows || []).map(row => 
+                  row ? (row[file.headers.indexOf(header)] || '') : ''
+                );
+                return {
+                  name: header.trim(),
+                  type: inferColumnType(values),
+                  isPrimary: headerLower === 'id',
+                  isForeign: false,
+                  references: undefined
+                };
+              })
+            }];
+          }
+        })}
       />
     </AnimatePresence>
   );

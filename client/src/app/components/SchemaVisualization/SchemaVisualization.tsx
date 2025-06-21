@@ -20,15 +20,40 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
   // Detect relationships between tables
   const relationships = useMemo(() => detectRelationships(tables), [tables]);
 
-  // Calculate positions for tables in a grid layout
+  // Calculate maximum number of fields in any table
+  const maxFields = useMemo(() => 
+    Math.max(...tables.map(table => table.fields.length)), [tables]
+  );
+
+  // Calculate table dimensions based on content
+  const getTableDimensions = (table: TableSchema) => {
+    const width = Math.max(250, Math.max(...table.fields.map(f => f.name.length * 8 + 60)));
+    const height = 40 + table.fields.length * 30; // Header height + field heights
+    return { width, height };
+  };
+
+  // Calculate positions for tables in a grid layout with dynamic sizing
   const getTablePosition = (index: number, totalTables: number) => {
     const columns = Math.ceil(Math.sqrt(totalTables));
     const row = Math.floor(index / columns);
     const col = index % columns;
-    return {
-      x: col * 300 + 50,
-      y: row * 300 + 50
-    };
+    
+    // Calculate maximum width in this column
+    const tablesInColumn = tables.filter((_, i) => (i % columns) === col);
+    const maxWidthInColumn = Math.max(...tablesInColumn.map(t => getTableDimensions(t).width));
+    
+    // Calculate x position based on maximum widths of previous columns
+    let x = 50; // Initial margin
+    for (let i = 0; i < col; i++) {
+      const tablesInPrevColumn = tables.filter((_, idx) => (idx % columns) === i);
+      const maxWidthInPrevColumn = Math.max(...tablesInPrevColumn.map(t => getTableDimensions(t).width));
+      x += maxWidthInPrevColumn + 50; // Add margin between columns
+    }
+
+    // Calculate y position with proper spacing
+    const y = row * (maxFields * 30 + 100) + 50;
+
+    return { x, y };
   };
 
   // Generate paths for relationships between tables
@@ -40,15 +65,17 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
   ) => {
     const start = getTablePosition(startTable, tables.length);
     const end = getTablePosition(endTable, tables.length);
+    const startDimensions = getTableDimensions(tables[startTable]);
+    const endDimensions = getTableDimensions(tables[endTable]);
 
     // Calculate field positions
-    const startY = start.y + 40 + startField * 30 + 15; // 40px header + field height/2
+    const startY = start.y + 40 + startField * 30 + 15;
     const endY = end.y + 40 + endField * 30 + 15;
 
     // If tables are in same column
-    if (Math.abs(start.x - end.x) < 300) {
-      const midX = start.x + 125; // Center of table width
-      return `M ${start.x + 250} ${startY} 
+    if (Math.abs(start.x - end.x) < 50) {
+      const midX = start.x + startDimensions.width / 2;
+      return `M ${start.x + startDimensions.width} ${startY} 
               C ${midX + 100} ${startY},
                 ${midX + 100} ${endY},
                 ${end.x} ${endY}`;
@@ -56,8 +83,8 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
 
     // If target table is to the right
     if (end.x > start.x) {
-      return `M ${start.x + 250} ${startY}
-              C ${start.x + 300} ${startY},
+      return `M ${start.x + startDimensions.width} ${startY}
+              C ${start.x + startDimensions.width + 50} ${startY},
                 ${end.x - 50} ${endY},
                 ${end.x} ${endY}`;
     }
@@ -65,8 +92,8 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
     // If target table is to the left
     return `M ${start.x} ${startY}
             C ${start.x - 50} ${startY},
-              ${end.x + 300} ${endY},
-              ${end.x + 250} ${endY}`;
+              ${end.x + endDimensions.width + 50} ${endY},
+              ${end.x + endDimensions.width} ${endY}`;
   };
 
   // Generate relationship label based on type
@@ -85,6 +112,27 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
     }
   };
 
+  // Calculate SVG dimensions based on table layout
+  const svgDimensions = useMemo(() => {
+    const columns = Math.ceil(Math.sqrt(tables.length));
+    const rows = Math.ceil(tables.length / columns);
+    
+    let maxX = 0;
+    let maxY = 0;
+    
+    tables.forEach((table, index) => {
+      const pos = getTablePosition(index, tables.length);
+      const dim = getTableDimensions(table);
+      maxX = Math.max(maxX, pos.x + dim.width);
+      maxY = Math.max(maxY, pos.y + dim.height);
+    });
+    
+    return {
+      width: maxX + 100, // Add margin
+      height: maxY + 100 // Add margin
+    };
+  }, [tables]);
+
   return (
     <div className={styles.visualizationContainer}>
       <TransformWrapper
@@ -92,12 +140,20 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
         minScale={0.5}
         maxScale={2}
         centerOnInit={true}
+        wheel={{ disabled: true }} // Disable zoom on wheel to allow natural scrolling
       >
         <TransformComponent
-          wrapperStyle={{ width: '100%', height: '100%' }}
-          contentStyle={{ width: '100%', height: '100%' }}
+          wrapperClass={styles.transformWrapper}
+          contentClass={styles.transformComponent}
+          wrapperStyle={{ width: '100%', height: '100%', overflow: 'auto' }}
         >
-          <svg ref={svgRef} width="100%" height="100%" className={styles.svg}>
+          <svg 
+            ref={svgRef} 
+            width={Math.max(svgDimensions.width, 800)} // Minimum width to ensure scrolling works
+            height={Math.max(svgDimensions.height, 600)} // Minimum height to ensure scrolling works
+            className={styles.schemaCanvas}
+            preserveAspectRatio="xMinYMin meet"
+          >
             <defs>
               <marker
                 id="arrowhead"
@@ -106,7 +162,6 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
                 refX="10"
                 refY="3.5"
                 orient="auto"
-                markerUnits="strokeWidth"
               >
                 <polygon
                   points="0 0, 10 3.5, 0 7"
@@ -135,21 +190,15 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
 
                 const relationId = `${relation.fromTable}-${relation.fromField}-${relation.toTable}-${relation.toField}`;
 
-                // Calculate start and end positions
+                const path = getRelationshipPath(
+                  fromTableIndex,
+                  fromFieldIndex,
+                  toTableIndex,
+                  toFieldIndex
+                );
+
                 const fromPos = getTablePosition(fromTableIndex, tables.length);
                 const toPos = getTablePosition(toTableIndex, tables.length);
-
-                // Calculate field positions
-                const fromY = fromPos.y + 40 + fromFieldIndex * 30;
-                const toY = toPos.y + 40 + toFieldIndex * 30;
-
-                // Create curve path with arrow
-                const path = `
-                  M ${fromPos.x + 250} ${fromY}
-                  C ${fromPos.x + 350} ${fromY},
-                    ${toPos.x - 100} ${toY},
-                    ${toPos.x} ${toY}
-                `;
 
                 return (
                   <g key={relationId}>
@@ -193,6 +242,7 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
             {/* Draw tables on top of relationships */}
             {tables.map((table, index) => {
               const position = getTablePosition(index, tables.length);
+              const dimensions = getTableDimensions(table);
               return (
                 <g
                   key={table.name}
@@ -200,7 +250,7 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
                   className={styles.table}
                 >
                   {/* Table header */}
-                  <rect width="250" height="40" rx="4" className={styles.tableHeader} />
+                  <rect width={dimensions.width} height="40" rx="4" className={styles.tableHeader} />
                   <text x="20" y="25" className={styles.tableName}>
                     {table.name}
                   </text>
@@ -208,7 +258,7 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
                   {/* Table body */}
                   <rect
                     y="40"
-                    width="250"
+                    width={dimensions.width}
                     height={table.fields.length * 30}
                     className={styles.tableBody}
                   />
@@ -224,7 +274,7 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
                         {field.isPrimary && <tspan className={styles.primaryKey}> 🔑</tspan>}
                         {field.isForeign && <tspan className={styles.foreignKey}> 🔗</tspan>}
                       </text>
-                      <text x="230" y="20" className={styles.fieldType}>
+                      <text x={dimensions.width - 20} y="20" className={styles.fieldType}>
                         {field.type}
                       </text>
                     </g>
