@@ -1281,7 +1281,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
               
               <div id="csv-uploader" className={styles.uploaderContainer}>
                 <CsvUploader 
-                  onFileUpload={handleFileUpload} 
+                  onFileUploadAction={handleFileUpload} 
                   isLoading={analyzing}
                 />
               </div>
@@ -1337,12 +1337,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     Assistant
                   </button>
                 </div>
-              </div>
+              </div>              
 
-              {/* Tab content - using display property instead of conditional rendering to preserve state */}
+              {/* Tab content */}
               {insights && (
-                <>
-                  <div className={styles.allTabContents}>
+                <div className={styles.allTabContents}>
+                  <div className={styles.tabContentWrapper}>
                     <div 
                       className={styles.tabContentWrapper} 
                       style={{ display: activeTab === 'summary' ? 'block' : 'none' }}
@@ -1452,20 +1452,11 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         />
                       </div>
                     </div>
-
-                    {/* For transition effects, use an overlay that slides/fades */}
-                    <motion.div 
-                      className={styles.tabTransitionOverlay}
-                      key={activeTab}
-                      initial={{ opacity: 1 }}
-                      animate={{ opacity: 0 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                    />
                   </div>
-
+                  
                   {/* Save/Export/Email buttons */}
-                  <div className={styles.saveButtonContainer}>                    {!isViewingHistory && (
+                  <div className={styles.saveButtonContainer}>
+                    {!isViewingHistory && (
                       <motion.button
                         className={styles.saveButton}
                         onClick={saveInsightsToDatabase}
@@ -1554,11 +1545,10 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       >
                         <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
                         <polyline points="22,6 12,13 2,6"></polyline>
-                      </svg>
-                      Send via Email
+                      </svg>                      Send via Email
                     </motion.button>
                   </div>
-                </>
+                </div>
               )}
             </motion.div>
           </div>
@@ -1925,19 +1915,17 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       // Add recommendations section
                       doc.setFontSize(16);
                       doc.setTextColor(33, 37, 41);
-                      
-                      const yPosition = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : summaryEndY + 130;
-                      doc.text('Recommendations', 15, yPosition);
+                        const recY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : summaryEndY + 130;
+                      doc.text('Recommendations', 15, recY);
                       
                       // Format recommendations as a table
-                      const recommendationsData = Array.isArray(tempInsights.recommendations) 
-                        ? tempInsights.recommendations.map((recommendation, index) => [`${index + 1}.`, recommendation]) 
+                      const recData = Array.isArray(tempInsights.recommendations) 
+                        ? tempInsights.recommendations.map((rec, index) => [`${index + 1}.`, rec]) 
                         : [['', 'No recommendations available']];
-                      
-                      autoTable(doc, {
-                        startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : yPosition + 5,
+                        autoTable(doc, {
+                        startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : recY + 5,
                         head: [['#', 'Recommendation']],
-                        body: recommendationsData,
+                        body: recData,
                         theme: 'grid',
                         headStyles: { 
                           fillColor: [79, 70, 229],
@@ -2048,7 +2036,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       }
                       
                       // Add footer with app name
-                                           const pageCount = doc.getNumberOfPages();
+                      const pageCount = doc.getNumberOfPages();
                       for (let i = 1; i <= pageCount; i++) {
                         doc.setPage(i);
                         
