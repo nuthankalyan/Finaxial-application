@@ -8,6 +8,8 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
+import type { TableRow, TableColumn } from '@/app/types/tables';
+import type { SummaryTable } from '@/app/types/csv';
 
 interface ReportPageProps {
   params: {
@@ -16,28 +18,11 @@ interface ReportPageProps {
   };
 }
 
-// Define types for the summary tables
-interface TableColumn {
-  header: string;
-  accessor: string;
-  isNumeric?: boolean;
-  isCurrency?: boolean;
-}
-
-interface SummaryTable {
-  id: string;
-  title: string;
-  description: string;
-  columns: TableColumn[];
-  data: Record<string, any>[];
-}
-
-// Define sidebar tab categories
 interface TabItem {
   id: string;
   title: string;
   icon: React.ReactNode;
-  tableRefs: string[]; // References to table IDs
+  tableRefs: string[];
 }
 
 const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
@@ -47,31 +32,15 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [reportName, setReportName] = useState<string>('Financial Report');
   const [reportDate, setReportDate] = useState<Date>(new Date());
-  
-  // Fetch data for the report
+
+  // Load sample data on mount
   useEffect(() => {
-    const fetchReportData = async () => {
-      setIsLoading(true);
-      try {
-        // In a real implementation, you would fetch the specific report data
-        // using params.id (workspace ID) and params.report_id
-        
-        // For now, we'll create sample data based on the PDF example
-        generateSampleData();
-        
-        setReportDate(new Date());
-        setIsLoading(false);
-      } catch (error) {
-        console.error('Error fetching report data:', error);
-        toast.error('Failed to load report data');
-        setIsLoading(false);
-      }
-    };
-    
-    fetchReportData();
-  }, [params.id, params.report_id]);
-  
-  // Function to generate sample data based on the reference PDF
+    setIsLoading(true);
+    generateSampleData();
+    setIsLoading(false);
+  }, []);
+
+  // Function to generate sample data
   const generateSampleData = () => {
     // Sample Cash Flow table
     const cashFlowTable: SummaryTable = {
@@ -180,8 +149,8 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
   };
   
   // Function to determine cell class based on value
-  const getCellClass = (value: number | null, isNumeric: boolean = false): string => {
-    if (value === null) return '';
+  const getCellClass = (value: string | number | boolean | null | undefined, isNumeric: boolean = false): string => {
+    if (value === null || value === undefined) return '';
     let classes = isNumeric ? styles.number : '';
     
     if (typeof value === 'number') {
@@ -192,9 +161,9 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
     
     return classes;
   };
-  
+
   // Function to get row class based on row type
-  const getRowClass = (row: Record<string, any>): string => {
+  const getRowClass = (row: TableRow): string => {
     if (row.isTotal) return styles.total;
     if (row.isSubTotal) return styles.total;
     if (row.isHeader) return styles.total;
@@ -245,7 +214,17 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
       tableRefs: ['key-ratios']
     }
   ];
-  
+
+  // Function to filter tables based on active tab
+  const getVisibleTables = (): SummaryTable[] => {
+    const activeTabItem = tabs.find(tab => tab.id === activeTab);
+    if (!activeTabItem) return summaryTables;
+    
+    return summaryTables.filter(table => 
+      activeTabItem.tableRefs.includes(table.id)
+    );
+  };
+
   // Function to export the report as PDF
   const exportToPdf = () => {
     const doc = new jsPDF();
@@ -309,16 +288,6 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
     // Save the PDF
     doc.save(`${reportName.replace(/\s+/g, '_')}.pdf`);
   };
-  
-  // Function to filter tables based on active tab
-  const getVisibleTables = (): SummaryTable[] => {
-    const activeTabItem = tabs.find(tab => tab.id === activeTab);
-    if (!activeTabItem) return summaryTables;
-    
-    return summaryTables.filter(table => 
-      activeTabItem.tableRefs.includes(table.id)
-    );
-  };
 
   return (
     <div className={styles.reportContainer}>
@@ -379,7 +348,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
             <div className={styles.reportMeta}>
               <div className={styles.reportDate}>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.dateIcon}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25c0 .621-.504 1.125-1.125 1.125H5.625c-.621 0-1.125-.504-1.125-1.125v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
                 </svg>
                 {reportDate.toLocaleDateString('en-US', {
                   year: 'numeric',

@@ -8,7 +8,9 @@ const {
   deleteWorkspace,
   saveInsights,
   getInsights,
-  logReportGeneration
+  logReportGeneration,
+  getReport,
+  saveReport
 } = require('../controllers/workspaceController');
 
 const router = express.Router();
@@ -30,7 +32,11 @@ router.route('/:id/insights')
   .post(saveInsights)
   .get(getInsights);
 
+router.route('/:id/report/:reportId')
+  .get(getReport)
+  .post(saveReport);
+
 router.route('/:id/report')
   .post(logReportGeneration);
 
-module.exports = router; 
+module.exports = router;

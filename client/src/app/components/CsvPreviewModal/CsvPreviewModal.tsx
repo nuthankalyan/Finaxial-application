@@ -32,6 +32,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     rows: string[][];
     sheets?: { name: string; headers: string[]; rows: string[][] }[];
   }[]>([]);
+  const [zoomLevel, setZoomLevel] = useState(1);
 
   // Parse all files on component load
   useEffect(() => {
@@ -79,6 +80,31 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   };
 
   const activeData = getActiveSheetData();
+
+  // Handle zoom with mouse wheel
+  const handleWheel = (e: WheelEvent) => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      const delta = -e.deltaY;
+      setZoomLevel(prev => {
+        const newZoom = prev + (delta > 0 ? 0.1 : -0.1);
+        return Math.min(Math.max(newZoom, 0.5), 2); // Limit zoom between 50% and 200%
+      });
+    }
+  };
+
+  // Add wheel event listener
+  useEffect(() => {
+    const tableWrapper = document.querySelector(`.${styles.tableWrapper}`);
+    if (tableWrapper) {
+      tableWrapper.addEventListener('wheel', handleWheel as any, { passive: false });
+    }
+    return () => {
+      if (tableWrapper) {
+        tableWrapper.removeEventListener('wheel', handleWheel as any);
+      }
+    };
+  }, []);
 
   return (
     <AnimatePresence>
@@ -156,10 +182,12 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                       ))}
                     </div>
                   </div>
-                )}
-                <div className={styles.tableWrapper}>
+                )}                <div 
+                  className={styles.tableWrapper} 
+                  style={{ transform: `scale(${zoomLevel})` }}
+                >
                   {activeData && activeData.headers ? (
-                    <table className={styles.previewTable}>
+                    <table className={styles.previewTable}style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
                       <thead>
                         <tr>
                           {activeData.headers.map((header, index) => (
