@@ -333,4 +333,94 @@ exports.logReportGeneration = async (req, res) => {
       message: error.message
     });
   }
-}; 
+};
+
+// @desc    Get a specific report from a workspace
+// @route   GET /api/workspaces/:id/report/:reportId
+// @access  Private
+exports.getReport = async (req, res) => {
+  try {
+    const workspace = await Workspace.findById(req.params.id);
+
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: 'Workspace not found'
+      });
+    }
+
+    // Check if user has access to workspace
+    if (!workspace.members.includes(req.user.id) && workspace.owner.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this workspace'
+      });
+    }
+
+    // Get the report data
+    const report = workspace.reports?.get(req.params.reportId);
+
+    if (!report) {
+      return res.status(404).json({
+        success: false,
+        message: 'Report not found'
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: report
+    });
+  } catch (error) {
+    console.error('Error fetching report:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
+
+// @desc    Save a report for a workspace
+// @route   POST /api/workspaces/:id/report/:reportId
+// @access  Private
+exports.saveReport = async (req, res) => {
+  try {
+    const workspace = await Workspace.findById(req.params.id);
+    
+    if (!workspace) {
+      return res.status(404).json({
+        success: false,
+        message: 'Workspace not found'
+      });
+    }
+
+    // Check if user has access to workspace
+    if (!workspace.members.includes(req.user.id) && workspace.owner.toString() !== req.user.id) {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this workspace'
+      });
+    }
+
+    // Save report data
+    workspace.reports = workspace.reports || {};
+    workspace.reports[req.params.reportId] = {
+      ...req.body.data,
+      updatedAt: new Date(),
+      updatedBy: req.user.id
+    };
+
+    await workspace.save();
+
+    res.status(200).json({
+      success: true,
+      data: workspace.reports[req.params.reportId]
+    });
+  } catch (error) {
+    console.error('Error saving report:', error);
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};

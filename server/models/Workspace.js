@@ -1,5 +1,32 @@
 const mongoose = require('mongoose');
 
+// Report schema to store report data
+const ReportSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: true
+  },
+  createdAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedAt: {
+    type: Date,
+    default: Date.now
+  },
+  updatedBy: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User'
+  },
+  fileContents: mongoose.Schema.Types.Mixed,
+  insights: mongoose.Schema.Types.Mixed,
+  financialMetrics: mongoose.Schema.Types.Mixed,
+  cashFlow: mongoose.Schema.Types.Mixed,
+  profitLoss: mongoose.Schema.Types.Mixed,
+  balanceSheet: mongoose.Schema.Types.Mixed,
+  trends: mongoose.Schema.Types.Mixed
+});
+
 const InsightSchema = new mongoose.Schema({
   fileName: {
     type: String,
@@ -56,6 +83,7 @@ const WorkspaceSchema = new mongoose.Schema({
     ref: 'User'
   }],
   financialInsights: [InsightSchema],
+  reports: [ReportSchema],  // Add reports field to store report data
   createdAt: {
     type: Date,
     default: Date.now
@@ -72,4 +100,4 @@ WorkspaceSchema.pre('save', function(next) {
   next();
 });
 
-module.exports = mongoose.model('Workspace', WorkspaceSchema); 
+module.exports = mongoose.model('Workspace', WorkspaceSchema);

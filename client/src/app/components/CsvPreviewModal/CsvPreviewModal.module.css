@@ -91,6 +91,9 @@
   border: 1px solid #e2e8f0;
   max-height: calc(90vh - 250px); /* Set maximum height for vertical scrolling */
   position: relative;
+  transform-origin: 0 0;
+  transition: transform 0.1s ease-out;
+  will-change: transform;
 }
 
 .previewTable {
@@ -99,6 +102,28 @@
   border-spacing: 0;
   font-size: 0.875rem;
   background-color: white;
+  transform-origin: 0 0;
+  transition: all 0.1s ease-out;
+}
+
+/* Add custom scrollbar styling for better visibility during zoom */
+.tableWrapper::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 5px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 5px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
 }
 
 .previewTable thead {
@@ -136,12 +161,15 @@
 }
 
 .modalFooter {
-  padding: 1.5rem 2rem;
-  border-top: 1px solid #e5e7eb;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  padding: 1.5rem 2rem;
+  border-top: 1px solid #e5e7eb;
   background-color: #f8fafc;
+  position: sticky;
+  bottom: 0;
+  z-index: 10;
 }
 
 .footerLeft {
@@ -151,6 +179,7 @@
 
 .footerRight {
   display: flex;
+  align-items: center;
   gap: 1rem;
 }
 
@@ -167,24 +196,41 @@
 }
 
 .cancelButton {
-  border: 1px solid #e2e8f0;
+  padding: 8px 16px;
+  min-width: 100px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
+  border: 1px solid #e5e7eb;
   background-color: white;
-  color: #475569;
+  color: #4b5563;
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.cancelButton:hover:not(:disabled) {
-  background-color: #f1f5f9;
-  border-color: #cbd5e1;
+.cancelButton:hover {
+  background-color: #f3f4f6;
+  border-color: #d1d5db;
 }
 
 .uploadButton {
+  padding: 8px 16px;
+  min-width: 140px;
+  border-radius: 6px;
+  font-weight: 500;
+  font-size: 0.875rem;
   border: none;
   background-color: #2563eb;
   color: white;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  transition: all 0.2s ease;
 }
 
-.uploadButton:hover:not(:disabled) {
+.uploadButton:hover {
   background-color: #1d4ed8;
 }
 
@@ -199,6 +245,7 @@
 }
 
 .loadingSpinner {
+  display: inline-block;
   width: 16px;
   height: 16px;
   border: 2px solid rgba(255, 255, 255, 0.3);
@@ -387,5 +434,51 @@
   .previewTable th,
   .previewTable td {
     padding: 0.75rem 1rem;
+  }
+
+  .modalFooter {
+    padding: 1rem;
+  }
+
+  .footerLeft,
+  .footerRight {
+    display: flex;
+    gap: 0.75rem;
+  }
+
+  .schemaButton,
+  .cancelButton,
+  .uploadButton {
+    padding: 8px 12px;
+    min-width: auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .modalFooter {
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .footerLeft,
+  .footerRight {
+    width: 100%;
+  }
+
+  .footerLeft {
+    justify-content: center;
+  }
+
+  .footerRight {
+    justify-content: center;
+  }
+
+  .schemaButton,
+  .cancelButton,
+  .uploadButton {
+    flex: 1;
+    justify-content: center;
+    max-width: 160px;
   }
 }
