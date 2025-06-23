@@ -199,10 +199,23 @@
   width: 100%;
 }
 
-.loadingIndicator p {
+.loadingMessageContainer {
+  position: relative;
+  height: 2.5rem;
+  overflow: hidden;
   margin-top: 1rem;
-  font-size: 1rem;
-  color: #4b5563;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.loadingMessage {
+  font-size: 1.125rem;
+  color: #2563eb;
+  font-weight: 500;
+  margin: 0;
+  position: relative;
+  text-align: center;
 }
 
 .spinner {

@@ -197,7 +197,39 @@ export function detectRelationships(tables: TableSchema[]): Relationship[] {
           });
         });
       }
-    }
+    }  });
+
+  // Add direct column name matching (a more aggressive approach)
+  tables.forEach(sourceTable => {
+    sourceTable.fields.forEach(sourceField => {
+      // Check if this field looks like a foreign key
+      if (sourceField.name.toLowerCase().includes('id') || 
+          sourceField.name.toLowerCase().includes('key') ||
+          sourceField.name.toLowerCase().includes('ref')) {
+        
+        tables.forEach(targetTable => {
+          // Don't compare with self
+          if (targetTable.name === sourceTable.name) return;
+          
+          targetTable.fields.forEach(targetField => {
+            // Look for exact name matches or name_id pattern
+            if (sourceField.name === targetField.name || 
+                sourceField.name === `${targetTable.name.toLowerCase()}_${targetField.name}` ||
+                sourceField.name === `${getSingular(targetTable.name.toLowerCase())}_${targetField.name}`) {
+              
+              // Add this as a potential relationship
+              relationships.push({
+                fromTable: sourceTable.name,
+                fromField: sourceField.name,
+                toTable: targetTable.name,
+                toField: targetField.name,
+                type: determineRelationType(sourceTable, sourceField, targetTable, uniqueConstraints)
+              });
+            }
+          });
+        });
+      }
+    });
   });
 
   // Clean up duplicate or redundant relationships
@@ -206,10 +238,11 @@ export function detectRelationships(tables: TableSchema[]): Relationship[] {
 
 // Helper function to deduplicate relationships
 function deduplicateRelationships(relationships: Relationship[]): Relationship[] {
+  // Use a more specific key that includes field names to avoid dropping valid relationships
   const seen = new Set<string>();
   return relationships.filter(relation => {
-    const key1 = `${relation.fromTable}-${relation.toTable}`;
-    const key2 = `${relation.toTable}-${relation.fromTable}`;
+    const key1 = `${relation.fromTable}.${relation.fromField}-${relation.toTable}.${relation.toField}`;
+    const key2 = `${relation.toTable}.${relation.toField}-${relation.fromTable}.${relation.fromField}`;
     
     if (seen.has(key1) || seen.has(key2)) {
       return false;

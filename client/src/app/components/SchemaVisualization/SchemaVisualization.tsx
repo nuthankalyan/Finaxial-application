@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState, useMemo } from 'react';
+import React, { useRef, useState, useMemo, useEffect } from 'react';
 import styles from './SchemaVisualization.module.css';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { detectRelationships } from '../../utils/schemaRelationships';
@@ -13,12 +13,20 @@ interface SchemaVisualizationProps {
   tables: TableSchema[];
 }
 
-export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables }) => {
+export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables }) => {  
   const svgRef = useRef<SVGSVGElement>(null);
-  const [hoveredRelation, setHoveredRelation] = useState<string | null>(null);
+  // Keeping state declarations for API compatibility but they're not being used
+  const [, ] = useState<string | null>(null);
+  const [, ] = useState<string | null>(null);
   
   // Detect relationships between tables
   const relationships = useMemo(() => detectRelationships(tables), [tables]);
+  
+  // Debug: Log the relationships to help diagnose issues
+  useEffect(() => {
+    console.log('Tables:', tables);
+    console.log('Detected relationships:', relationships);
+  }, [tables, relationships]);
 
   // Calculate maximum number of fields in any table
   const maxFields = useMemo(() => 
@@ -132,6 +140,8 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
       height: maxY + 100 // Add margin
     };
   }, [tables]);
+  // We're removing all hover handlers to prevent the shaky effect
+  // Keeping the state variables for compatibility but not using them
 
   return (
     <div className={styles.visualizationContainer}>
@@ -201,14 +211,10 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
                 const toPos = getTablePosition(toTableIndex, tables.length);
 
                 return (
-                  <g key={relationId}>
-                    <path
+                  <g key={relationId}>                    <path
                       d={path}
-                      className={`${styles.relationshipPath} ${
-                        hoveredRelation === relationId ? styles.relationshipPathHighlighted : ''
-                      }`}
-                      onMouseEnter={() => setHoveredRelation(relationId)}
-                      onMouseLeave={() => setHoveredRelation(null)}
+                      className={styles.relationshipPath}
+                      style={{ pointerEvents: 'stroke' }}
                     />
                     
                     {/* Add relationship type label */}
@@ -240,15 +246,14 @@ export const SchemaVisualization: React.FC<SchemaVisualizationProps> = ({ tables
             </g>
 
             {/* Draw tables on top of relationships */}
-            {tables.map((table, index) => {
-              const position = getTablePosition(index, tables.length);
+            {tables.map((table, index) => {              const position = getTablePosition(index, tables.length);
               const dimensions = getTableDimensions(table);
+              
               return (
                 <g
                   key={table.name}
-                  transform={`translate(${position.x}, ${position.y})`}
-                  className={styles.table}
-                >
+                  transform={`translate(${position.x}, ${position.y})`}                  className={styles.table}                >
+                  
                   {/* Table header */}
                   <rect width={dimensions.width} height="40" rx="4" className={styles.tableHeader} />
                   <text x="20" y="25" className={styles.tableName}>

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CsvPreviewModal } from './CsvPreviewModal/CsvPreviewModal';
@@ -22,6 +22,26 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
   const [error, setError] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
   const [showPreview, setShowPreview] = useState(false);
+  
+  // Loading states for animated text
+  const loadingMessages = ["Analysing", "Visualizing", "Crafting", "Preparing assistant","Generating reports"];
+  const [currentLoadingMessage, setCurrentLoadingMessage] = useState(0);
+  const [isMessageChanging, setIsMessageChanging] = useState(false);
+
+  // Effect to rotate loading messages while in loading state
+  useEffect(() => {
+    if (!isLoading) return;
+    
+    const messageInterval = setInterval(() => {
+      setIsMessageChanging(true);
+      setTimeout(() => {
+        setCurrentLoadingMessage((prev) => (prev + 1) % loadingMessages.length);
+        setIsMessageChanging(false);
+      }, 500); // Wait for exit animation before changing message
+    }, 2500); // Change message every 2.5 seconds
+    
+    return () => clearInterval(messageInterval);
+  }, [isLoading, loadingMessages.length]);
 
   const handleConfirmUpload = useCallback(() => {
     if (uploadedFiles.length > 0) {
@@ -176,9 +196,21 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className={styles.loadingIndicator}
-            >
-              <div className={styles.spinner}></div>
-              <p>Analyzing your financial data...</p>
+            >              <div className={styles.spinner}></div>
+              <div className={styles.loadingMessageContainer}>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={currentLoadingMessage}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className={styles.loadingMessage}
+                  >
+                    {loadingMessages[currentLoadingMessage]}...
+                  </motion.p>
+                </AnimatePresence>
+              </div>
             </motion.div>
           ) : (
             <motion.div
