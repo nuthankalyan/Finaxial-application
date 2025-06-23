@@ -1191,3 +1191,91 @@ Please generate 5 chart configurations in valid JSON format.
     }];
   }
 };
+
+/**
+ * Asks a question about multiple financial files
+ * 
+ * @param files Array of files with their content and filename
+ * @param question Question to be asked about the financial data
+ * @returns AI-generated answer based on all the provided files
+ */
+export const askMultiFileFinancialQuestion = async (files: FileInfo[], question: string): Promise<string> => {
+  try {
+    if (files.length === 0) {
+      throw new Error('No files provided');
+    }
+    
+    // For a single file, use the original function
+    if (files.length === 1) {
+      return await askFinancialQuestion(files[0].content, question);
+    }
+      // Initialize the Generative AI model
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('Gemini API key not found');
+    }
+    
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    
+    // Prepare a description for each file
+    let filesContent = '';
+    files.forEach((file, index) => {
+      filesContent += `=== FILE ${index + 1}: ${file.fileName} ===\n${file.content}\n\n`;
+    });
+    
+    // Create a prompt for analyzing all files together
+    const prompt = `
+You are a financial assistant with expertise in analyzing multiple data files. You're provided with ${files.length} CSV/Excel files containing financial data. Please analyze them to answer the question asked.
+
+Here's the data from these files:
+
+${filesContent}
+
+USER QUESTION:
+${question}
+
+Please analyze all the data and provide a comprehensive answer to the question. Consider relationships between the files if relevant. Format your response in a clear, structured way.
+`;
+
+    // Generate content from the model
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    return response.text();
+  } catch (error: any) {
+    console.error('Error asking multi-file question with Gemini:', error);
+    throw new Error(`Failed to process your question: ${error.message}`);
+  }
+};
+
+/**
+ * Cached version of the multi-file question assistant
+ */
+export const askMultiFileFinancialQuestionCached = async (files: FileInfo[], question: string): Promise<string> => {
+  try {
+    // Create a combined content string for cache key generation
+    const combinedContent = files.map(f => `${f.fileName}:${f.content}`).join('||');
+    
+    // Create a cache key for this query + data combination
+    const cacheKey = createQueryCacheKey(combinedContent, question);
+    
+    // Check if we have a cached response
+    const cachedResponse = queryCache.get<string>(cacheKey);
+    if (cachedResponse) {
+      console.log('Using cached response for multi-file query:', question);
+      return cachedResponse;
+    }
+    
+    // No cached response, call the API
+    console.log('Cache miss, fetching fresh response for multi-file query:', question);
+    const response = await askMultiFileFinancialQuestion(files, question);
+    
+    // Cache the response for future use
+    queryCache.set(cacheKey, response);
+    
+    return response;
+  } catch (error: any) {
+    console.error('Error in cached multi-file question service:', error);
+    throw new Error(`Failed to process your question: ${error.message}`);
+  }
+};
