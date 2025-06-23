@@ -3,11 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './FinancialAssistant.module.css';
-import { 
-  askFinancialQuestionCached, 
-  askMultiFileFinancialQuestionCached,
-  FileInfo 
-} from '../services/geminiService';
+import { askFinancialQuestionCached, FileInfo } from '../services/geminiService';
 import SqlCodeBlock from './SqlCodeBlock';
 import { formatMessage } from '../utils/messageFormatter';
 import { queryCache } from '../utils/cacheManager';
@@ -159,15 +155,14 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
       let fromCache = false;
       
       let response: string;
-        // Check if we're using multiple files (files prop) or single file (csvData prop)
-      if (files && files.length > 1) {
-        // We have multiple files, use the multi-file API
-        response = await askMultiFileFinancialQuestionCached(files, userMessage.text);
-      } else if (files && files.length === 1) {
-        // We have a single file in the files array
+      
+      // Check if we're using multiple files (files prop) or single file (csvData prop)
+      if (files && files.length > 0) {
+        // For now, we'll use the first file for questions as the askFinancialQuestionCached API
+        // doesn't yet support multiple files. This can be expanded in the future.
         response = await askFinancialQuestionCached(files[0].content, userMessage.text);
       } else if (csvData) {
-        // Use the original single file approach with csvData
+        // Use the original single file approach
         response = await askFinancialQuestionCached(csvData, userMessage.text);
       } else {
         throw new Error('No data available');
