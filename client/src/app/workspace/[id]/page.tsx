@@ -22,7 +22,6 @@ import InsightCards, { InsightCardData } from '../../components/InsightCards';
 import { logReportGeneration } from '../../services/activityService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { getHiddenColumnsFromStorage, processFileContent } from '../../utils/csvProcessing';
 
 interface Workspace {
   _id: string;
@@ -218,8 +217,8 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [analyzing, setAnalyzing] = useState(false);
   const [insights, setInsights] = useState<FinancialInsights | null>(null);
   const [savedInsightCards, setSavedInsightCards] = useState<InsightCardData[] | null>(null);
-  const [fileName, setFileName] = useState<string | null>(null);  const [csvContent, setCsvContent] = useState<string | null>(null);
-  const [filteredCsvContent, setFilteredCsvContent] = useState<string | null>(null);
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [csvContent, setCsvContent] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileInfo[]>([]);
   const [savedInsights, setSavedInsights] = useState<SavedInsight[]>([]);
   const [saving, setSaving] = useState(false);
@@ -456,36 +455,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       sender: 'assistant',
       timestamp: new Date()
     }]);
-      try {
-      // Get hidden columns configuration from localStorage
-      const hiddenColumnsData = getHiddenColumnsFromStorage();
-          // Process files to filter out hidden columns
-      const processedFilesContent = filesContent.map((file, index) => {
-        const fileType = file.fileName.toLowerCase().endsWith('.xlsx') || 
-                         file.fileName.toLowerCase().endsWith('.xls') ? 'excel' : 'csv';
-          const processedContent = processFileContent(file.content, fileType, hiddenColumnsData, index);
-        
-        // If this is the first file, also update the filteredCsvContent state
-        if (index === 0) {
-          setFilteredCsvContent(processedContent);
-          
-          // Log the original vs filtered content to verify filtering
-          console.log(`Original content size: ${file.content.length} chars`);
-          console.log(`Filtered content size: ${processedContent.length} chars`);
-          
-          if (file.content.length !== processedContent.length) {
-            console.log('Hidden columns were successfully filtered out from the data');
-          }
-        }
-        
-        return {
-          content: processedContent,
-          fileName: file.fileName
-        };
-      });
-      
-      // Convert the processed files to FileInfo format for the Gemini service
-      const files: FileInfo[] = processedFilesContent;
+    
+    try {      // Convert the files to FileInfo format for the Gemini service
+      const files: FileInfo[] = filesContent.map(file => ({
+        content: file.content,
+        fileName: file.fileName
+      }));
       
       // Store the files for access by other components
       setUploadedFiles(files);
@@ -645,11 +620,10 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         title: 'Insights Saved',
         message: 'Your financial analysis has been saved successfully.'
       });
-        // Clear the current insights after saving
+      
+      // Clear the current insights after saving
       setInsights(null);
       setFileName(null);
-      setCsvContent(null);
-      setFilteredCsvContent(null);
       setCharts(null);
       
       // Don't reset assistant messages here - keep the conversation going
@@ -695,22 +669,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       setSavedInsightCards(insight.insightCards);
     } else {
       setSavedInsightCards(null);
-    }    
-    setFileName(insight.fileName);
-    
-    // When viewing saved insights, the content is already filtered (no hidden columns)
-    // So we use the same data for both original and filtered content
-    if (insight.rawResponse) {
-      setCsvContent(insight.rawResponse);
-      setFilteredCsvContent(insight.rawResponse);
-      
-      // Also set uploadedFiles with the processed content
-      setUploadedFiles([{
-        content: insight.rawResponse,
-        fileName: insight.fileName
-      }]);
     }
     
+    setFileName(insight.fileName);
     setActiveTab('summary');
     
     // Set the charts data if available
@@ -1481,10 +1442,10 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       className={styles.tabContentWrapper} 
                       style={{ display: activeTab === 'assistant' ? 'block' : 'none' }}
                     >
-                      <div className={styles.assistantContent}>                        <FinancialAssistant 
-                          csvData={filteredCsvContent ? filteredCsvContent : null}
+                      <div className={styles.assistantContent}>
+                        <FinancialAssistant 
+                          csvData={csvContent ? csvContent : null}
                           fileName={fileName}
-                          files={uploadedFiles.length > 0 ? uploadedFiles : undefined}
                           isEnabled={!!insights}
                           onMessagesChange={handleAssistantMessagesChange}
                           initialMessages={assistantMessages}
