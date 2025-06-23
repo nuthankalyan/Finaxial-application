@@ -1,5 +1,6 @@
 import type { TableSchema, TableField } from '../types/schema';
 import { inferColumnType } from './typeInference';
+import { HiddenColumnsMap } from '../types/hiddenColumns';
 
 interface FileData {
   content: string;
@@ -55,9 +56,21 @@ function inferRelationship(
 
 export function prepareTableSchemas(
   parsedFiles: ParsedFileData[],
-  files: FileData[]
+  files: FileData[],
+  hiddenColumns?: HiddenColumnsMap
 ): TableSchema[] {
   let schemas: TableSchema[] = [];
+  
+  // Try to get hiddenColumns from localStorage if not provided
+  const hiddenColumnsData = hiddenColumns || (() => {
+    try {
+      const storedHiddenColumns = localStorage.getItem('hiddenColumns');
+      return storedHiddenColumns ? JSON.parse(storedHiddenColumns) : {};
+    } catch (e) {
+      console.error('Error parsing hidden columns from localStorage:', e);
+      return {};
+    }
+  })();
   
   parsedFiles.forEach((file, fileIndex) => {
     if (file.sheets && file.sheets.length > 0) {
@@ -84,11 +97,20 @@ export function prepareTableSchemas(
                 .map(s => `${files[parsedFiles.indexOf(f)].file.name.replace(/\.[^/.]+$/, "")}_${s.name.replace(/[^a-zA-Z0-9]/g, '_')}`)
             : [files[parsedFiles.indexOf(f)].file.name.replace(/\.[^/.]+$/, "")]
         );
+        
+        // Get hidden columns for this file/sheet
+        const fileHiddenColumns = hiddenColumnsData[fileIndex]?.[sheetIndex] || [];
 
-        const fields = sheet.headers.map(header => {
+        // Filter out hidden columns
+        const visibleHeaderIndices = sheet.headers
+          .map((_, index) => index)
+          .filter(index => !fileHiddenColumns.includes(index));
+        
+        const fields = visibleHeaderIndices.map(headerIndex => {
+          const header = sheet.headers[headerIndex];
           const headerLower = header.trim().toLowerCase();
           const values = sheet.rows.map(row => 
-            row[sheet.headers.indexOf(header)] || ''
+            row[headerIndex] || ''
           );
           
           const fieldData: TableField = {
@@ -140,10 +162,19 @@ export function prepareTableSchemas(
         console.log(`Skipping file with no headers: ${tableName}`);
         return;
       }
+      
+      // Get hidden columns for this file
+      const fileHiddenColumns = hiddenColumnsData[fileIndex]?.[0] || [];
+      
+      // Filter out hidden columns
+      const visibleHeaderIndices = file.headers
+        .map((_, index) => index)
+        .filter(index => !fileHiddenColumns.includes(index));
 
-      const fields = file.headers.map(header => {
+      const fields = visibleHeaderIndices.map(headerIndex => {
+        const header = file.headers[headerIndex];
         const headerLower = header.trim().toLowerCase();
-        const values = file.rows.map(row => row[file.headers.indexOf(header)] || '');
+        const values = file.rows.map(row => row[headerIndex] || '');
         
         const fieldData: TableField = {
           name: header.trim(),

@@ -5,6 +5,7 @@ import { SchemaPreviewModalWrapper } from '../SchemaPreviewModal/SchemaPreviewMo
 import { prepareTableSchemas } from '../../utils/tableSchemaPreparation';
 import { inferColumnType } from '../../utils/typeInference';
 import styles from './CsvPreviewModal.module.css';
+import { HiddenColumnsMap } from '../../types/hiddenColumns';
 
 interface FileData {
   content: string;
@@ -33,6 +34,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     sheets?: { name: string; headers: string[]; rows: string[][] }[];
   }[]>([]);
   const [zoomLevel, setZoomLevel] = useState(1);
+  const [hiddenColumns, setHiddenColumns] = useState<HiddenColumnsMap>({});
 
   // Parse all files on component load
   useEffect(() => {
@@ -58,10 +60,32 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     });
     setParsedFiles(parsed);
   }, [files]);
-
+  
+  // Initialize hiddenColumns state when files change
+  useEffect(() => {
+    const initialHiddenColumns: HiddenColumnsMap = {};
+    
+    files.forEach((file, fileIndex) => {
+      initialHiddenColumns[fileIndex] = {};
+      
+      if (parsedFiles[fileIndex]) {
+        if (file.type === 'excel' && parsedFiles[fileIndex].sheets) {
+          parsedFiles[fileIndex].sheets.forEach((_, sheetIndex) => {
+            initialHiddenColumns[fileIndex][sheetIndex] = [];
+          });
+        } else {
+          initialHiddenColumns[fileIndex][0] = []; // Default sheet index 0 for CSV
+        }
+      }
+    });
+    
+    setHiddenColumns(initialHiddenColumns);
+  }, [files, parsedFiles]);
   const handleUpload = async () => {
     setIsLoading(true);
     try {
+      // Store hidden columns in localStorage for use in insight generation and schema visualization
+      localStorage.setItem('hiddenColumns', JSON.stringify(hiddenColumns));
       await onConfirm();
     } finally {
       setIsLoading(false);
@@ -80,6 +104,101 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   };
 
   const activeData = getActiveSheetData();
+  // Toggle column visibility
+  const toggleColumnVisibility = (columnIndex: number) => {
+    console.log(`Toggle called for column ${columnIndex}`);
+    
+    setHiddenColumns(prevHidden => {
+      // Create a deep copy of the previous state
+      const newHidden = JSON.parse(JSON.stringify(prevHidden));
+      
+      // Initialize nested objects if they don't exist
+      if (!newHidden[activeTabIndex]) {
+        newHidden[activeTabIndex] = {};
+      }
+      
+      if (!newHidden[activeTabIndex][selectedSheetIndex]) {
+        newHidden[activeTabIndex][selectedSheetIndex] = [];
+      }
+      
+      // Check if column is already hidden
+      const columnHiddenIndex = newHidden[activeTabIndex][selectedSheetIndex].indexOf(columnIndex);
+      
+      if (columnHiddenIndex === -1) {
+        // Add to hidden columns
+        console.log(`Hiding column ${columnIndex}`);
+        
+        // Create a new array with the added column index
+        const updatedHiddenColumns = [...newHidden[activeTabIndex][selectedSheetIndex], columnIndex];
+        newHidden[activeTabIndex][selectedSheetIndex] = updatedHiddenColumns;
+        
+      } else {
+        // Remove from hidden columns
+        console.log(`Showing column ${columnIndex}`);
+        
+        // Create a new filtered array without the column index
+        const updatedHiddenColumns = newHidden[activeTabIndex][selectedSheetIndex]
+          .filter((idx: number) => idx !== columnIndex);
+        newHidden[activeTabIndex][selectedSheetIndex] = updatedHiddenColumns;
+      }
+      
+      // Log the state for debugging
+      console.log('Updated hidden columns:', newHidden);
+      
+      return newHidden;
+    });
+  };
+  
+  // Hide all columns
+  const hideAllColumns = () => {
+    if (!activeData || !activeData.headers) return;
+    
+    setHiddenColumns(prevHidden => {
+      const newHidden = { ...prevHidden };
+      
+      if (!newHidden[activeTabIndex]) {
+        newHidden[activeTabIndex] = {};
+      }
+      
+      // Add all column indices to hidden array
+      newHidden[activeTabIndex][selectedSheetIndex] = Array.from(
+        { length: activeData.headers.length }, 
+        (_, index) => index
+      );
+      
+      return newHidden;
+    });
+  };
+  
+  // Show all columns
+  const showAllColumns = () => {
+    setHiddenColumns(prevHidden => {
+      const newHidden = { ...prevHidden };
+      
+      if (!newHidden[activeTabIndex]) {
+        newHidden[activeTabIndex] = {};
+      }
+      
+      // Clear all hidden columns for this file/sheet
+      newHidden[activeTabIndex][selectedSheetIndex] = [];
+      
+      return newHidden;
+    });
+  };
+    // Check if a column is hidden
+  const isColumnHidden = (columnIndex: number): boolean => {
+    if (!hiddenColumns[activeTabIndex] || 
+        !hiddenColumns[activeTabIndex][selectedSheetIndex]) {
+      return false;
+    }
+    
+    const isHidden = hiddenColumns[activeTabIndex][selectedSheetIndex].includes(columnIndex);
+    // Debug to console when checking specific columns (e.g., first few)
+    if (columnIndex < 3) {
+      console.log(`Column ${columnIndex} hidden status:`, isHidden);
+    }
+    return isHidden;
+  };
 
   // Handle zoom with mouse wheel
   const handleWheel = (e: WheelEvent) => {
@@ -105,6 +224,34 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
       }
     };
   }, []);
+
+  // Force refresh UI when hiddenColumns change
+  useEffect(() => {
+    // Small timeout to ensure DOM has updated
+    const timeout = setTimeout(() => {
+      console.log('Refreshing hidden columns UI');
+      // Force a refresh of the hidden styles
+      const hiddenHeaders = document.querySelectorAll('th.' + styles.hiddenColumnHeader);
+      const hiddenCells = document.querySelectorAll('td.' + styles.hiddenColumnCell);
+      
+      console.log(`Found ${hiddenHeaders.length} hidden headers and ${hiddenCells.length} hidden cells`);
+        // Refresh headers
+      hiddenHeaders.forEach(header => {
+        header.classList.remove(styles.hiddenColumnHeader);
+        void (header as HTMLElement).offsetWidth; // Force reflow
+        header.classList.add(styles.hiddenColumnHeader);
+      });
+      
+      // Refresh cells
+      hiddenCells.forEach(cell => {
+        cell.classList.remove(styles.hiddenColumnCell);
+        void (cell as HTMLElement).offsetWidth; // Force reflow
+        cell.classList.add(styles.hiddenColumnCell);
+      });
+    }, 50);
+    
+    return () => clearTimeout(timeout);
+  }, [hiddenColumns, styles.hiddenColumnHeader, styles.hiddenColumnCell]);
 
   return (
     <AnimatePresence>
@@ -185,30 +332,97 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 )}                <div 
                   className={styles.tableWrapper} 
                   style={{ transform: `scale(${zoomLevel})` }}
-                >
-                  {activeData && activeData.headers ? (
-                    <table className={styles.previewTable}style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
-                      <thead>
-                        <tr>
-                          {activeData.headers.map((header, index) => (
-                            <th key={index}>{header ? header.trim() : ''}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeData.rows && activeData.rows.map((row, rowIndex) => (
-                          <tr
-                            key={rowIndex}
-                            className={rowIndex % 2 === 0 ? styles.evenRow : styles.oddRow}
-                          >
-                            {row.map((cell, cellIndex) => (
-                              <td key={cellIndex}>{cell || ''}</td>
+                >                {activeData && activeData.headers ? (
+                    <>                      <div className={styles.columnVisibilityControls}>
+                        <span style={{ 
+                          fontSize: '0.9rem', 
+                          color: '#374151', 
+                          marginRight: '10px',
+                          padding: '4px 8px',
+                          background: '#f3f4f6',
+                          borderRadius: '4px',
+                          border: '1px solid #e5e7eb',
+                          fontWeight: '500'
+                        }}>
+                          <span style={{ marginRight: '4px' }}>ℹ️</span>
+                          Hidden columns will be excluded from insights and schema diagrams
+                        </span>
+                        <button 
+                          className={styles.columnVisibilityButton}
+                          onClick={hideAllColumns}
+                          title="Hide all columns - hidden columns won't be used for insight generation"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+                            <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
+                            <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
+                          </svg>
+                          Hide All
+                        </button>
+                        <button 
+                          className={styles.columnVisibilityButton}
+                          onClick={showAllColumns}
+                          title="Show all columns for insight generation"
+                        >
+                          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                            <path d="M10.5 8a2.5 2.5 0 1 1-5 0 2.5 2.5 0 0 1 5 0z"/>
+                            <path d="M0 8s3-5.5 8-5.5S16 8 16 8s-3 5.5-8 5.5S0 8 0 8zm8 3.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z"/>
+                          </svg>
+                          Show All
+                        </button>
+                      </div>
+                      <table className={styles.previewTable} style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
+                        <thead>
+                          <tr>                            {activeData.headers.map((header, index) => (                              <th 
+                                key={index} 
+                                className={isColumnHidden(index) ? styles.hiddenColumnHeader : ''}
+                              >
+                                <div className={styles.columnHeader}>                                  <button
+                                    className={styles.columnToggle}
+                                    data-hidden={isColumnHidden(index)}
+                                    onClick={(e) => {
+                                      e.stopPropagation(); // Prevent event bubbling
+                                      toggleColumnVisibility(index);
+                                    }}
+                                    title={isColumnHidden(index) ? "Show column" : "Hide column"}
+                                    aria-label={isColumnHidden(index) ? `Show column ${header}` : `Hide column ${header}`}
+                                    type="button"
+                                  >
+                                    {isColumnHidden(index) ? (
+                                      <svg className={styles.columnToggleIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                                        <line x1="1" y1="1" x2="23" y2="23"></line>
+                                      </svg>
+                                    ) : (
+                                      <svg className={styles.columnToggleIcon} xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                      </svg>
+                                    )}
+                                  </button>
+                                  {header ? header.trim() : ''}
+                                </div>
+                              </th>
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
+                        </thead>
+                        <tbody>                          {activeData.rows && activeData.rows.map((row, rowIndex) => (
+                            <tr
+                              key={rowIndex}
+                              className={rowIndex % 2 === 0 ? styles.evenRow : styles.oddRow}
+                            >
+                              {row.map((cell, cellIndex) => (                                <td 
+                                  key={cellIndex} 
+                                  className={isColumnHidden(cellIndex) ? styles.hiddenColumnCell : ''}
+                                >
+                                  <span style={{ position: 'relative', zIndex: 2 }}>{cell || ''}</span>
+                                </td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </>                  ) : (
                     <div className={styles.noData}>No data available</div>
                   )}
                 </div>
@@ -219,11 +433,11 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
           </div>
 
           <div className={styles.modalFooter}>
-            <div className={styles.footerLeft}>
-              <button
+            <div className={styles.footerLeft}>              <button
                 className={styles.schemaButton}
                 onClick={() => setShowSchemaVisualization(true)}
                 disabled={isLoading}
+                title="View schema diagram (hidden columns will be excluded)"
               >
                 <span className={styles.schemaIcon}>🔍</span>
                 <span>View Schema</span>
@@ -236,11 +450,11 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 disabled={isLoading}
               >
                 <span>Cancel</span>
-              </button>
-              <button
+              </button>              <button
                 className={styles.uploadButton}
                 onClick={handleUpload}
                 disabled={isLoading}
+                title="Generate insights based on the data (hidden columns will be excluded)"
               >
                 {isLoading ? (
                   <>
@@ -256,70 +470,10 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
             </div>
           </div>
         </motion.div>
-      </motion.div>
-
-      {/* Schema Visualization Modal */}      <SchemaPreviewModalWrapper
+      </motion.div>      {/* Schema Visualization Modal */}      <SchemaPreviewModalWrapper
         isOpen={showSchemaVisualization}
         onCloseAction={() => setShowSchemaVisualization(false)}
-        tables={(parsedFiles || []).flatMap((file, fileIndex) => {
-          if (!file || !files[fileIndex]) {
-            return [];
-          }
-          if (files[fileIndex].type === 'excel' && file.sheets) {
-            // Create tables for each sheet in Excel files
-            return file.sheets.map(sheet => ({              name: `${files[fileIndex].file.name.replace(/\.[^/.]+$/, "")}_${sheet.name || 'unnamed'}`,
-              fields: (sheet.headers || []).map(header => {
-                if (!header) {
-                  return {
-                    name: 'unnamed',
-                    type: 'string',
-                    isPrimary: false,
-                    isForeign: false,
-                    references: undefined
-                  };
-                }
-                const headerLower = header.trim().toLowerCase();
-                const values = (sheet.rows || []).map(row => 
-                  row ? (row[sheet.headers.indexOf(header)] || '') : ''
-                );
-                return {
-                  name: header.trim(),
-                  type: inferColumnType(values),
-                  isPrimary: headerLower === 'id',
-                  isForeign: false,
-                  references: undefined
-                };
-              })
-            }));
-          } else {            // Create a single table for CSV files
-            return [{
-              name: files[fileIndex].file.name.replace(/\.[^/.]+$/, ""),
-              fields: (file.headers || []).map(header => {
-                if (!header) {
-                  return {
-                    name: 'unnamed',
-                    type: 'string',
-                    isPrimary: false,
-                    isForeign: false,
-                    references: undefined
-                  };
-                }
-                const headerLower = header.trim().toLowerCase();
-                const values = (file.rows || []).map(row => 
-                  row ? (row[file.headers.indexOf(header)] || '') : ''
-                );
-                return {
-                  name: header.trim(),
-                  type: inferColumnType(values),
-                  isPrimary: headerLower === 'id',
-                  isForeign: false,
-                  references: undefined
-                };
-              })
-            }];
-          }
-        })}
-      />
+        tables={prepareTableSchemas(parsedFiles, files, hiddenColumns)}      />
     </AnimatePresence>
   );
 };
