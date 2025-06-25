@@ -1,10 +1,13 @@
-import React, { useState, useEffect } from 'react';
+'use client';
+
+import React, { useState, useEffect, WheelEvent } from 'react';
 import { parseCsvPreview } from '../../utils/csvParser';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SchemaPreviewModalWrapper } from '../SchemaPreviewModal/SchemaPreviewModalWrapper';
 import { prepareTableSchemas } from '../../utils/tableSchemaPreparation';
 import { inferColumnType } from '../../utils/typeInference';
 import styles from './CsvPreviewModal.module.css';
+import { LoadingOverlay } from '../LoadingOverlay/LoadingOverlay';
 
 interface FileData {
   content: string;
@@ -14,43 +17,97 @@ interface FileData {
 
 interface CsvPreviewModalProps {
   files: FileData[];
-  onConfirm: () => void;
-  onCancel: () => void;
+  onConfirmAction: () => Promise<void>;
+  onCancelAction: () => void;
+}
+
+interface ParsedFile {
+  headers: string[];
+  rows: string[][];
+  sheets?: { name: string; headers: string[]; rows: string[][] }[];
+}
+
+interface ActiveData {
+  headers: string[];
+  rows: string[][];
 }
 
 export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   files,
-  onConfirm,
-  onCancel,
-}) => {
+  onConfirmAction,
+  onCancelAction,
+}): React.ReactElement => {
   const [isLoading, setIsLoading] = useState(false);
   const [activeTabIndex, setActiveTabIndex] = useState(0);
   const [selectedSheetIndex, setSelectedSheetIndex] = useState(0);
   const [showSchemaVisualization, setShowSchemaVisualization] = useState(false);
-  const [parsedFiles, setParsedFiles] = useState<{
-    headers: string[];
-    rows: string[][];
-    sheets?: { name: string; headers: string[]; rows: string[][] }[];
-  }[]>([]);
+  const [showHiddenColumnsMenu, setShowHiddenColumnsMenu] = useState(false);
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Parse all files on component load
+  // Toggle column visibility
+  const toggleColumnVisibility = (header: string): void => {
+    setHiddenColumns(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(header)) {
+        newSet.delete(header);
+      } else {
+        newSet.add(header);
+      }
+      return newSet;
+    });
+    setShowHiddenColumnsMenu(false);
+  };
+
+  // Get active data based on current tab and sheet
+  const getActiveData = (): ActiveData | null => {
+    const file = parsedFiles[activeTabIndex];
+    if (!file) return null;
+
+    if (files[activeTabIndex]?.type === 'excel' && file.sheets) {
+      return {
+        headers: file.sheets[selectedSheetIndex]?.headers || [],
+        rows: file.sheets[selectedSheetIndex]?.rows || []
+      };
+    }
+
+    return {
+      headers: file.headers,
+      rows: file.rows
+    };
+  };
+
+  // Function to get visible row data
+  const getVisibleRowData = (row: string[], headers: string[]): string[] => {
+    return row.filter((_, index) => !hiddenColumns.has(headers[index]));
+  };
+
+  // Handle wheel zoom
+  const handleWheel = (e: WheelEvent<HTMLDivElement>): void => {
+    if (e.ctrlKey || e.metaKey) {
+      e.preventDefault();
+      setZoomLevel((prevZoom) => {
+        const newZoom = prevZoom + (e.deltaY > 0 ? -0.1 : 0.1);
+        return Math.min(Math.max(newZoom, 0.5), 2);
+      });
+    }
+  };
+
+  // Parse files on load
   useEffect(() => {
     const parsed = files.map((file) => {
       if (file.type === 'excel') {
-        // Parse Excel data from JSON string
         const excelData = JSON.parse(file.content);
-        // Convert the sheets object to an array format
         const sheets = Object.entries(excelData.sheets).map(([name, data]: [string, any]) => ({
           name,
           headers: data.headers,
           rows: data.rows
         }));
-        // Return the first sheet's data as main data and include all sheets
         return {
           headers: excelData.sheets[excelData.primarySheet].headers,
           rows: excelData.sheets[excelData.primarySheet].rows,
-          sheets: sheets
+          sheets
         };
       } else {
         return parseCsvPreview(file.content);
@@ -59,52 +116,126 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     setParsedFiles(parsed);
   }, [files]);
 
-  const handleUpload = async () => {
+  // Process data and handle upload
+  const handleUpload = async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    if (isLoading) return;
+    
     setIsLoading(true);
     try {
-      await onConfirm();
+      await onConfirmAction();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
+  // Handle modal close
+  const handleClose = (e: React.MouseEvent<HTMLElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!isLoading) {
+      onCancelAction();
+    }
+  };
+
+  // Handle modal content click
+  const handleModalContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    e.stopPropagation(); // Prevent clicks inside modal from closing it
+  };
+
+  // Cleanup effect
+  useEffect(() => {
+    return () => {
+      setIsLoading(false);
+      setShowHiddenColumnsMenu(false);
+      setShowSchemaVisualization(false);
+    };
+  }, []);
+
+  const data = getActiveData();
+  const hiddenColumnsCount = data?.headers.filter(h => hiddenColumns.has(h)).length || 0;
+
+  // Handle cancel/close
+  const handleCloseAction = () => {
+    if (!isLoading) {
+      onCancelAction();
+    }
+  };
+
+  // Handle confirm/generate insights
+  const handleConfirmAction = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
+    try {
+      // Process files before confirming
+      const processedFiles = parsedFiles.map((file, index) => {
+        if (files[index].type === 'excel' && file.sheets) {
+          const processedSheets = file.sheets.map(sheet => ({
+            name: sheet.name,
+            headers: sheet.headers.filter(header => !hiddenColumns.has(header)),
+            rows: sheet.rows.map(row => 
+              row.filter((_, colIndex) => !hiddenColumns.has(sheet.headers[colIndex]))
+            )
+          }));
+
+          const primarySheetName = processedSheets[0]?.name || '';
+          const sheetsObject: Record<string, { headers: string[]; rows: string[][] }> = {};
+          
+          processedSheets.forEach(sheet => {
+            sheetsObject[sheet.name] = {
+              headers: sheet.headers,
+              rows: sheet.rows
+            };
+          });
+
+          // Update original file content
+          files[index].content = JSON.stringify({
+            primarySheet: primarySheetName,
+            sheets: sheetsObject
+          });
+
+          return {
+            headers: sheetsObject[primarySheetName].headers,
+            rows: sheetsObject[primarySheetName].rows,
+            sheets: processedSheets
+          };
+        } else {
+          const visibleHeaders = file.headers.filter(header => !hiddenColumns.has(header));
+          const visibleRows = file.rows.map(row => 
+            row.filter((_, colIndex) => !hiddenColumns.has(file.headers[colIndex]))
+          );
+
+          // Update original file content
+          files[index].content = [
+            visibleHeaders.join(','),
+            ...visibleRows.map(row => row.join(','))
+          ].join('\n');
+
+          return {
+            headers: visibleHeaders,
+            rows: visibleRows
+          };
+        }
+      });
+
+      setParsedFiles(processedFiles);
+      await onConfirmAction();
+    } catch (error) {
+      console.error('Error processing files:', error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Helper function to get the currently active sheet data
-  const getActiveSheetData = () => {
-    const activeFile = parsedFiles[activeTabIndex];
-    
-    if (activeFile?.sheets && activeFile.sheets.length > 0) {
-      return activeFile.sheets[selectedSheetIndex];
-    }
-    
-    return activeFile;
-  };
-
-  const activeData = getActiveSheetData();
-
-  // Handle zoom with mouse wheel
-  const handleWheel = (e: WheelEvent) => {
-    if (e.ctrlKey || e.metaKey) {
-      e.preventDefault();
-      const delta = -e.deltaY;
-      setZoomLevel(prev => {
-        const newZoom = prev + (delta > 0 ? 0.1 : -0.1);
-        return Math.min(Math.max(newZoom, 0.5), 2); // Limit zoom between 50% and 200%
-      });
+  // Handle clicking outside modal
+  const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (e.target === e.currentTarget && !isLoading) {
+      handleClose(e);
     }
   };
-
-  // Add wheel event listener
-  useEffect(() => {
-    const tableWrapper = document.querySelector(`.${styles.tableWrapper}`);
-    if (tableWrapper) {
-      tableWrapper.addEventListener('wheel', handleWheel as any, { passive: false });
-    }
-    return () => {
-      if (tableWrapper) {
-        tableWrapper.removeEventListener('wheel', handleWheel as any);
-      }
-    };
-  }, []);
 
   return (
     <AnimatePresence>
@@ -113,6 +244,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        onClick={handleOverlayClick}
       >
         <motion.div
           className={styles.modalContent}
@@ -120,6 +252,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
           transition={{ type: 'spring', duration: 0.3 }}
+          onClick={handleModalContentClick}
         >
           <div className={styles.modalHeader}>
             <h2>
@@ -133,13 +266,36 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
               </span>
               Data Preview ({files.length} {files.length === 1 ? 'file' : 'files'})
             </h2>
-            <button 
-              onClick={onCancel}
+            <button
+              onClick={handleClose}
               className={styles.closeButton}
               aria-label="Close"
+              disabled={isLoading}
             >
               ×
             </button>
+          </div>
+
+          {/* User Guidance */}
+          <div className={styles.userGuidance}>
+            <svg
+              viewBox="0 0 24 24"
+              width="20"
+              height="20"
+              stroke="currentColor"
+              strokeWidth="2"
+              fill="none"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="16" x2="12" y2="12"></line>
+              <line x1="12" y1="8" x2="12.01" y2="8"></line>
+            </svg>
+            <span>
+              You can hide/show columns using the eye icon in each column header. 
+              {hiddenColumnsCount > 0 && ` Currently ${hiddenColumnsCount} column${hiddenColumnsCount > 1 ? 's are' : ' is'} hidden.`}
+            </span>
           </div>
 
           <div className={styles.modalBody}>
@@ -154,6 +310,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                     setActiveTabIndex(index);
                     setSelectedSheetIndex(0);
                   }}
+                  disabled={isLoading}
                 >
                   <span className={styles.fileTypeIcon}>
                     {file.type === 'excel' ? '📊' : '📄'}
@@ -161,65 +318,151 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                   {file.file.name}
                 </button>
               ))}
-            </div>            {activeData ? (
-              <>
-                {/* Show sheet tabs if the active file is Excel and has multiple sheets */}
-                {files[activeTabIndex].type === 'excel' &&
-                 parsedFiles[activeTabIndex]?.sheets &&
-                 parsedFiles[activeTabIndex].sheets.length > 1 && (
-                  <div className={styles.sheetTabs}>
-                    <div className={styles.sheetTabsScroll}>
-                      {parsedFiles[activeTabIndex].sheets?.map((sheet, idx) => (
-                        <button
-                          key={idx}
-                          className={`${styles.sheetTab} ${
-                            idx === selectedSheetIndex ? styles.activeSheetTab : ''
-                          }`}
-                          onClick={() => setSelectedSheetIndex(idx)}
-                        >
-                          {sheet.name}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}                <div 
-                  className={styles.tableWrapper} 
-                  style={{ transform: `scale(${zoomLevel})` }}
-                >
-                  {activeData && activeData.headers ? (
-                    <table className={styles.previewTable}style={{ transform: `scale(${zoomLevel})`, transformOrigin: 'top left' }}>
-                      <thead>
-                        <tr>
-                          {activeData.headers.map((header, index) => (
-                            <th key={index}>{header ? header.trim() : ''}</th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {activeData.rows && activeData.rows.map((row, rowIndex) => (
-                          <tr
-                            key={rowIndex}
-                            className={rowIndex % 2 === 0 ? styles.evenRow : styles.oddRow}
+            </div>
+
+            <div className={styles.previewContainer}>
+              {data ? (
+                <>
+                  {files[activeTabIndex]?.type === 'excel' &&
+                   parsedFiles[activeTabIndex]?.sheets &&
+                   parsedFiles[activeTabIndex].sheets.length > 1 && (
+                    <div className={styles.sheetTabs}>
+                      <div className={styles.sheetTabsScroll}>
+                        {parsedFiles[activeTabIndex].sheets?.map((sheet, idx) => (
+                          <button
+                            key={idx}
+                            className={`${styles.sheetTab} ${
+                              idx === selectedSheetIndex ? styles.activeSheetTab : ''
+                            }`}
+                            onClick={() => setSelectedSheetIndex(idx)}
+                            disabled={isLoading}
                           >
-                            {row.map((cell, cellIndex) => (
-                              <td key={cellIndex}>{cell || ''}</td>
+                            {sheet.name}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className={styles.tableContainer}>
+                    <div
+                      className={styles.tableWrapper}
+                      style={{ transform: `scale(${zoomLevel})` }}
+                      onWheel={handleWheel}
+                    >
+                      <table className={styles.previewTable}>
+                        <thead>
+                          <tr>
+                            {data.headers.map((header, index) => (
+                              !hiddenColumns.has(header) && (
+                                <th key={index}>
+                                  <div className={styles.columnHeader}>
+                                    <div className={styles.headerContent}>
+                                      {header ? header.trim() : ''}
+                                    </div>
+                                    <button
+                                      className={styles.columnToggleButton}
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        toggleColumnVisibility(header);
+                                      }}
+                                      title="Hide this column"
+                                      disabled={isLoading}
+                                    >
+                                      <svg
+                                        viewBox="0 0 24 24"
+                                        width="16"
+                                        height="16"
+                                        stroke="currentColor"
+                                        strokeWidth="2"
+                                        fill="none"
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                      >
+                                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                        <circle cx="12" cy="12" r="3"></circle>
+                                      </svg>
+                                    </button>
+                                  </div>
+                                </th>
+                              )
                             ))}
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  ) : (
-                    <div className={styles.noData}>No data available</div>
-                  )}
-                </div>
-              </>
-            ) : (
-              <div className={styles.loadingTable}>Loading file preview...</div>
-            )}
+                        </thead>
+                        <tbody>
+                          {data.rows.map((row, rowIndex) => (
+                            <tr
+                              key={rowIndex}
+                              className={rowIndex % 2 === 0 ? styles.evenRow : styles.oddRow}
+                            >
+                              {row.map((cell, cellIndex) => !hiddenColumns.has(data.headers[cellIndex]) && (
+                                <td key={cellIndex}>{cell || ''}</td>
+                              ))}
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className={styles.noData}>No data available</div>
+              )}
+              <LoadingOverlay isVisible={isLoading} />
+            </div>
           </div>
 
           <div className={styles.modalFooter}>
             <div className={styles.footerLeft}>
+              {hiddenColumnsCount > 0 && (
+                <div className={styles.hiddenColumnsWrapper}>
+                  <button
+                    className={styles.showHiddenColumnsButton}
+                    onClick={() => setShowHiddenColumnsMenu(!showHiddenColumnsMenu)}
+                    title={`${hiddenColumnsCount} column${hiddenColumnsCount > 1 ? 's' : ''} hidden`}
+                  >
+                    Hidden Columns
+                    <span className={styles.hiddenColumnsCount}>
+                      {hiddenColumnsCount}
+                    </span>
+                  </button>
+
+                  {showHiddenColumnsMenu && (
+                    <div className={styles.hiddenColumnsMenu}>
+                      <div className={styles.hiddenColumnsList}>
+                        {data?.headers
+                          .filter(header => hiddenColumns.has(header))
+                          .map(header => (
+                            <div key={header} className={styles.hiddenColumnItem}>
+                              <span title={header}>{header}</span>
+                              <button
+                                className={styles.showColumnButton}
+                                onClick={() => toggleColumnVisibility(header)}
+                                title={`Show ${header} column`}
+                              >
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  width="14"
+                                  height="14"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  fill="none"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                >
+                                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                                  <circle cx="12" cy="12" r="3"></circle>
+                                </svg>
+                                Show
+                              </button>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <button
                 className={styles.schemaButton}
                 onClick={() => setShowSchemaVisualization(true)}
@@ -229,13 +472,14 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 <span>View Schema</span>
               </button>
             </div>
+
             <div className={styles.footerRight}>
               <button
                 className={styles.cancelButton}
-                onClick={onCancel}
+                onClick={handleClose}
                 disabled={isLoading}
               >
-                <span>Cancel</span>
+                Cancel
               </button>
               <button
                 className={styles.uploadButton}
@@ -248,26 +492,34 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                     <span>Processing...</span>
                   </>
                 ) : (
-                  <>
-                    <span>Generate Insights</span>
-                  </>
+                  <span>Generate Insights</span>
                 )}
               </button>
             </div>
           </div>
+
+          <div className={styles.previewContainer}>
+            {data ? (
+              <>
+                {/* ...existing data display code... */}
+              </>
+            ) : (
+              <div className={styles.noData}>No data available</div>
+            )}
+            <LoadingOverlay isVisible={isLoading} />
+          </div>
         </motion.div>
       </motion.div>
 
-      {/* Schema Visualization Modal */}      <SchemaPreviewModalWrapper
+      <SchemaPreviewModalWrapper
         isOpen={showSchemaVisualization}
         onCloseAction={() => setShowSchemaVisualization(false)}
         tables={(parsedFiles || []).flatMap((file, fileIndex) => {
-          if (!file || !files[fileIndex]) {
-            return [];
-          }
+          if (!file || !files[fileIndex]) return [];
+
           if (files[fileIndex].type === 'excel' && file.sheets) {
-            // Create tables for each sheet in Excel files
-            return file.sheets.map(sheet => ({              name: `${files[fileIndex].file.name.replace(/\.[^/.]+$/, "")}_${sheet.name || 'unnamed'}`,
+            return file.sheets.map(sheet => ({
+              name: `${files[fileIndex].file.name.replace(/\.[^/.]+$/, "")}_${sheet.name || 'unnamed'}`,
               fields: (sheet.headers || []).map(header => {
                 if (!header) {
                   return {
@@ -291,7 +543,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 };
               })
             }));
-          } else {            // Create a single table for CSV files
+          } else {
             return [{
               name: files[fileIndex].file.name.replace(/\.[^/.]+$/, ""),
               fields: (file.headers || []).map(header => {

@@ -78,32 +78,15 @@
 }
 
 .tableContainer {
+  position: relative;
   flex: 1;
-  overflow: hidden;
-  padding: 1.5rem 2rem;
-  min-height: 200px;
-  max-height: calc(90vh - 180px);
+  overflow: auto;
+  padding: 1rem;
 }
 
 .tableWrapper {
-  overflow: auto;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  max-height: calc(90vh - 250px); /* Set maximum height for vertical scrolling */
-  position: relative;
-  transform-origin: 0 0;
-  transition: transform 0.1s ease-out;
-  will-change: transform;
-}
-
-.previewTable {
-  width: 100%;
-  border-collapse: separate; /* Changed from collapse to separate for sticky header */
-  border-spacing: 0;
-  font-size: 0.875rem;
-  background-color: white;
-  transform-origin: 0 0;
-  transition: all 0.1s ease-out;
+  min-width: 100%;
+  transform-origin: top left;
 }
 
 /* Add custom scrollbar styling for better visibility during zoom */
@@ -124,6 +107,16 @@
 
 .tableWrapper::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
+}
+
+.previewTable {
+  width: 100%;
+  border-collapse: separate; /* Changed from collapse to separate for sticky header */
+  border-spacing: 0;
+  font-size: 0.875rem;
+  background-color: white;
+  transform-origin: 0 0;
+  transition: all 0.1s ease-out;
 }
 
 .previewTable thead {
@@ -175,6 +168,7 @@
 .footerLeft {
   display: flex;
   align-items: center;
+  position: relative;
 }
 
 .footerRight {
@@ -234,6 +228,11 @@
   background-color: #1d4ed8;
 }
 
+/* Button disabled states */
+.fileTab:disabled,
+.sheetTab:disabled,
+.columnToggleButton:disabled,
+.schemaButton:disabled,
 .cancelButton:disabled,
 .uploadButton:disabled {
   opacity: 0.5;
@@ -417,6 +416,157 @@
   font-size: 1rem;
 }
 
+.columnHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.5rem;
+}
+
+.headerContent {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.columnToggleButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.25rem;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  opacity: 0.6;
+}
+
+.columnToggleButton:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+  opacity: 1;
+}
+
+.userGuidance {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 2rem;
+  background-color: #f0f9ff;
+  border-bottom: 1px solid #e0f2fe;
+  color: #0369a1;
+  font-size: 0.875rem;
+}
+
+.userGuidance svg {
+  flex-shrink: 0;
+}
+
+.hiddenColumnsWrapper {
+  position: relative;
+  margin-right: 1rem;
+}
+
+.hiddenColumnsMenu {
+  position: absolute;
+  bottom: calc(100% + 0.5rem);
+  left: 0;
+  min-width: 280px;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e5e7eb;
+  z-index: 20;
+  padding: 0.5rem;
+}
+
+.hiddenColumnsList {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.hiddenColumnItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-radius: 4px;
+  transition: background-color 0.2s ease;
+}
+
+.hiddenColumnItem:hover {
+  background-color: #f8fafc;
+}
+
+.hiddenColumnItem span {
+  color: #1e293b;
+  font-size: 0.875rem;
+  margin-right: 1rem;
+}
+
+.showColumnButton {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border: none;
+  border-radius: 4px;
+  background-color: #2563eb;
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.showColumnButton:hover {
+  background-color: #1d4ed8;
+}
+
+.showColumnButton svg {
+  width: 14px;
+  height: 14px;
+}
+
+.showHiddenColumnsButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  background-color: white;
+  color: #1e293b;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.showHiddenColumnsButton:hover {
+  background-color: #f8fafc;
+  border-color: #cbd5e1;
+}
+
+.hiddenColumnsCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #e2e8f0;
+  color: #475569;
+  border-radius: 9999px;
+  padding: 0.125rem 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  margin-left: 0.25rem;
+}
+
 @media (max-width: 640px) {
   .modalContent {
     width: 95%;
@@ -453,6 +603,19 @@
     min-width: auto;
     white-space: nowrap;
   }
+
+  .showHiddenColumnsButton {
+    padding: 0.5rem;
+    font-size: 0.75rem;
+  }
+
+  .hiddenColumnsMenu {
+    min-width: 160px;
+  }
+
+  .hiddenColumnItem {
+    font-size: 0.75rem;
+  }
 }
 
 @media (max-width: 480px) {
@@ -481,4 +644,13 @@
     justify-content: center;
     max-width: 160px;
   }
+}
+
+.previewContainer {  position: relative;
+  flex: 1;
+  overflow: hidden;
+  margin: 1rem;
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
 }
