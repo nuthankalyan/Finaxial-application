@@ -110,8 +110,8 @@ export const DatasetVersions: React.FC<DatasetVersionsProps> = ({ dataset, works
               </td>
               <td>
                 <button
-                  onClick={() => handleDelete(version.id)}
-                  disabled={isDeleting || dataset.versions.length <= 1}
+                  onClick={() => version.id && handleDelete(version.id)}
+                  disabled={isDeleting || dataset.versions.length <= 1 || !version.id}
                   className={styles.deleteButton}
                   aria-label="Delete version"
                 >
