@@ -80,43 +80,113 @@
 .tableContainer {
   position: relative;
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   padding: 1rem;
+  max-height: calc(100vh - 300px);
+  min-height: 300px;
+  display: flex;
+  flex-direction: column;
+  /* Ensure scrollbars are visible in all browsers */
+  scrollbar-width: auto;
+  -ms-overflow-style: scrollbar;
 }
 
 .tableWrapper {
+  flex: 1;
+  overflow-x: scroll;
+  overflow-y: scroll;
   min-width: 100%;
+  max-width: 100%;
   transform-origin: top left;
+  /* Force scrollbars to always be visible */
+  scrollbar-width: auto;
+  -ms-overflow-style: scrollbar;
+  /* Ensure horizontal scrollbar is always shown when needed */
+  scrollbar-gutter: stable;
 }
 
-/* Add custom scrollbar styling for better visibility during zoom */
-.tableWrapper::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
+/* Fixed horizontal scrollbar container */
+.horizontalScrollContainer {
+  position: relative;
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  border-bottom: 1px solid #e2e8f0;
 }
 
-.tableWrapper::-webkit-scrollbar-track {
+.verticalScrollContainer {
+  flex: 1;
+  overflow-x: hidden;
+  overflow-y: auto;
+  min-height: 0;
+}
+
+.tableInnerWrapper {
+  overflow: visible;
+  min-width: max-content;
+}
+
+/* Enhanced scrollbar styling for better visibility during zoom and scrolling */
+.tableContainer::-webkit-scrollbar,
+.tableWrapper::-webkit-scrollbar,
+.horizontalScrollContainer::-webkit-scrollbar,
+.verticalScrollContainer::-webkit-scrollbar {
+  width: 14px;
+  height: 14px;
+  /* Ensure scrollbars are always shown when needed */
+  -webkit-appearance: none;
+}
+
+.tableContainer::-webkit-scrollbar-track,
+.tableWrapper::-webkit-scrollbar-track,
+.horizontalScrollContainer::-webkit-scrollbar-track,
+.verticalScrollContainer::-webkit-scrollbar-track {
   background: #f1f5f9;
-  border-radius: 5px;
+  border-radius: 7px;
+  margin: 2px;
+  border: 1px solid #e2e8f0;
 }
 
-.tableWrapper::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 5px;
-}
-
-.tableWrapper::-webkit-scrollbar-thumb:hover {
+.tableContainer::-webkit-scrollbar-thumb,
+.tableWrapper::-webkit-scrollbar-thumb,
+.horizontalScrollContainer::-webkit-scrollbar-thumb,
+.verticalScrollContainer::-webkit-scrollbar-thumb {
   background: #94a3b8;
+  border-radius: 7px;
+  border: 2px solid #f1f5f9;
+  /* Make scrollbar thumb more visible */
+  min-height: 20px;
+  min-width: 20px;
+}
+
+.tableContainer::-webkit-scrollbar-thumb:hover,
+.tableWrapper::-webkit-scrollbar-thumb:hover,
+.horizontalScrollContainer::-webkit-scrollbar-thumb:hover,
+.verticalScrollContainer::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+.tableContainer::-webkit-scrollbar-corner,
+.tableWrapper::-webkit-scrollbar-corner,
+.horizontalScrollContainer::-webkit-scrollbar-corner,
+.verticalScrollContainer::-webkit-scrollbar-corner {
+  background: #f1f5f9;
 }
 
 .previewTable {
   width: 100%;
-  border-collapse: separate; /* Changed from collapse to separate for sticky header */
+  min-width: max-content;
+  border-collapse: separate;
   border-spacing: 0;
   font-size: 0.875rem;
   background-color: white;
   transform-origin: 0 0;
   transition: all 0.1s ease-out;
+  table-layout: auto;
+  margin: 0;
+  /* Ensure table maintains its width for horizontal scrolling */
+  width: max-content;
+  min-width: 100%;
 }
 
 .previewTable thead {
@@ -131,14 +201,24 @@
   text-align: left;
   font-weight: 600;
   color: #334155;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05); /* Add shadow to header */
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
   border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+  min-width: 150px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .previewTable td {
   padding: 0.875rem 1.5rem;
   color: #475569;
   border-bottom: 1px solid #e2e8f0;
+  white-space: nowrap;
+  min-width: 150px;
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .evenRow {
@@ -328,11 +408,13 @@
 .sheetTabs {
   display: flex;
   overflow-x: auto;
-  
-  background-color: #f3f4f6;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
   padding: 0 1rem;
   scrollbar-width: thin;
   scrollbar-color: #94a3b8 #e5e7eb;
+  min-height: 48px;
+  align-items: center;
 }
 
 .sheetTabs::-webkit-scrollbar {
@@ -351,6 +433,9 @@
 .sheetTabsScroll {
   display: flex;
   flex-wrap: nowrap;
+  gap: 0.25rem;
+  align-items: center;
+  min-height: 48px;
 }
 
 .sheetTab {
@@ -358,28 +443,36 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: #64748b;
-  background-color: transparent;
-  border: none;
+  background-color: white;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px 6px 0 0;
   cursor: pointer;
   transition: all 0.2s ease;
   white-space: nowrap;
   position: relative;
+  margin-bottom: -1px;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .sheetTab:hover {
   color: #334155;
-  background-color: rgba(226, 232, 240, 0.5);
+  background-color: #f1f5f9;
+  border-color: #cbd5e1;
 }
 
 .activeSheetTab {
   color: #0f172a;
   font-weight: 600;
+  background-color: white;
+  border-color: #3b82f6;
+  border-bottom-color: white;
+  z-index: 1;
 }
 
 .activeSheetTab::after {
   content: '';
   position: absolute;
-  bottom: 0;
+  bottom: -1px;
   left: 0;
   width: 100%;
   height: 2px;
@@ -567,6 +660,87 @@
   margin-left: 0.25rem;
 }
 
+/* Enhanced styles for large datasets */
+.tableScrollContainer {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
+}
+
+.tableScrollContainer::-webkit-scrollbar {
+  width: 12px;
+  height: 12px;
+}
+
+.tableScrollContainer::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.tableScrollContainer::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 6px;
+  border: 2px solid #f1f5f9;
+}
+
+.tableScrollContainer::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.tableScrollContainer::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
+/* Cell content with tooltips for overflow */
+.cellContent {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.cellContent:hover {
+  overflow: visible;
+  white-space: normal;
+  word-break: break-word;
+  position: relative;
+  z-index: 5;
+  background-color: #f8fafc;
+  padding: 0.5rem;
+  border-radius: 4px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+/* Sticky headers for large tables */
+.stickyHeader {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background-color: #f8fafc;
+}
+
+/* Performance optimization for large tables */
+.virtualizedRow {
+  height: 40px;
+  display: flex;
+  align-items: center;
+}
+
+.virtualizedCell {
+  flex: 0 0 auto;
+  padding: 0.5rem 1rem;
+  border-right: 1px solid #e2e8f0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 120px;
+  max-width: 300px;
+}
+
 @media (max-width: 640px) {
   .modalContent {
     width: 95%;
@@ -578,12 +752,21 @@
   }
 
   .tableContainer {
-    padding: 1rem;
+    padding: 0.5rem;
+    max-height: calc(100vh - 280px);
+  }
+
+  .previewContainer {
+    margin: 0.5rem;
+    max-height: calc(100vh - 300px);
   }
 
   .previewTable th,
   .previewTable td {
-    padding: 0.75rem 1rem;
+    padding: 0.5rem 0.75rem;
+    min-width: 100px;
+    max-width: 200px;
+    font-size: 0.75rem;
   }
 
   .modalFooter {
@@ -616,6 +799,23 @@
   .hiddenColumnItem {
     font-size: 0.75rem;
   }
+  /* Enhanced mobile scrolling */
+  .tableContainer::-webkit-scrollbar,
+  .tableWrapper::-webkit-scrollbar,
+  .horizontalScrollContainer::-webkit-scrollbar,
+  .verticalScrollContainer::-webkit-scrollbar,
+  .stickyHorizontalScroll::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  .cellContent {
+    max-width: 150px;
+  }
+
+  .stickyHorizontalScroll {
+    height: 15px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -644,13 +844,135 @@
     justify-content: center;
     max-width: 160px;
   }
+
+  .previewTable th,
+  .previewTable td {
+    padding: 0.375rem 0.5rem;
+    min-width: 80px;
+    max-width: 120px;
+    font-size: 0.7rem;
+  }
+
+  .tableContainer {
+    padding: 0.25rem;
+    max-height: calc(100vh - 260px);
+  }
+
+  .previewContainer {
+    margin: 0.25rem;
+    max-height: calc(100vh - 280px);
+  }
+  /* Extra small scrollbars for mobile */
+  .tableContainer::-webkit-scrollbar,
+  .tableWrapper::-webkit-scrollbar,
+  .horizontalScrollContainer::-webkit-scrollbar,
+  .verticalScrollContainer::-webkit-scrollbar,
+  .stickyHorizontalScroll::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  .stickyHorizontalScroll {
+    height: 12px;
+  }
 }
 
-.previewContainer {  position: relative;
+.previewContainer {
+  position: relative;
   flex: 1;
   overflow: hidden;
   margin: 1rem;
   min-height: 300px;
+  max-height: calc(100vh - 350px);
   display: flex;
   flex-direction: column;
+  /* Ensure container supports scrolling properly */
+  min-width: 0;
+}
+
+/* Sticky horizontal scrollbar */
+.stickyHorizontalScroll {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 17px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  background: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  z-index: 5;
+}
+
+.stickyHorizontalScroll::-webkit-scrollbar {
+  height: 12px;
+}
+
+.stickyHorizontalScroll::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.stickyHorizontalScroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 6px;
+  border: 2px solid #f1f5f9;
+}
+
+.stickyHorizontalScroll::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.horizontalScrollContent {
+  height: 1px;
+  min-width: max-content;
+  width: 100%;
+}
+
+/* Synchronized scrolling */
+.syncScrollHorizontal {
+  overflow-x: hidden;
+}
+
+/* Firefox-specific scrollbar styling */
+.tableWrapper {
+  scrollbar-width: auto;
+  scrollbar-color: #94a3b8 #f1f5f9;
+  /* Force both scrollbars to always be visible in Firefox */
+  overflow: scroll;
+}
+
+/* Force visibility for all browsers */
+.tableWrapper::-webkit-scrollbar:horizontal {
+  height: 14px;
+  background: #f1f5f9;
+}
+
+.tableWrapper::-webkit-scrollbar:vertical {
+  width: 14px;
+  background: #f1f5f9;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:horizontal {
+  background: #94a3b8;
+  border-radius: 7px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:vertical {
+  background: #94a3b8;
+  border-radius: 7px;
+}
+
+/* Ensure horizontal scrollbar is always visible when content overflows */
+.tableWrapper:has(.previewTable) {
+  overflow-x: scroll !important;
+  overflow-y: scroll !important;
+}
+
+/* Fallback for browsers that don't support :has() */
+@supports not selector(:has(*)) {
+  .tableWrapper {
+    overflow-x: scroll !important;
+    overflow-y: scroll !important;
+  }
 }

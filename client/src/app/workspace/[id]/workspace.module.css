@@ -28,8 +28,8 @@
 .sidebarTitle {
   font-size: 1.5rem;
   font-weight: 700;
-  margin-bottom: 1.5rem;
-  padding-bottom: 0.75rem;
+  
+  
   border-bottom: 1px solid #e5e7eb;
 }
 
@@ -1140,9 +1140,539 @@
   color: #111827;
 }
 
-.modalInsightCardsContainer {
-  margin-bottom: 2rem;
+/* Version History Styles */
+.sidebarHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  
+}
+
+.versionHistoryButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background-color: #6366f1;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: white;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.versionHistoryButton:hover {
+  background-color: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.versionHistoryButton:active {
+  transform: translateY(0);
+  background-color: #3730a3;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.versionHistoryButton:focus {
+  outline: none;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2);
+}
+
+.versionHistoryButton::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
   width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.3),
+    transparent
+  );
+  transition: left 0.5s ease;
+}
+
+.versionHistoryButton:hover::before {
+  left: 100%;
+}
+
+.versionIcon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Version History Modal */
+.versionHistoryModal {
+  background-color: white;
+  border-radius: 12px;
+  width: 90%;
+  max-width: 800px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  overflow: hidden;
+}
+
+.versionModalHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 2rem;
+  border-bottom: 1px solid #e5e7eb;
+  background-color: #f8fafc;
+}
+
+.versionModalTitle {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.versionModalTitle h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+}
+
+.versionModalIcon {
+  width: 24px;
+  height: 24px;
+  color: #6366f1;
+}
+
+.versionModalClose {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background-color: transparent;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #6b7280;
+}
+
+.versionModalClose:hover {
+  background-color: #f3f4f6;
+  color: #111827;
+}
+
+.versionModalClose svg {
+  width: 20px;
+  height: 20px;
+}
+
+.versionModalContent {
+  flex: 1;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.versionTableContainer {
+  flex: 1;
+  overflow: auto;
+  max-height: 60vh;
+}
+
+.versionTable {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 0;
+  background-color: white;
+}
+
+.versionTable thead {
+  background-color: #f8fafc;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.versionTable th {
+  padding: 1rem 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #374151;
+  border-bottom: 2px solid #e5e7eb;
+  white-space: nowrap;
+}
+
+.versionTable th:first-child {
+  padding-left: 1.5rem;
+}
+
+.versionTable th:last-child {
+  padding-right: 1.5rem;
+}
+
+.versionRow {
+  border-bottom: 1px solid #f3f4f6;
+  transition: background-color 0.2s ease;
+}
+
+.versionRow:hover {
+  background-color: #f9fafb;
+}
+
+.versionRow:last-child {
+  border-bottom: none;
+}
+
+.versionTable td {
+  padding: 1rem 0.75rem;
+  font-size: 0.875rem;
+  color: #374151;
+  vertical-align: top;
+}
+
+.versionTable td:first-child {
+  padding-left: 1.5rem;
+}
+
+.versionTable td:last-child {
+  padding-right: 1.5rem;
+}
+
+.versionBadge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background-color: #dbeafe;
+  color: #1e40af;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.fileNameCell {
+  display: flex;
+  align-items: center;
+}
+
+.fileIcon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.fileName {
+  font-weight: 500;
+  color: #111827;
+  word-break: break-word;
+}
+
+.dataInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  font-size: 0.8125rem;
+  color: #6b7280;
+}
+
+.changesCell {
+  max-width: 200px;
+}
+
+.changeDetails {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.changeChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.changeChip.added {
+  background-color: #dcfce7;
+  color: #15803d;
+}
+
+.changeChip.modified {
+  background-color: #fef9c3;
+  color: #854d0e;
+}
+
+.changeChip.removed {
+  background-color: #fee2e2;
+  color: #b91c1c;
+}
+
+.columnChanges {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+}
+
+.initialVersion {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-style: italic;
+}
+
+.typeChip {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background-color: #f3f4f6;
+  color: #374151;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.dateCell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.dateText {
+  font-weight: 500;
+  color: #111827;
+}
+
+.timeText {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.actionsCell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.actionButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: 1px solid #e5e7eb;
+  background-color: white;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #d1d5db;
+}
+
+.actionButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.actionButton.deleteButton {
+  color: #dc2626;
+}
+
+.actionButton.deleteButton:hover:not(:disabled) {
+  background-color: #fef2f2;
+  border-color: #fecaca;
+}
+
+.versionEmpty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+  color: #6b7280;
+}
+
+.emptyIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #d1d5db;
+}
+
+.versionEmpty h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.versionEmpty p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  max-width: 400px;
+}
+
+.versionModalFooter {
+  padding: 1rem 2rem;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f8fafc;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.versionModalButton {
+  padding: 0.5rem 1rem;
+  background-color: #6366f1;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.versionModalButton:hover {
+  background-color: #4f46e5;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .sidebarHeader {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  
+  .versionHistoryButton {
+    align-self: stretch;
+    justify-content: center;
+  }
+  
+  .versionHistoryModal {
+    width: 95%;
+    max-width: none;
+    max-height: 90vh;
+    margin: 0 auto;
+  }
+  
+  .versionModalHeader,
+  .versionModalFooter {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+  
+  .versionModalContent {
+    padding: 0;
+  }
+  
+  .versionTableContainer {
+    max-height: 70vh;
+  }
+  
+  .versionTable {
+    font-size: 0.8125rem;
+  }
+  
+  .versionTable th,
+  .versionTable td {
+    padding: 0.75rem 0.5rem;
+  }
+  
+  .versionTable th:first-child,
+  .versionTable td:first-child {
+    padding-left: 1rem;
+  }
+  
+  .versionTable th:last-child,
+  .versionTable td:last-child {
+    padding-right: 1rem;
+  }
+  
+  .fileNameCell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.25rem;
+  }
+  
+  .fileName {
+    font-size: 0.8125rem;
+  }
+  
+  .dataInfo {
+    font-size: 0.75rem;
+  }
+  
+  .changesCell {
+    max-width: 150px;
+  }
+  
+  .changeChip {
+    font-size: 0.6875rem;
+    padding: 0.125rem 0.25rem;
+  }
+  
+  .columnChanges {
+    font-size: 0.6875rem;
+  }
+  
+  .dateCell {
+    gap: 0.0625rem;
+  }
+  
+  .dateText {
+    font-size: 0.8125rem;
+  }
+  
+  .timeText {
+    font-size: 0.6875rem;
+  }
+}
+
+/* Version loading spinner styles */
+.versionLoading {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  color: #6b7280;
+}
+
+.versionLoading .spinner {
+  width: 32px;
+  height: 32px;
+  margin-bottom: 1rem;
+  border: 3px solid #f3f4f6;
+  border-top: 3px solid #6366f1;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.sidebarHeaderTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #111827;
+  margin: 0;
+  flex: 1;
 }

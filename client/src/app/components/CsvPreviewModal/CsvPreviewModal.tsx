@@ -59,16 +59,21 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     });
     setShowHiddenColumnsMenu(false);
   };
-
   // Get active data based on current tab and sheet
   const getActiveData = (): ActiveData | null => {
     const file = parsedFiles[activeTabIndex];
     if (!file) return null;
 
     if (files[activeTabIndex]?.type === 'excel' && file.sheets) {
+      // Ensure selectedSheetIndex is valid
+      const validSheetIndex = Math.min(selectedSheetIndex, file.sheets.length - 1);
+      const sheet = file.sheets[validSheetIndex];
+      
+      if (!sheet) return null;
+      
       return {
-        headers: file.sheets[selectedSheetIndex]?.headers || [],
-        rows: file.sheets[selectedSheetIndex]?.rows || []
+        headers: sheet.headers || [],
+        rows: sheet.rows || []
       };
     }
 
@@ -92,18 +97,26 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
         return Math.min(Math.max(newZoom, 0.5), 2);
       });
     }
-  };
-
-  // Parse files on load
+  };  // Parse files on load
   useEffect(() => {
     const parsed = files.map((file) => {
       if (file.type === 'excel') {
         const excelData = JSON.parse(file.content);
+        console.log('Excel data parsed:', { 
+          fileName: file.file.name, 
+          primarySheet: excelData.primarySheet, 
+          sheetsKeys: Object.keys(excelData.sheets || {}),
+          sheets: excelData.sheets 
+        });
+        
         const sheets = Object.entries(excelData.sheets).map(([name, data]: [string, any]) => ({
           name,
           headers: data.headers,
           rows: data.rows
         }));
+        
+        console.log('Processed sheets:', sheets);
+        
         return {
           headers: excelData.sheets[excelData.primarySheet].headers,
           rows: excelData.sheets[excelData.primarySheet].rows,
@@ -113,8 +126,23 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
         return parseCsvPreview(file.content);
       }
     });
+    console.log('All parsed files:', parsed);
     setParsedFiles(parsed);
   }, [files]);
+
+  // Reset sheet index when active tab changes or when parsed files change
+  useEffect(() => {
+    const currentFile = parsedFiles[activeTabIndex];
+    if (currentFile && files[activeTabIndex]?.type === 'excel' && currentFile.sheets) {
+      // Ensure selectedSheetIndex is within bounds
+      if (selectedSheetIndex >= currentFile.sheets.length) {
+        setSelectedSheetIndex(0);
+      }
+    } else {
+      // For non-Excel files, always reset to 0
+      setSelectedSheetIndex(0);
+    }
+  }, [activeTabIndex, parsedFiles, selectedSheetIndex]);
 
   // Process data and handle upload
   const handleUpload = async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
@@ -298,8 +326,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
             </span>
           </div>
 
-          <div className={styles.modalBody}>
-            <div className={styles.fileTabs}>
+          <div className={styles.modalBody}>            <div className={styles.fileTabs}>
               {files.map((file, index) => (
                 <button
                   key={index}
@@ -308,6 +335,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                   }`}
                   onClick={() => {
                     setActiveTabIndex(index);
+                    // Reset sheet index when switching files
                     setSelectedSheetIndex(0);
                   }}
                   disabled={isLoading}
@@ -318,31 +346,41 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                   {file.file.name}
                 </button>
               ))}
-            </div>
-
-            <div className={styles.previewContainer}>
+            </div><div className={styles.previewContainer}>
               {data ? (
                 <>
-                  {files[activeTabIndex]?.type === 'excel' &&
-                   parsedFiles[activeTabIndex]?.sheets &&
-                   parsedFiles[activeTabIndex].sheets.length > 1 && (
-                    <div className={styles.sheetTabs}>
-                      <div className={styles.sheetTabsScroll}>
-                        {parsedFiles[activeTabIndex].sheets?.map((sheet, idx) => (
-                          <button
-                            key={idx}
-                            className={`${styles.sheetTab} ${
-                              idx === selectedSheetIndex ? styles.activeSheetTab : ''
-                            }`}
-                            onClick={() => setSelectedSheetIndex(idx)}
-                            disabled={isLoading}
-                          >
-                            {sheet.name}
-                          </button>
-                        ))}
+                  {(() => {
+                    const isExcel = files[activeTabIndex]?.type === 'excel';
+                    const hasSheets = parsedFiles[activeTabIndex]?.sheets;
+                    const sheetsLength = parsedFiles[activeTabIndex]?.sheets?.length || 0;
+                    
+                    console.log('Sheet tabs debug:', {
+                      activeTabIndex,
+                      isExcel,
+                      hasSheets: !!hasSheets,
+                      sheetsLength,
+                      sheets: parsedFiles[activeTabIndex]?.sheets
+                    });
+                    
+                    return isExcel && hasSheets && sheetsLength > 0 ? (
+                      <div className={styles.sheetTabs}>
+                        <div className={styles.sheetTabsScroll}>
+                          {parsedFiles[activeTabIndex].sheets?.map((sheet, idx) => (
+                            <button
+                              key={idx}
+                              className={`${styles.sheetTab} ${
+                                idx === selectedSheetIndex ? styles.activeSheetTab : ''
+                              }`}
+                              onClick={() => setSelectedSheetIndex(idx)}
+                              disabled={isLoading}
+                            >
+                              {sheet.name}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
+                    ) : null;
+                  })()}
 
                   <div className={styles.tableContainer}>
                     <div
@@ -468,7 +506,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 onClick={() => setShowSchemaVisualization(true)}
                 disabled={isLoading}
               >
-                <span className={styles.schemaIcon}>🔍</span>
+              
                 <span>View Schema</span>
               </button>
             </div>
@@ -477,8 +515,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
               <button
                 className={styles.cancelButton}
                 onClick={handleClose}
-                disabled={isLoading}
-              >
+                disabled={isLoading}              >
                 Cancel
               </button>
               <button
@@ -496,17 +533,6 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 )}
               </button>
             </div>
-          </div>
-
-          <div className={styles.previewContainer}>
-            {data ? (
-              <>
-                {/* ...existing data display code... */}
-              </>
-            ) : (
-              <div className={styles.noData}>No data available</div>
-            )}
-            <LoadingOverlay isVisible={isLoading} />
           </div>
         </motion.div>
       </motion.div>

@@ -35,7 +35,7 @@ export const SchemaPreviewModal: React.FC<SchemaPreviewModalProps> = ({
         >
           <div className={styles.modalHeader}>
             <h2>
-              <span className={styles.icon}>🔍</span>
+              
               Database Schema Visualization
             </h2>
             <button

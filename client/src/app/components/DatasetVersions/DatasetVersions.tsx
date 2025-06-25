@@ -7,11 +7,12 @@ import styles from './DatasetVersions.module.css';
 
 interface DatasetVersionsProps {
   dataset: Dataset;
+  workspaceId: string;
   onVersionDelete?: (success: boolean, updatedDataset?: Dataset) => void;
   isDeleting?: boolean;
 }
 
-export const DatasetVersions: React.FC<DatasetVersionsProps> = ({ dataset, onVersionDelete, isDeleting }) => {
+export const DatasetVersions: React.FC<DatasetVersionsProps> = ({ dataset, workspaceId, onVersionDelete, isDeleting }) => {
   const handleDelete = async (versionId: string) => {
     if (dataset.versions.length <= 1) {
       // Don't allow deleting the last version
@@ -19,7 +20,7 @@ export const DatasetVersions: React.FC<DatasetVersionsProps> = ({ dataset, onVer
       return;
     }
 
-    const result = datasetService.deleteDatasetVersion(dataset.id, versionId);
+    const result = await datasetService.deleteDatasetVersion(workspaceId, dataset.id, versionId);
     if (onVersionDelete) onVersionDelete(result.success, result.dataset);
   };
 

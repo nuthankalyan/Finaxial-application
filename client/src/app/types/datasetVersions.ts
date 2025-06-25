@@ -6,6 +6,8 @@ export interface ChangeMetadata {
   removedColumns: string[];
   modifiedColumns: string[];
   changeDescription?: string;
+  rowCount: number;
+  columnCount: number;
 }
 
 export interface DatasetMetadata {
@@ -17,16 +19,20 @@ export interface DatasetMetadata {
 }
 
 export interface DatasetVersion {
-  id: string;
+  _id: string;
+  id?: string;
   version: number;
   fileName: string;
+  originalFileName: string;
   createdAt: string;
+  uploadedAt: string;
   userId: string;
   content: string;
   type: 'csv' | 'excel';
   metadata: DatasetMetadata;
   changeMetadata?: ChangeMetadata;
   parentVersionId?: string;
+  fileSize: number;
 }
 
 export interface Dataset {

@@ -4,10 +4,8 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { motion, AnimatePresence } from 'framer-motion';
 import { CsvPreviewModal } from './CsvPreviewModal/CsvPreviewModal';
-import { LoadingOverlay } from './LoadingOverlay/LoadingOverlay';
 import { parseExcelFile } from '../utils/excelParser';
 import { datasetService } from '../services/datasetService';
-import { Notification } from './Notification/Notification';
 import { Dataset } from '../types/datasetVersions';
 import { DatasetVersions } from './DatasetVersions/DatasetVersions';
 import styles from './CsvUploader.module.css';
@@ -21,20 +19,21 @@ interface FileData {
 interface CsvUploaderProps {
   onFileUploadAction: (filesContent: { content: string; fileName: string }[]) => void;
   isLoading: boolean;
+  workspaceId: string;
 }
 
-export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUploaderProps) {
+export default function CsvUploader({ onFileUploadAction, isLoading, workspaceId }: CsvUploaderProps) {
   const [error, setError] = useState<string | null>(null);
   const [uploadedFiles, setUploadedFiles] = useState<FileData[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [notificationMessage, setNotificationMessage] = useState('');
   const [showNotification, setShowNotification] = useState(false);
-  const [currentVersion, setCurrentVersion] = useState<number | undefined>();
-  const [currentDataset, setCurrentDataset] = useState<Dataset | undefined>();
+  const [currentVersions, setCurrentVersions] = useState<number[]>([]);
+  const [currentDatasets, setCurrentDatasets] = useState<Dataset[]>([]);
   const [showVersions, setShowVersions] = useState(false);
   
   // Loading states for animated text
-  const loadingMessages = ["Analysing", "Visualizing", "Crafting", "Preparing assistant","Generating reports"];
+  const loadingMessages = ["Analysing", "Visualizing", "Crafting", "Preparing assistant"];
   const [currentLoadingMessage, setCurrentLoadingMessage] = useState(0);
   const [isMessageChanging, setIsMessageChanging] = useState(false);
 
@@ -51,57 +50,79 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
     }, 2500); // Change message every 2.5 seconds
     
     return () => clearInterval(messageInterval);
-  }, [isLoading, loadingMessages.length]);
-
-  const handleConfirmUpload = useCallback(async (): Promise<void> => {
+  }, [isLoading, loadingMessages.length]);  const handleConfirmUpload = useCallback(async () => {
     if (uploadedFiles.length > 0) {
       try {
-        const results = await Promise.all(uploadedFiles.map(async file => {
-          const uploadResult = await datasetService.uploadDataset(
-            file.content,
-            file.file.name,
-            file.type,
-            'current-user-id' // In a real app, get this from auth context
-          );
+        // Use batch upload for better performance with multiple files
+        const filesForUpload = uploadedFiles.map(file => ({
+          content: file.content,
+          fileName: file.file.name,
+          type: file.type
+        }));        const uploadResults = await datasetService.uploadMultipleDatasets(
+          filesForUpload,
+          'current-user-id', // In a real app, get this from auth context
+          workspaceId
+        );
 
-          return {
-            content: file.content,
-            fileName: file.file.name,
-            sheets: file.type === 'excel' ? JSON.parse(file.content).sheets : undefined,
-            uploadResult
-          };
+        // Prepare results in the expected format
+        const results = uploadedFiles.map((file, index) => ({
+          content: file.content,
+          fileName: file.file.name,
+          sheets: file.type === 'excel' ? JSON.parse(file.content).sheets : undefined,
+          uploadResult: uploadResults[index]
         }));
 
-        // Show notification for the last uploaded file
-        const lastResult = results[results.length - 1].uploadResult;
-        setCurrentDataset(lastResult.dataset);
-        setCurrentVersion(lastResult.version);
-        setNotificationMessage(
-          `Data ${lastResult.isNewDataset ? 'uploaded' : 'updated'} successfully${lastResult.version ? ` – Version ${lastResult.version} added` : ''}`
-        );
+        // Collect all datasets and versions
+        const allDatasets = results.map(result => result.uploadResult.dataset);
+        const allVersions = results.map(result => result.uploadResult.version);
+        
+        // Update state with all datasets
+        setCurrentDatasets(allDatasets);
+        setCurrentVersions(allVersions);
+        
+        // Show notification for multiple files
+        const newDatasets = results.filter(r => r.uploadResult.isNewDataset).length;
+        const updatedDatasets = results.filter(r => !r.uploadResult.isNewDataset).length;
+        
+        let message = '';
+        if (newDatasets > 0 && updatedDatasets > 0) {
+          message = `${newDatasets} new dataset(s) created, ${updatedDatasets} dataset(s) updated`;
+        } else if (newDatasets > 0) {
+          message = `${newDatasets} new dataset(s) created successfully`;
+        } else {
+          message = `${updatedDatasets} dataset(s) updated successfully`;
+        }
+        
+        if (results.length > 1) {
+          message += ` – ${results.length} files processed`;
+        } else {
+          message += ` – Version ${allVersions[0]} added`;
+        }
+        
+        setNotificationMessage(message);
         setShowNotification(true);
 
         // Prepare files for the existing onFileUploadAction
-        const filesForUpload = results.map(result => ({
+        const filesForAction = results.map(result => ({
           content: result.content,
           fileName: result.fileName,
           sheets: result.sheets
         }));
 
         setShowPreview(false);
-        await onFileUploadAction(filesForUpload);
+        onFileUploadAction(filesForAction);
         setUploadedFiles([]);
 
-        // Auto-hide notification after 3 seconds
+        // Auto-hide notification after 5 seconds for multiple files
         setTimeout(() => {
           setShowNotification(false);
-        }, 3000);
+        }, 5000);
       } catch (error) {
         console.error('Error uploading files:', error);
         setError('Failed to upload files. Please try again.');
       }
     }
-  }, [uploadedFiles, onFileUploadAction]);
+  }, [uploadedFiles, onFileUploadAction, workspaceId]);
 
   const handleCancelUpload = useCallback(() => {
     setShowPreview(false);
@@ -204,6 +225,7 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
     event.preventDefault();
     event.stopPropagation();
   };
+
   const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
     event.preventDefault();
     event.stopPropagation();
@@ -212,23 +234,18 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
       onDrop(Array.from(event.dataTransfer.files));
     }
   };
-
   return (
-    <div className={styles.uploaderContainer}>
-      {showPreview && uploadedFiles.length > 0 && (
+    <div className={styles.uploaderContainer}>      {showPreview && uploadedFiles.length > 0 && (
         <CsvPreviewModal
           files={uploadedFiles}
           onConfirmAction={handleConfirmUpload}
           onCancelAction={handleCancelUpload}
         />
       )}
-
       <motion.div
-        className={`${styles.dropzone} ${isDragActive ? styles.active : ''} ${
-          isLoading ? styles.loading : ''
-        }`}
+        className={`${styles.dropzone} ${isDragActive ? styles.active : ''} ${isLoading ? styles.loading : ''}`}
         {...getRootProps({
-          onClick: undefined,
+          onClick: undefined, // We'll handle click separately to avoid conflicts
         })}
         onClick={!isLoading ? getRootProps().onClick : undefined}
         onDragOver={handleDragOver}
@@ -246,17 +263,20 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
               className={styles.loadingIndicator}
-            >
+            >              <div className={styles.spinner}></div>
               <div className={styles.loadingMessageContainer}>
-                <motion.p
-                  key={currentLoadingMessage}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  className={styles.loadingMessage}
-                >
-                  {loadingMessages[currentLoadingMessage]}
-                </motion.p>
+                <AnimatePresence mode="wait">
+                  <motion.p
+                    key={currentLoadingMessage}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.5 }}
+                    className={styles.loadingMessage}
+                  >
+                    {loadingMessages[currentLoadingMessage]}...
+                  </motion.p>
+                </AnimatePresence>
               </div>
             </motion.div>
           ) : (
@@ -280,18 +300,15 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
                   strokeWidth={2}
                   d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
                 />
-              </svg>
-              {uploadedFiles.length > 0 ? (
-                <div className={styles.filesList}>
-                  <p className={styles.uploadedFilesTitle}>
+              </svg>              {uploadedFiles.length > 0 ? (
+                <div className={styles.filesList}>                  <p className={styles.uploadedFilesTitle}>
                     {uploadedFiles.length} {uploadedFiles.length === 1 ? 'file' : 'files'} ready
                     <span className={styles.fileTypesInfo}>
                       ({uploadedFiles.filter(f => f.type === 'csv').length} CSV, {uploadedFiles.filter(f => f.type === 'excel').length} Excel)
                     </span>
-                  </p>
-                  <ul className={styles.fileNamesList}>
+                  </p>                  <ul className={styles.fileNamesList}>
                     {uploadedFiles.slice(0, 3).map((file, index) => (
-                      <li key={index} className={styles.fileNameItem}>
+                      <li key={`${file.file.name}-${file.file.size}-${index}`} className={styles.fileNameItem}>
                         <span className={styles.fileName}>{file.file.name}</span>
                         <button 
                           onClick={(e) => {
@@ -313,8 +330,7 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
                   </ul>
                   <p className={styles.dragMoreText}>Drag more files or click to browse</p>
                 </div>
-              ) : (
-                <>
+              ) : (                <>
                   <p className={styles.mainText}>
                     {isDragActive ? 'Drop your files here' : 'Drag & drop your CSV or Excel files here'}
                   </p>
@@ -324,9 +340,7 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
             </motion.div>
           )}
         </AnimatePresence>
-      </motion.div>
-
-      {error && (
+      </motion.div>      {error && (
         <motion.div
           className={styles.error}
           initial={{ opacity: 0, y: -10 }}
@@ -334,30 +348,19 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
         >
           {error}
         </motion.div>
-      )}
-
-      {uploadedFiles.length > 0 && (
-        <motion.div
+      )}      {uploadedFiles.length > 0 && (
+        <motion.div 
           className={styles.generateButtonContainer}
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
         >
-          <button
+          <button 
             className={styles.generateButton}
             onClick={() => setShowPreview(true)}
             disabled={isLoading}
           >
             Preview & Generate Insights
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={styles.generateIcon}
-            >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={styles.generateIcon}>
               <path d="M5 12h14"></path>
               <path d="M12 5l7 7-7 7"></path>
             </svg>
@@ -365,52 +368,74 @@ export default function CsvUploader({ onFileUploadAction, isLoading }: CsvUpload
         </motion.div>
       )}
 
-      {currentDataset && (
+      {/* Dataset Versions Control */}
+      {currentDatasets.length > 0 && (
         <motion.div
           initial={{ opacity: 0, y: 5 }}
           animate={{ opacity: 1, y: 0 }}
           className={styles.showVersionsButton}
         >
           <button onClick={() => setShowVersions(!showVersions)}>
-            {showVersions ? 'Hide Versions' : 'Show Versions'}
+            {showVersions ? 'Hide Versions' : `Show Versions (${currentDatasets.length} dataset${currentDatasets.length > 1 ? 's' : ''})`}
           </button>
         </motion.div>
       )}
 
-      {currentDataset && showVersions && (
+      {/* Multiple Dataset Versions */}
+      {currentDatasets.length > 0 && showVersions && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           className={styles.versionsContainer}
         >
-          <DatasetVersions 
-            dataset={currentDataset} 
-            onVersionDelete={(success, updatedDataset) => {
-              if (success && updatedDataset) {
-                setCurrentDataset(updatedDataset);
-                setCurrentVersion(updatedDataset.currentVersion);
-                setNotificationMessage("Version deleted successfully");
-                setShowNotification(true);
-                setTimeout(() => {
-                  setShowNotification(false);
-                }, 3000);
-              } else {
-                setError("Cannot delete the last version of a dataset");
-                setTimeout(() => {
-                  setError(null);
-                }, 3000);
-              }
-            }}
-          />
+          {currentDatasets.map((dataset, index) => (
+            <div key={dataset.id} className={styles.datasetVersionsWrapper}>
+              <h4 className={styles.datasetTitle}>
+                {dataset.name} 
+                <span className={styles.datasetInfo}>
+                  ({dataset.versions.length} version{dataset.versions.length > 1 ? 's' : ''})
+                </span>
+              </h4>              <DatasetVersions 
+                dataset={dataset}
+                workspaceId={workspaceId}
+                onVersionDelete={(success, updatedDataset) => {
+                  if (success && updatedDataset) {
+                    // Update the specific dataset in the array
+                    setCurrentDatasets(prev => 
+                      prev.map(d => d.id === updatedDataset.id ? updatedDataset : d)
+                    );
+                    setNotificationMessage("Version deleted successfully");
+                    setShowNotification(true);
+                    setTimeout(() => {
+                      setShowNotification(false);
+                    }, 3000);
+                  } else {
+                    setError("Cannot delete the last version of a dataset");
+                    setTimeout(() => {
+                      setError(null);
+                    }, 3000);
+                  }
+                }}
+              />
+            </div>
+          ))}
         </motion.div>
       )}
 
-      <Notification
-        message={notificationMessage}
-        version={currentVersion}
-        isVisible={showNotification}
-        type="success"
-      />
+      {/* Notification */}
+      {showNotification && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+          className={styles.notification}
+        >
+          <div className={styles.notificationContent}>
+            <span className={styles.notificationIcon}>✓</span>
+            <span className={styles.notificationMessage}>{notificationMessage}</span>
+          </div>
+        </motion.div>
+      )}
     </div>
   );
 }

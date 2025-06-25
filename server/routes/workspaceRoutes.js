@@ -10,7 +10,12 @@ const {
   getInsights,
   logReportGeneration,
   getReport,
-  saveReport
+  saveReport,
+  uploadDataset,
+  getDatasets,
+  getDataset,
+  deleteDatasetVersion,
+  getDatasetVersions
 } = require('../controllers/workspaceController');
 
 const router = express.Router();
@@ -38,5 +43,19 @@ router.route('/:id/report/:reportId')
 
 router.route('/:id/report')
   .post(logReportGeneration);
+
+// Dataset routes
+router.route('/:id/datasets')
+  .post(uploadDataset)
+  .get(getDatasets);
+
+router.route('/:id/dataset-versions')
+  .get(getDatasetVersions);
+
+router.route('/:id/datasets/:datasetId')
+  .get(getDataset);
+
+router.route('/:id/datasets/:datasetId/versions/:versionId')
+  .delete(deleteDatasetVersion);
 
 module.exports = router;

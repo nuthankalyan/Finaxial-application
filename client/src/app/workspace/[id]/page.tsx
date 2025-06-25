@@ -22,6 +22,7 @@ import InsightCards, { InsightCardData } from '../../components/InsightCards';
 import { logReportGeneration } from '../../services/activityService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
+import { DatasetVersion } from '../../types/datasetVersions';
 
 interface Workspace {
   _id: string;
@@ -266,6 +267,11 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     sender: 'assistant',
     timestamp: new Date()
   }]);
+
+  // Add new state for version history
+  const [showVersionHistory, setShowVersionHistory] = useState(false);
+  const [datasetVersions, setDatasetVersions] = useState<DatasetVersion[]>([]);
+  const [loadingVersions, setLoadingVersions] = useState(false);
   
   // Simple helper function to format chat messages for display
   const formatChatMessage = (text: string): React.ReactNode => {
@@ -1150,6 +1156,75 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     );
   };
 
+  // Function to fetch dataset versions
+  const fetchDatasetVersions = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      router.push('/login');
+      return;
+    }
+
+    setLoadingVersions(true);
+    try {
+      const response = await fetch(buildApiUrl(`api/workspaces/${id}/dataset-versions`), {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch dataset versions');
+      }
+
+      const data = await response.json();
+      setDatasetVersions(data.data || []);
+    } catch (err: any) {
+      console.error('Error fetching dataset versions:', err);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to load dataset versions'
+      });
+    } finally {
+      setLoadingVersions(false);
+    }
+  };
+
+  // Function to open version history modal
+  const handleVersionHistory = async () => {
+    setShowVersionHistory(true);
+    await fetchDatasetVersions();
+  };
+
+  // Function to format file size
+  const formatFileSize = (bytes: number): string => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Function to get file type icon
+  const getFileTypeIcon = (fileName: string): string => {
+    if (!fileName) {
+      return '📁';
+    }
+    const extension = fileName.split('.').pop()?.toLowerCase();
+    switch (extension) {
+      case 'csv':
+        return '📄';
+      case 'xlsx':
+      case 'xls':
+        return '📊';
+      case 'json':
+        return '📋';
+      default:
+        return '📁';
+    }
+  };
+  
   if (loading) {
     return (
       <div className={styles.container}>
@@ -1187,8 +1262,31 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <h2 className={styles.sidebarTitle}>History</h2>
+            <div className={styles.sidebarHeader}>
+              <h2 className={styles.sidebarTitle}>History</h2>
+            </div>
             <div className={styles.previousInsights}>
+              <button 
+                className={styles.versionHistoryButton}
+                onClick={handleVersionHistory}
+                title="View Dataset Version History"
+              >
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                  className={styles.versionIcon}
+                >
+                  <path d="M3 3v5h5"></path>
+                  <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
+                  <path d="M12 7v5l4 2"></path>
+                </svg>
+                Version History
+              </button>
               <h3>Previously generated insights</h3>
               {savedInsights.length > 0 ? (
                 <div className={styles.insightsList}>
@@ -1278,11 +1376,11 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
               <div className={styles.disclaimerBox}>
                 Disclaimer: This product can be leveraged to different business needs and doesn't limit to financial industry only
               </div>
-              
-              <div id="csv-uploader" className={styles.uploaderContainer}>
+                <div id="csv-uploader" className={styles.uploaderContainer}>
                 <CsvUploader 
                   onFileUploadAction={handleFileUpload} 
                   isLoading={analyzing}
+                  workspaceId={id}
                 />
               </div>
             </motion.div>
@@ -2146,6 +2244,230 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     <polyline points="22,6 12,13 2,6"></polyline>
                   </svg>
                   Send via Email
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      
+      {/* Version History Modal */}
+      <AnimatePresence>
+        {showVersionHistory && (
+          <motion.div 
+            className={styles.modalOverlay}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowVersionHistory(false)}
+          >
+            <motion.div 
+              className={styles.versionHistoryModal}
+              initial={{ opacity: 0, y: 20, scale: 0.95 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.95 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className={styles.versionModalHeader}>
+                <div className={styles.versionModalTitle}>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className={styles.versionModalIcon}
+                  >
+                    <path d="M3 3v5h5"></path>
+                    <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8"></path>
+                    <path d="M12 7v5l4 2"></path>
+                  </svg>
+                  <h3>Dataset Version History</h3>
+                </div>
+                <button 
+                  className={styles.versionModalClose}
+                  onClick={() => setShowVersionHistory(false)}
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+              
+              <div className={styles.versionModalContent}>
+                {loadingVersions ? (
+                  <div className={styles.versionLoading}>
+                    <div className={styles.spinner}></div>
+                    <p>Loading version history...</p>
+                  </div>
+                ) : datasetVersions.length > 0 ? (
+                  <div className={styles.versionTableContainer}>
+                    <table className={styles.versionTable}>
+                      <thead>
+                        <tr>
+                          <th>Version</th>
+                          <th>File Name</th>
+                          <th>Data Info</th>
+                          <th>Changes</th>
+                          <th>Type</th>
+                          <th>Created</th>
+                          <th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {datasetVersions.map((version) => (
+                          <tr key={version._id} className={styles.versionRow}>
+                            <td>
+                              <span className={styles.versionBadge}>
+                                v{version.version}
+                              </span>
+                            </td>
+                            <td>
+                              <div className={styles.fileNameCell}>
+                                <span className={styles.fileName}>
+                                  {version.fileName || version.originalFileName || 'Unknown file'}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.dataInfo}>
+                                {version.metadata && (
+                                  <>
+                                    {version.metadata.rowCount && (
+                                      <span>{version.metadata.rowCount.toLocaleString()} rows</span>
+                                    )}
+                                    {version.metadata.columnCount && (
+                                      <span>{version.metadata.columnCount} columns</span>
+                                    )}
+                                    {version.metadata.sheets && version.metadata.sheets.length > 0 && (
+                                      <span>{version.metadata.sheets.length} sheets</span>
+                                    )}
+                                  </>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.changesCell}>
+                                {version.changeMetadata ? (
+                                  <div className={styles.changeDetails}>
+                                    {version.changeMetadata.addedRows > 0 && (
+                                      <span className={styles.changeChip + ' ' + styles.added}>
+                                        +{version.changeMetadata.addedRows} rows
+                                      </span>
+                                    )}
+                                    {version.changeMetadata.modifiedRows > 0 && (
+                                      <span className={styles.changeChip + ' ' + styles.modified}>
+                                        ~{version.changeMetadata.modifiedRows} rows
+                                      </span>
+                                    )}
+                                    {version.changeMetadata.removedRows > 0 && (
+                                      <span className={styles.changeChip + ' ' + styles.removed}>
+                                        -{version.changeMetadata.removedRows} rows
+                                      </span>
+                                    )}
+                                    {version.changeMetadata.addedColumns && version.changeMetadata.addedColumns.length > 0 && (
+                                      <div className={styles.columnChanges}>
+                                        Added columns: {version.changeMetadata.addedColumns.join(', ')}
+                                      </div>
+                                    )}
+                                    {version.changeMetadata.removedColumns && version.changeMetadata.removedColumns.length > 0 && (
+                                      <div className={styles.columnChanges}>
+                                        Removed columns: {version.changeMetadata.removedColumns.join(', ')}
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  <span className={styles.initialVersion}>Initial Version</span>
+                                )}
+                              </div>
+                            </td>
+                            <td>
+                              <span className={styles.typeChip}>
+                                {(version.type || 'CSV').toUpperCase()}
+                              </span>
+                            </td>
+                            <td>
+                              <div className={styles.dateCell}>
+                                <span className={styles.dateText}>
+                                  {new Date(version.createdAt || version.uploadedAt).toLocaleDateString('en-US', {
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })}
+                                </span>
+                                <span className={styles.timeText}>
+                                  {new Date(version.createdAt || version.uploadedAt).toLocaleTimeString('en-US', {
+                                    hour: '2-digit',
+                                    minute: '2-digit'
+                                  })}
+                                </span>
+                              </div>
+                            </td>
+                            <td>
+                              <div className={styles.actionsCell}>
+                                <button 
+                                  className={styles.actionButton + ' ' + styles.deleteButton}
+                                  title="Delete version"
+                                  disabled={datasetVersions.length <= 1}
+                                >
+                                  <svg 
+                                    xmlns="http://www.w3.org/2000/svg" 
+                                    width="16" 
+                                    height="16" 
+                                    viewBox="0 0 24 24" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    strokeWidth="2" 
+                                    strokeLinecap="round" 
+                                    strokeLinejoin="round"
+                                  >
+                                    <path d="M3 6h18"></path>
+                                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"></path>
+                                    <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                                  </svg>
+                                </button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className={styles.versionEmpty}>
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                      className={styles.emptyIcon}
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14,2 14,8 20,8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10,9 9,9 8,9"></polyline>
+                    </svg>
+                    <h4>No Version History</h4>
+                    <p>No dataset versions found for this workspace. Upload some files to start tracking version history.</p>
+                  </div>
+                )}
+              </div>
+              
+              <div className={styles.versionModalFooter}>
+                <button 
+                  className={styles.versionModalButton}
+                  onClick={() => setShowVersionHistory(false)}
+                >
+                  Close
                 </button>
               </div>
             </motion.div>

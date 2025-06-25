@@ -1,5 +1,51 @@
 const mongoose = require('mongoose');
 
+// Change metadata schema for dataset versions
+const ChangeMetadataSchema = new mongoose.Schema({
+  addedRows: { type: Number, default: 0 },
+  removedRows: { type: Number, default: 0 },
+  modifiedRows: { type: Number, default: 0 },
+  addedColumns: [String],
+  removedColumns: [String],
+  modifiedColumns: [String],
+  changeDescription: String
+});
+
+// Dataset metadata schema
+const DatasetMetadataSchema = new mongoose.Schema({
+  columnCount: { type: Number, required: true },
+  rowCount: { type: Number, required: true },
+  headers: [String],
+  sheets: [String],
+  dataTypes: mongoose.Schema.Types.Mixed
+});
+
+// Dataset version schema
+const DatasetVersionSchema = new mongoose.Schema({
+  id: { type: String, required: true },
+  version: { type: Number, required: true },
+  fileName: { type: String, required: true },
+  createdAt: { type: Date, default: Date.now },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  content: { type: String, required: true },
+  type: { type: String, enum: ['csv', 'excel'], required: true },
+  metadata: { type: DatasetMetadataSchema, required: true },
+  changeMetadata: ChangeMetadataSchema,
+  parentVersionId: String
+});
+
+// Dataset schema
+const DatasetSchema = new mongoose.Schema({
+  id: { type: String, required: true, unique: true },
+  name: { type: String, required: true },
+  currentVersion: { type: Number, default: 1 },
+  versions: [DatasetVersionSchema],
+  createdAt: { type: Date, default: Date.now },
+  updatedAt: { type: Date, default: Date.now },
+  userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  description: String
+});
+
 // Report schema to store report data
 const ReportSchema = new mongoose.Schema({
   name: {
@@ -84,6 +130,7 @@ const WorkspaceSchema = new mongoose.Schema({
   }],
   financialInsights: [InsightSchema],
   reports: [ReportSchema],  // Add reports field to store report data
+  datasets: [DatasetSchema], // Add datasets field to store dataset versions
   createdAt: {
     type: Date,
     default: Date.now
