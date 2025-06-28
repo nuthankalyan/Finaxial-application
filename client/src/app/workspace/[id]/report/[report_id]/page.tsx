@@ -10,6 +10,8 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TableRow, TableColumn } from '@/app/types/tables';
 import type { SummaryTable } from '@/app/types/csv';
+import { generateSummaryTables, generateMultiFileSummaryTables, type ReportData } from '@/app/services/summaryTableService';
+import { buildApiUrl } from '../../../../utils/apiConfig';
 
 interface ReportPageProps {
   params: {
@@ -25,110 +27,193 @@ interface TabItem {
   tableRefs: string[];
 }
 
+interface WorkspaceData {
+  _id: string;
+  name: string;
+  datasets?: Array<{
+    id: string;
+    name: string;
+    versions: Array<{
+      id: string;
+      content: string;
+      fileName: string;
+      type: 'csv' | 'excel';
+      createdAt: string;
+    }>;
+  }>;
+}
+
 const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<string>('cashflow');
-  const [summaryTables, setSummaryTables] = useState<SummaryTable[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('overview');
+  const [reportData, setReportData] = useState<ReportData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
   const [reportName, setReportName] = useState<string>('Financial Report');
   const [reportDate, setReportDate] = useState<Date>(new Date());
+  const [workspaceData, setWorkspaceData] = useState<WorkspaceData | null>(null);
 
-  // Load sample data on mount
+  // Load data on mount
   useEffect(() => {
-    setIsLoading(true);
-    generateSampleData();
-    setIsLoading(false);
-  }, []);
+    const loadReportData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        // Check authentication
+        const token = localStorage.getItem('token');
+        if (!token) {
+          router.push('/login');
+          return;
+        }
 
-  // Function to generate sample data
-  const generateSampleData = () => {
-    // Sample Cash Flow table
-    const cashFlowTable: SummaryTable = {
-      id: 'cashflow',
-      title: 'Cash Flow Statement',
-      description: 'Summary of cash inflows and outflows for the period',
-      columns: [
-        { header: 'Category', accessor: 'category' },
-        { header: 'Amount (₹)', accessor: 'amount', isNumeric: true, isCurrency: true }
-      ],
-      data: [
-        { category: 'Cash Flow from Operating Activities', amount: 547830000 },
-        { category: 'Cash Flow from Investing Activities', amount: -170710000 },
-        { category: 'Cash Flow from Financing Activities', amount: -147420000 },
-        { category: 'Net Change in Cash and Cash Equivalents', amount: 229700000, isTotal: true },
-      ]
+        // Fetch workspace data to get datasets
+        const response = await fetch(buildApiUrl(`api/workspaces/${params.id}`), {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch workspace data');
+        }
+
+        const { data: workspace } = await response.json();
+        setWorkspaceData(workspace);
+        setReportName(`${workspace.name} - Financial Report`);
+
+        // Check if workspace has datasets with data
+        if (!workspace.datasets || workspace.datasets.length === 0) {
+          setError('No datasets found in this workspace. Please upload financial data first.');
+          return;
+        }
+
+        // Get the latest version of each dataset
+        const latestDatasets = workspace.datasets.map((dataset: any) => {
+          const latestVersion = dataset.versions[dataset.versions.length - 1];
+          return {
+            content: latestVersion.content,
+            fileName: latestVersion.fileName,
+            type: latestVersion.type
+          };
+        });
+
+        // Process CSV content (for Excel files, extract primary sheet)
+        const csvFiles = latestDatasets.map((dataset: any) => {
+          let content = dataset.content;
+          
+          // If it's Excel data (stored as JSON), extract CSV content
+          if (dataset.type === 'excel') {
+            try {
+              const excelData = JSON.parse(content);
+              // Convert the primary sheet to CSV format
+              const primarySheetData = excelData.sheets[excelData.primarySheet];
+              const headers = primarySheetData.headers;
+              const rows = primarySheetData.rows;
+              
+              content = [headers.join(','), ...rows.map((row: any[]) => row.join(','))].join('\n');
+            } catch (e) {
+              console.warn('Failed to parse Excel data, using raw content');
+            }
+          }
+          
+          return {
+            content,
+            fileName: dataset.fileName
+          };
+        });
+
+        // Generate summary tables using Gemini AI
+        let reportData: ReportData;
+        
+        if (csvFiles.length === 1) {
+          reportData = await generateSummaryTables(csvFiles[0].content, csvFiles[0].fileName);
+        } else {
+          reportData = await generateMultiFileSummaryTables(csvFiles);
+        }
+        
+        setReportData(reportData);
+        
+        // Set the first available tab as active if not already set to overview
+        if (activeTab !== 'overview' && reportData.tables.length > 0) {
+          setActiveTab('overview');
+        }
+
+        // Optional: Save the generated report data to the server for future access
+        try {
+          const token = localStorage.getItem('token');
+          await fetch(buildApiUrl(`api/workspaces/${params.id}/report/${params.report_id}`), {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              data: {
+                reportData,
+                generatedAt: new Date().toISOString(),
+                workspaceName: workspace.name
+              }
+            })
+          });
+        } catch (saveError) {
+          console.warn('Failed to save report data:', saveError);
+          // Don't throw error as this is optional
+        }
+
+      } catch (err: any) {
+        console.error('Error loading report data:', err);
+        setError(err.message || 'Failed to load report data');
+      } finally {
+        setIsLoading(false);
+      }
     };
+
+    loadReportData();
+  }, [params.id, params.report_id, router]);
+
+  // Define sidebar tabs based on available summary tables
+  const tabs: TabItem[] = [
+    {
+      id: 'overview',
+      title: 'Overview',
+      icon: (
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 3v11.25A2.25 2.25 0 006 16.5h2.25M3.75 3h-1.5m1.5 0h16.5m0 0h1.5m-1.5 0v11.25A2.25 2.25 0 0118 16.5h-2.25m-7.5 0h7.5m-7.5 0l-1.5 1.5m7.5-1.5l1.5 1.5m-7.5 0V21m7.5 0V21" />
+        </svg>
+      ),
+      tableRefs: []
+    }
+  ];
+
+  // Add dynamic tabs based on available tables
+  if (reportData?.tables) {
+    reportData.tables.forEach((table, index) => {
+      tabs.push({
+        id: table.id,
+        title: table.title,
+        icon: (
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 0A2.25 2.25 0 015.625 3.375h13.5A2.25 2.25 0 0121.375 5.625m0 0v12.75m-9.75-1.125h7.5c.621 0 1.125-.504 1.125-1.125M12 7.5h8.25m-8.25 0a2.25 2.25 0 00-2.25 2.25V12m0 0v2.25a2.25 2.25 0 002.25 2.25M12 7.5V12m8.25-4.5V12m0 0v2.25a2.25 2.25 0 01-2.25 2.25H12m8.25-4.5a2.25 2.25 0 00-2.25-2.25H12m0 0V7.5" />
+          </svg>
+        ),
+        tableRefs: [table.id]
+      });
+    });
+  }
+
+  // Function to filter tables based on active tab
+  const getVisibleTables = (): SummaryTable[] => {
+    if (activeTab === 'overview') {
+      return reportData?.tables || [];
+    }
     
-    // Sample Profit & Loss table
-    const profitLossTable: SummaryTable = {
-      id: 'profit-loss',
-      title: 'Profit & Loss Statement',
-      description: 'Summary of revenue, expenses and profit for the period',
-      columns: [
-        { header: 'Category', accessor: 'category' },
-        { header: 'Amount (₹)', accessor: 'amount', isNumeric: true, isCurrency: true }
-      ],
-      data: [
-        { category: 'Revenue from Operations', amount: 541620000 },
-        { category: 'Other Income', amount: 51720000 },
-        { category: 'Total Revenue', amount: 593340000, isSubTotal: true },
-        { category: 'Cost of Materials Consumed', amount: -112640000 },
-        { category: 'Employee Benefits Expense', amount: -116050000 },
-        { category: 'Other Expenses', amount: -140270000 },
-        { category: 'Total Expenses', amount: -368960000, isSubTotal: true },
-        { category: 'Profit Before Tax', amount: 224380000 },
-        { category: 'Tax Expense', amount: -53350000 },
-        { category: 'Net Profit After Tax', amount: 171030000, isTotal: true },
-      ]
-    };
+    const activeTabItem = tabs.find(tab => tab.id === activeTab);
+    if (!activeTabItem || !reportData?.tables) return [];
     
-    // Sample Balance Sheet table
-    const balanceSheetTable: SummaryTable = {
-      id: 'balance-sheet',
-      title: 'Balance Sheet',
-      description: 'Summary of assets, liabilities and equity',
-      columns: [
-        { header: 'Category', accessor: 'category' },
-        { header: 'Amount (₹)', accessor: 'amount', isNumeric: true, isCurrency: true }
-      ],
-      data: [
-        { category: 'ASSETS', amount: null, isHeader: true },
-        { category: 'Non-current Assets', amount: 270360000 },
-        { category: 'Current Assets', amount: 1072700000 },
-        { category: 'Total Assets', amount: 1343060000, isSubTotal: true },
-        { category: 'LIABILITIES', amount: null, isHeader: true },
-        { category: 'Non-current Liabilities', amount: 7000000 },
-        { category: 'Current Liabilities', amount: 244410000 },
-        { category: 'Total Liabilities', amount: 251410000, isSubTotal: true },
-        { category: 'EQUITY', amount: null, isHeader: true },
-        { category: 'Share Capital', amount: 306540000 },
-        { category: 'Other Equity', amount: 785110000 },
-        { category: 'Total Equity', amount: 1091650000, isSubTotal: true },
-        { category: 'Total Liabilities and Equity', amount: 1343060000, isTotal: true },
-      ]
-    };
-    
-    // Sample Key Ratios table
-    const keyRatiosTable: SummaryTable = {
-      id: 'key-ratios',
-      title: 'Key Financial Ratios',
-      description: 'Important financial ratios derived from the financial statements',
-      columns: [
-        { header: 'Ratio', accessor: 'ratio' },
-        { header: 'Value', accessor: 'value', isNumeric: true }
-      ],
-      data: [
-        { ratio: 'Current Ratio', value: '4.39' },
-        { ratio: 'Quick Ratio', value: '4.28' },
-        { ratio: 'Debt to Equity', value: '0.23' },
-        { ratio: 'Return on Equity (ROE)', value: '15.67%' },
-        { ratio: 'Return on Assets (ROA)', value: '12.73%' },
-        { ratio: 'Profit Margin', value: '31.58%' },
-        { ratio: 'EBITDA Margin', value: '43.66%' },
-      ]
-    };
-    
-    setSummaryTables([cashFlowTable, profitLossTable, balanceSheetTable, keyRatiosTable]);
+    return reportData.tables.filter(table => 
+      activeTabItem.tableRefs.includes(table.id)
+    );
   };
   
   // Function to format currency numbers
@@ -169,64 +254,10 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
     if (row.isHeader) return styles.total;
     return '';
   };
-  
-  // Define sidebar tabs based on available summary tables
-  const tabs: TabItem[] = [
-    {
-      id: 'cashflow',
-      title: 'Cash Flow',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      ),
-      tableRefs: ['cashflow']
-    },
-    {
-      id: 'profit-loss',
-      title: 'Profit & Loss',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 14.25l6-6m4.5-3.493V21.75l-3.75-1.5-3.75 1.5-3.75-1.5-3.75 1.5V4.757c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0c1.1.128 1.907 1.077 1.907 2.185zM9.75 9h.008v.008H9.75V9zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm4.125 4.5h.008v.008h-.008V13.5zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-        </svg>
-      ),
-      tableRefs: ['profit-loss']
-    },
-    {
-      id: 'balance-sheet',
-      title: 'Balance Sheet',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
-        </svg>
-      ),
-      tableRefs: ['balance-sheet']
-    },
-    {
-      id: 'key-ratios',
-      title: 'Key Ratios',
-      icon: (
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
-          <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 6a7.5 7.5 0 107.5 7.5h-7.5V6z" />
-          <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0013.5 3v7.5z" />
-        </svg>
-      ),
-      tableRefs: ['key-ratios']
-    }
-  ];
-
-  // Function to filter tables based on active tab
-  const getVisibleTables = (): SummaryTable[] => {
-    const activeTabItem = tabs.find(tab => tab.id === activeTab);
-    if (!activeTabItem) return summaryTables;
-    
-    return summaryTables.filter(table => 
-      activeTabItem.tableRefs.includes(table.id)
-    );
-  };
-
   // Function to export the report as PDF
   const exportToPdf = () => {
+    if (!reportData) return;
+    
     const doc = new jsPDF();
     
     // Add title
@@ -239,8 +270,20 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
     
     let yPos = 40;
     
+    // Add executive summary if available
+    if (reportData.summary) {
+      doc.setFontSize(16);
+      doc.text('Executive Summary', 20, yPos);
+      yPos += 10;
+      
+      doc.setFontSize(10);
+      const summaryLines = doc.splitTextToSize(reportData.summary, 170);
+      doc.text(summaryLines, 20, yPos);
+      yPos += summaryLines.length * 5 + 10;
+    }
+    
     // Add each table
-    summaryTables.forEach(table => {
+    reportData.tables.forEach(table => {
       // Check if we need to add a new page
       if (yPos > 230) {
         doc.addPage();
@@ -363,52 +406,136 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
           {isLoading ? (
             <div className={styles.loadingContainer}>
               <div className={styles.loadingSpinner}></div>
-              <p>Loading report data...</p>
+              <p>Generating financial report...</p>
             </div>
-          ) : (
-            /* Summary tables */
-            <div className={styles.summaryTables}>
-              {getVisibleTables().map(table => (
-                <div key={table.id} className={styles.tableSection} id={table.id}>
-                  <h3 className={styles.tableHeader}>{table.title}</h3>
-                  <p className={styles.tableDescription}>{table.description}</p>
+          ) : error ? (
+            <div className={styles.errorContainer}>
+              <div className={styles.errorIcon}>⚠️</div>
+              <h3>Unable to Generate Report</h3>
+              <p>{error}</p>
+              <button 
+                className={styles.backButton}
+                onClick={() => router.push(`/workspace/${params.id}`)}
+              >
+                Return to Workspace
+              </button>
+            </div>
+          ) : reportData ? (
+            <>
+              {/* Executive Summary */}
+              {activeTab === 'overview' && (
+                <div className={styles.overviewSection}>
+                  <div className={styles.summaryCard}>
+                    <h3>Executive Summary</h3>
+                    <div className={styles.summaryContent}>
+                      {reportData.summary}
+                    </div>
+                  </div>
                   
-                  <div className={styles.tableWrapper}>
-                    <table className={styles.table}>
-                      <thead>
-                        <tr>
-                          {table.columns.map(column => (
-                            <th key={column.accessor} className={column.isNumeric ? styles.number : ''}>
-                              {column.header}
-                            </th>
-                          ))}
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {table.data.map((row, index) => (
-                          <tr key={index} className={getRowClass(row)}>
-                            {table.columns.map(column => {
-                              const value = row[column.accessor];
-                              return (
-                                <td 
-                                  key={column.accessor}
-                                  className={getCellClass(value, column.isNumeric)}
-                                >
-                                  {column.isNumeric && column.isCurrency && typeof value === 'number'
-                                    ? formatCurrency(value)
-                                    : column.isNumeric
-                                    ? formatNumber(value)
-                                    : value || ''}
-                                </td>
-                              );
-                            })}
-                          </tr>
+                  {/* Key Insights */}
+                  {reportData.insights && reportData.insights.length > 0 && (
+                    <div className={styles.insightsCard}>
+                      <h3>Key Insights</h3>
+                      <ul className={styles.insightsList}>
+                        {reportData.insights.map((insight, index) => (
+                          <li key={index}>{insight}</li>
                         ))}
-                      </tbody>
-                    </table>
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Recommendations */}
+                  {reportData.recommendations && reportData.recommendations.length > 0 && (
+                    <div className={styles.recommendationsCard}>
+                      <h3>Recommendations</h3>
+                      <ul className={styles.recommendationsList}>
+                        {reportData.recommendations.map((recommendation, index) => (
+                          <li key={index}>{recommendation}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  
+                  {/* Summary of All Tables */}
+                  <div className={styles.tablesOverview}>
+                    <h3>Financial Summary Tables</h3>
+                    <div className={styles.tableCards}>
+                      {reportData.tables.map((table) => (
+                        <div 
+                          key={table.id} 
+                          className={styles.tableCard}
+                          onClick={() => setActiveTab(table.id)}
+                        >
+                          <h4>{table.title}</h4>
+                          <p>{table.description}</p>
+                          <span className={styles.tableStats}>
+                            {table.data.length} rows • {table.columns.length} columns
+                          </span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ))}
+              )}
+              
+              {/* Summary tables for specific tabs */}
+              {activeTab !== 'overview' && (
+                <div className={styles.summaryTables}>
+                  {getVisibleTables().map(table => (
+                    <div key={table.id} className={styles.tableSection} id={table.id}>
+                      <h3 className={styles.tableHeader}>{table.title}</h3>
+                      <p className={styles.tableDescription}>{table.description}</p>
+                      
+                      <div className={styles.tableWrapper}>
+                        <table className={styles.table}>
+                          <thead>
+                            <tr>
+                              {table.columns.map(column => (
+                                <th key={column.accessor} className={column.isNumeric ? styles.number : ''}>
+                                  {column.header}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {table.data.map((row, index) => (
+                              <tr key={index} className={getRowClass(row)}>
+                                {table.columns.map(column => {
+                                  const value = row[column.accessor];
+                                  return (
+                                    <td 
+                                      key={column.accessor}
+                                      className={getCellClass(value, column.isNumeric)}
+                                    >
+                                      {column.isNumeric && column.isCurrency && typeof value === 'number'
+                                        ? formatCurrency(value)
+                                        : column.isNumeric
+                                        ? formatNumber(value)
+                                        : value || ''}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </>
+          ) : (
+            <div className={styles.errorContainer}>
+              <div className={styles.errorIcon}>📊</div>
+              <h3>No Report Data Available</h3>
+              <p>Unable to generate financial report from available data.</p>
+              <button 
+                className={styles.backButton}
+                onClick={() => router.push(`/workspace/${params.id}`)}
+              >
+                Return to Workspace
+              </button>
             </div>
           )}
         </div>

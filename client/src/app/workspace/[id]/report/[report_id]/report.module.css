@@ -226,13 +226,179 @@
   background-color: #f9fafb;
 }
 
+/* Error container styles */
+.errorContainer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 400px;
+  text-align: center;
+  padding: 2rem;
+  background: white;
+  border-radius: 12px;
+  margin: 1rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+}
+
+.errorIcon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.errorContainer h3 {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 0.5rem;
+}
+
+.errorContainer p {
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+  max-width: 400px;
+}
+
+/* Overview section styles */
+.overviewSection {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding: 0;
+}
+
+.summaryCard,
+.insightsCard,
+.recommendationsCard {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.summaryCard h3,
+.insightsCard h3,
+.recommendationsCard h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.summaryContent {
+  color: #374151;
+  line-height: 1.6;
+  font-size: 0.95rem;
+}
+
+.insightsList,
+.recommendationsList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.insightsList li,
+.recommendationsList li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f3f4f6;
+  color: #374151;
+  line-height: 1.5;
+  position: relative;
+  padding-left: 1.5rem;
+}
+
+.insightsList li:before {
+  content: "💡";
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+}
+
+.recommendationsList li:before {
+  content: "🎯";
+  position: absolute;
+  left: 0;
+  top: 0.75rem;
+}
+
+.insightsList li:last-child,
+.recommendationsList li:last-child {
+  border-bottom: none;
+}
+
+/* Tables overview section */
+.tablesOverview {
+  background: white;
+  border-radius: 12px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  border: 1px solid #e5e7eb;
+}
+
+.tablesOverview h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.tableCards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.tableCard {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.tableCard:hover {
+  background: #f3f4f6;
+  border-color: #4f46e5;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.tableCard h4 {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #111827;
+  margin-bottom: 0.5rem;
+}
+
+.tableCard p {
+  color: #6b7280;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  margin-bottom: 0.75rem;
+}
+
+.tableStats {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  font-weight: 500;
+}
+
 /* Loading state */
 .loadingContainer {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: 4rem 0;
+  min-height: 400px;
+  text-align: center;
+  padding: 2rem;
 }
 
 .loadingSpinner {
@@ -243,6 +409,13 @@
   border-top-color: #4f46e5;
   animation: spin 1s ease-in-out infinite;
   margin-bottom: 1.5rem;
+}
+
+.loadingContainer p {
+  color: #6b7280;
+  font-size: 1rem;
+  margin-top: 1rem;
+  font-weight: 500;
 }
 
 @keyframes spin {
