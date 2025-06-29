@@ -223,7 +223,7 @@ function generatePlaceholderMetrics() {
 export const generateChartData = async (csvContent: string): Promise<ChartData[]> => {
   try {
     // Initialize the Gemini API client
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_2;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     
     if (!apiKey) {
       throw new Error('Gemini API key is not configured');
@@ -908,7 +908,7 @@ export const generateMultipleFilesChartData = async (files: FileInfo[]): Promise
     }
     
     // Initialize the Gemini API client
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_2;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     
     if (!apiKey) {
       throw new Error('Gemini API key is not configured');
