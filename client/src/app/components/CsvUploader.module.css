@@ -305,6 +305,12 @@
 }
 
 /* Update show versions button for multiple datasets */
+.showVersionsButton {
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
 .showVersionsButton button {
   display: inline-flex;
   align-items: center;
@@ -313,8 +319,8 @@
   font-size: 0.875rem;
   font-weight: 500;
   color: #2563eb;
-  background-color: rgba(37, 99, 235, 0.05);
-  border: 1px solid rgba(37, 99, 235, 0.1);
+  background-color: white;
+  border: none;
   border-radius: 0.375rem;
   cursor: pointer;
   transition: all 0.2s ease;

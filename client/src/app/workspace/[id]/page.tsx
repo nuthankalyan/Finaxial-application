@@ -1302,32 +1302,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         <h4>{insight.fileName}</h4>
                         <p>{formatDate(insight.createdAt)}</p>
                       </div>
-                      {insight.charts && Array.isArray(insight.charts) && insight.charts.length > 0 && (
-                        <button 
-                          className={styles.viewVisualizations}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openInsightDetails(insight);
-                            setDetailsTab('visualizations');
-                          }}
-                          title="View Visualizations"
-                        >
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            viewBox="0 0 24 24" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round"
-                            className={styles.visualizationIcon}
-                          >
-                            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                            <line x1="3" y1="9" x2="21" y2="9"></line>
-                            <line x1="9" y1="21" x2="9" y2="9"></line>
-                          </svg>
-                        </button>
-                      )}
+                      
                     </motion.div>
                   ))}
                 </div>
