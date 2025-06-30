@@ -22,16 +22,43 @@ export const generateSummaryTables = async (csvContent: string, fileName?: strin
       throw new Error('Gemini API key is not configured');
     }
 
+    // Log the data being processed to ensure only visible columns are included
+    console.log('[SummaryTableService] Processing single file:', {
+      fileName,
+      contentLength: csvContent.length,
+      firstLine: csvContent.split('\n')[0], // Show headers
+      lineCount: csvContent.split('\n').length
+    });
+
+    // Validate that we have meaningful data
+    const lines = csvContent.trim().split('\n');
+    if (lines.length < 2) {
+      throw new Error('Insufficient data: File must contain headers and at least one data row');
+    }
+
+    const headers = lines[0].split(',').map(h => h.trim());
+    
+    // Check if we have any visible columns
+    if (headers.length === 0 || headers.every(h => h.trim() === '')) {
+      throw new Error('No visible columns found: Please ensure at least one column is visible before generating reports');
+    }
+    
+    console.log('[SummaryTableService] Processing headers (visible columns only):', headers);
+
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
     const prompt = `
 You are a financial analyst. Analyze the following CSV data and generate comprehensive financial summary tables suitable for a professional financial report.
 
+IMPORTANT: This CSV data has already been filtered to include only the columns that the user wants to analyze. Do not include any columns that are not present in this data. Only use the visible columns provided.
+
 CSV DATA:
 ${csvContent}
 
 ${fileName ? `FILE NAME: ${fileName}` : ''}
+
+COLUMN HEADERS AVAILABLE: ${headers.join(', ')}
 
 Please generate a structured financial report with the following components:
 
@@ -140,6 +167,19 @@ RECOMMENDATIONS:
           
           // Validate and sanitize table data
           tables = tables.map(table => sanitizeTable(table));
+          
+          // Ensure tables only use visible columns from the source data
+          tables = validateTablesUseVisibleColumns(tables, headers);
+          
+          console.log('[SummaryTableService] Generated tables with visible columns only:', {
+            tableCount: tables.length,
+            tables: tables.map(table => ({
+              id: table.id,
+              title: table.title,
+              columnCount: table.columns.length,
+              columns: table.columns.map(col => col.header)
+            }))
+          });
         }
       } catch (error) {
         console.error('Error parsing tables JSON:', error);
@@ -189,16 +229,54 @@ export const generateMultiFileSummaryTables = async (files: { content: string; f
       throw new Error('Gemini API key is not configured');
     }
 
+    // Log the files being processed to ensure only visible columns are included
+    console.log('[SummaryTableService] Processing multiple files:', {
+      fileCount: files.length,
+      files: files.map(file => {
+        const lines = file.content.trim().split('\n');
+        const headers = lines.length > 0 ? lines[0].split(',').map(h => h.trim()) : [];
+        return {
+          fileName: file.fileName,
+          contentLength: file.content.length,
+          headers,
+          lineCount: lines.length
+        };
+      })
+    });
+
+    // Validate all files have meaningful data
+    files.forEach((file, index) => {
+      const lines = file.content.trim().split('\n');
+      if (lines.length < 2) {
+        throw new Error(`Insufficient data in file ${index + 1} (${file.fileName}): File must contain headers and at least one data row`);
+      }
+      
+      const headers = lines[0].split(',').map(h => h.trim());
+      if (headers.length === 0 || headers.every(h => h.trim() === '')) {
+        throw new Error(`No visible columns found in file ${index + 1} (${file.fileName}): Please ensure at least one column is visible before generating reports`);
+      }
+    });
+
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
-    // Prepare file contents
-    const filesContent = files.map((file, index) => 
-      `FILE ${index + 1}: ${file.fileName}\n${file.content}\n\n`
-    ).join('');
+    // Prepare file contents with column information
+    const filesContent = files.map((file, index) => {
+      const lines = file.content.trim().split('\n');
+      const headers = lines.length > 0 ? lines[0].split(',').map(h => h.trim()) : [];
+      
+      return `FILE ${index + 1}: ${file.fileName}
+COLUMNS AVAILABLE: ${headers.join(', ')}
+DATA:
+${file.content}
+
+`;
+    }).join('');
 
     const prompt = `
 You are a financial analyst. Analyze the following multiple CSV files and generate comprehensive financial summary tables that consolidate and compare data across all files.
+
+IMPORTANT: Each CSV file has already been filtered to include only the columns that the user wants to analyze for that specific file. Do not include any columns that are not present in the provided data. Only use the visible columns from each file as specified in the "COLUMNS AVAILABLE" section for each file.
 
 ${filesContent}
 
@@ -279,6 +357,33 @@ RECOMMENDATIONS:
           const sanitizedJson = sanitizeJsonString(jsonMatch[0]);
           tables = JSON.parse(sanitizedJson);
           tables = tables.map(table => sanitizeTable(table));
+          
+          // Get all available headers from all files for validation
+          const allAvailableHeaders = files.reduce((headers: string[], file) => {
+            const lines = file.content.trim().split('\n');
+            if (lines.length > 0) {
+              const fileHeaders = lines[0].split(',').map(h => h.trim());
+              return [...headers, ...fileHeaders];
+            }
+            return headers;
+          }, []);
+          
+          // Remove duplicates
+          const uniqueHeaders = [...new Set(allAvailableHeaders)];
+          
+          // Ensure tables only use visible columns from the source files
+          tables = validateTablesUseVisibleColumns(tables, uniqueHeaders);
+          
+          console.log('[SummaryTableService] Generated multi-file tables with visible columns only:', {
+            tableCount: tables.length,
+            availableHeaders: uniqueHeaders,
+            tables: tables.map(table => ({
+              id: table.id,
+              title: table.title,
+              columnCount: table.columns.length,
+              columns: table.columns.map(col => col.header)
+            }))
+          });
         }
       } catch (error) {
         console.error('Error parsing multi-file tables JSON:', error);
@@ -314,6 +419,51 @@ RECOMMENDATIONS:
     throw new Error(`Failed to generate multi-file financial summary: ${error.message}`);
   }
 };
+
+// Helper function to validate that generated tables only use available columns
+function validateTablesUseVisibleColumns(tables: SummaryTable[], availableHeaders: string[]): SummaryTable[] {
+  return tables.map(table => {
+    // Filter columns to only include those that exist in the source data
+    const validColumns = table.columns.filter(col => {
+      const headerExists = availableHeaders.some(header => 
+        header.toLowerCase().replace(/[^a-z0-9]/g, '') === 
+        col.header.toLowerCase().replace(/[^a-z0-9]/g, '')
+      );
+      
+      if (!headerExists) {
+        console.warn(`[SummaryTableService] Filtering out column "${col.header}" as it's not in available headers:`, availableHeaders);
+      }
+      
+      return headerExists;
+    });
+
+    // Filter data to only include valid column accessors
+    const validAccessors = new Set(validColumns.map(col => col.accessor));
+    const validData = table.data.map(row => {
+      const filteredRow: any = {};
+      
+      // Keep special properties
+      if (row.isTotal) filteredRow.isTotal = true;
+      if (row.isSubTotal) filteredRow.isSubTotal = true;
+      if (row.isHeader) filteredRow.isHeader = true;
+      
+      // Only keep data for valid columns
+      Object.keys(row).forEach(key => {
+        if (validAccessors.has(key) || ['isTotal', 'isSubTotal', 'isHeader'].includes(key)) {
+          filteredRow[key] = row[key];
+        }
+      });
+      
+      return filteredRow;
+    });
+
+    return {
+      ...table,
+      columns: validColumns,
+      data: validData
+    };
+  }).filter(table => table.columns.length > 0); // Remove tables with no valid columns
+}
 
 // Helper function to sanitize JSON string
 function sanitizeJsonString(jsonString: string): string {

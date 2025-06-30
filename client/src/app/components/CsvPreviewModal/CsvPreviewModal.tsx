@@ -42,20 +42,45 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   const [selectedSheetIndex, setSelectedSheetIndex] = useState(0);
   const [showSchemaVisualization, setShowSchemaVisualization] = useState(false);
   const [showHiddenColumnsMenu, setShowHiddenColumnsMenu] = useState(false);
-  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(new Set());
+  const [hiddenColumnsByFileSheet, setHiddenColumnsByFileSheet] = useState<Map<string, Set<string>>>(new Map());
   const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
   const [zoomLevel, setZoomLevel] = useState(1);
 
-  // Toggle column visibility
+  // Get unique key for current file/sheet combination
+  const getCurrentFileSheetKey = (): string => {
+    const currentFile = files[activeTabIndex];
+    if (!currentFile) return 'default';
+    
+    if (currentFile.type === 'excel') {
+      const sheet = parsedFiles[activeTabIndex]?.sheets?.[selectedSheetIndex];
+      return `${activeTabIndex}-${selectedSheetIndex}-${sheet?.name || 'default'}`;
+    }
+    
+    return `${activeTabIndex}-${currentFile.file.name}`;
+  };
+
+  // Get hidden columns for current file/sheet
+  const getCurrentHiddenColumns = (): Set<string> => {
+    const key = getCurrentFileSheetKey();
+    return hiddenColumnsByFileSheet.get(key) || new Set();
+  };
+
+  // Toggle column visibility for current file/sheet
   const toggleColumnVisibility = (header: string): void => {
-    setHiddenColumns(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(header)) {
-        newSet.delete(header);
+    const key = getCurrentFileSheetKey();
+    setHiddenColumnsByFileSheet(prev => {
+      const newMap = new Map(prev);
+      const currentHidden = newMap.get(key) || new Set();
+      const newHidden = new Set(currentHidden);
+      
+      if (newHidden.has(header)) {
+        newHidden.delete(header);
       } else {
-        newSet.add(header);
+        newHidden.add(header);
       }
-      return newSet;
+      
+      newMap.set(key, newHidden);
+      return newMap;
     });
     setShowHiddenColumnsMenu(false);
   };
@@ -85,6 +110,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
 
   // Function to get visible row data
   const getVisibleRowData = (row: string[], headers: string[]): string[] => {
+    const hiddenColumns = getCurrentHiddenColumns();
     return row.filter((_, index) => !hiddenColumns.has(headers[index]));
   };
 
@@ -144,6 +170,11 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     }
   }, [activeTabIndex, parsedFiles, selectedSheetIndex]);
 
+  // Reset hidden columns menu when switching files/sheets
+  useEffect(() => {
+    setShowHiddenColumnsMenu(false);
+  }, [activeTabIndex, selectedSheetIndex]);
+
   // Process data and handle upload
   const handleUpload = async (e: React.MouseEvent<HTMLButtonElement>): Promise<void> => {
     e.preventDefault();
@@ -151,12 +182,9 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     
     if (isLoading) return;
     
-    setIsLoading(true);
-    try {
-      await onConfirmAction();
-    } finally {
-      setIsLoading(false);
-    }
+    // Call handleConfirmAction instead of onConfirmAction directly
+    // This ensures hidden columns are processed before upload
+    await handleConfirmAction();
   };
   
   // Handle modal close
@@ -179,10 +207,12 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
       setIsLoading(false);
       setShowHiddenColumnsMenu(false);
       setShowSchemaVisualization(false);
+      setHiddenColumnsByFileSheet(new Map());
     };
   }, []);
 
   const data = getActiveData();
+  const hiddenColumns = getCurrentHiddenColumns();
   const hiddenColumnsCount = data?.headers.filter(h => hiddenColumns.has(h)).length || 0;
 
   // Handle cancel/close
@@ -198,16 +228,40 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     
     setIsLoading(true);
     try {
+      console.log('Processing files with hidden columns:', {
+        hiddenColumnsByFileSheet: Object.fromEntries(hiddenColumnsByFileSheet),
+        activeTabIndex,
+        selectedSheetIndex
+      });
+      
       // Process files before confirming
       const processedFiles = parsedFiles.map((file, index) => {
+        console.log(`Processing file ${index} (${files[index].file.name}):`, {
+          type: files[index].type,
+          hasSheets: !!file.sheets,
+          sheetsCount: file.sheets?.length || 0
+        });
+        
         if (files[index].type === 'excel' && file.sheets) {
-          const processedSheets = file.sheets.map(sheet => ({
-            name: sheet.name,
-            headers: sheet.headers.filter(header => !hiddenColumns.has(header)),
-            rows: sheet.rows.map(row => 
-              row.filter((_, colIndex) => !hiddenColumns.has(sheet.headers[colIndex]))
-            )
-          }));
+          const processedSheets = file.sheets.map((sheet, sheetIndex) => {
+            const sheetKey = `${index}-${sheetIndex}-${sheet.name || 'default'}`;
+            const sheetHiddenColumns = hiddenColumnsByFileSheet.get(sheetKey) || new Set();
+            
+            console.log(`Processing sheet ${sheetIndex} (${sheet.name}):`, {
+              sheetKey,
+              originalHeaders: sheet.headers,
+              hiddenColumns: Array.from(sheetHiddenColumns),
+              visibleHeaders: sheet.headers.filter(header => !sheetHiddenColumns.has(header))
+            });
+            
+            return {
+              name: sheet.name,
+              headers: sheet.headers.filter(header => !sheetHiddenColumns.has(header)),
+              rows: sheet.rows.map(row => 
+                row.filter((_, colIndex) => !sheetHiddenColumns.has(sheet.headers[colIndex]))
+              )
+            };
+          });
 
           const primarySheetName = processedSheets[0]?.name || '';
           const sheetsObject: Record<string, { headers: string[]; rows: string[][] }> = {};
@@ -231,9 +285,20 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
             sheets: processedSheets
           };
         } else {
-          const visibleHeaders = file.headers.filter(header => !hiddenColumns.has(header));
+          // For CSV files, get the file-specific hidden columns
+          const csvKey = `${index}-${files[index].file.name}`;
+          const csvHiddenColumns = hiddenColumnsByFileSheet.get(csvKey) || new Set();
+          
+          console.log(`Processing CSV file ${index}:`, {
+            csvKey,
+            originalHeaders: file.headers,
+            hiddenColumns: Array.from(csvHiddenColumns),
+            visibleHeaders: file.headers.filter(header => !csvHiddenColumns.has(header))
+          });
+          
+          const visibleHeaders = file.headers.filter(header => !csvHiddenColumns.has(header));
           const visibleRows = file.rows.map(row => 
-            row.filter((_, colIndex) => !hiddenColumns.has(file.headers[colIndex]))
+            row.filter((_, colIndex) => !csvHiddenColumns.has(file.headers[colIndex]))
           );
 
           // Update original file content
@@ -248,6 +313,19 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
           };
         }
       });
+
+      console.log('Final processed files:', processedFiles.map((file, index) => ({
+        fileIndex: index,
+        fileName: files[index].file.name,
+        type: files[index].type,
+        headers: file.headers,
+        rowCount: file.rows?.length || 0,
+        sheets: file.sheets?.map(sheet => ({
+          name: sheet.name,
+          headers: sheet.headers,
+          rowCount: sheet.rows.length
+        }))
+      })));
 
       setParsedFiles(processedFiles);
       await onConfirmAction();
@@ -322,7 +400,8 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
             </svg>
             <span>
               You can hide/show columns using the eye icon in each column header. 
-              {hiddenColumnsCount > 0 && ` Currently ${hiddenColumnsCount} column${hiddenColumnsCount > 1 ? 's are' : ' is'} hidden.`}
+              Hidden columns are specific to each file and sheet.
+              {hiddenColumnsCount > 0 && ` Currently ${hiddenColumnsCount} column${hiddenColumnsCount > 1 ? 's are' : ' is'} hidden in this view.`}
             </span>
           </div>
 
@@ -447,6 +526,63 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 <div className={styles.noData}>No data available</div>
               )}
               <LoadingOverlay isVisible={isLoading} />
+            </div>
+          </div>
+
+          {/* Column Summary for Reports */}
+          <div className={styles.columnSummary}>
+            <div className={styles.summaryHeader}>
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                stroke="currentColor"
+                strokeWidth="2"
+                fill="none"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={styles.summaryIcon}
+              >
+                <path d="M9 11l3 3 8-8"></path>
+                <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.66 0 3.22.45 4.56 1.24"></path>
+              </svg>
+              <span className={styles.summaryTitle}>Report Generation Summary</span>
+            </div>
+            <div className={styles.summaryContent}>
+              {(() => {
+                const visibleHeaders = data?.headers.filter(header => !hiddenColumns.has(header)) || [];
+                const totalColumns = data?.headers.length || 0;
+                const visibleColumns = visibleHeaders.length;
+                
+                return (
+                  <div className={styles.summaryStats}>
+                    <div className={styles.statItem}>
+                      <span className={styles.statLabel}>Columns to include in reports:</span>
+                      <span className={styles.statValue}>
+                        {visibleColumns} of {totalColumns}
+                        {hiddenColumnsCount > 0 && (
+                          <span className={styles.hiddenNote}>
+                            ({hiddenColumnsCount} hidden)
+                          </span>
+                        )}
+                      </span>
+                    </div>
+                    {visibleColumns > 0 && (
+                      <div className={styles.columnsList}>
+                        <span className={styles.columnsLabel}>Included columns:</span>
+                        <span className={styles.columnsValues}>
+                          {visibleHeaders.slice(0, 3).join(', ')}
+                          {visibleHeaders.length > 3 && (
+                            <span className={styles.moreColumns}>
+                              {' '}and {visibleHeaders.length - 3} more
+                            </span>
+                          )}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
             </div>
           </div>
 
