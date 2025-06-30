@@ -102,12 +102,6 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
         const csvFiles = latestDatasets.map((dataset: any) => {
           let content = dataset.content;
           
-          console.log(`[Report Generation] Processing dataset: ${dataset.fileName}`, {
-            type: dataset.type,
-            hasContent: !!content,
-            contentLength: content?.length || 0
-          });
-          
           // If it's Excel data (stored as JSON), extract CSV content
           if (dataset.type === 'excel') {
             try {
@@ -117,29 +111,9 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
               const headers = primarySheetData.headers;
               const rows = primarySheetData.rows;
               
-              console.log(`[Report Generation] Excel file ${dataset.fileName}:`, {
-                primarySheet: excelData.primarySheet,
-                headers,
-                rowCount: rows.length,
-                columnCount: headers.length
-              });
-              
               content = [headers.join(','), ...rows.map((row: any[]) => row.join(','))].join('\n');
             } catch (e) {
               console.warn('Failed to parse Excel data, using raw content');
-            }
-          } else {
-            // For CSV files, extract headers for debugging
-            try {
-              const lines = content.split('\n');
-              const headers = lines[0]?.split(',') || [];
-              console.log(`[Report Generation] CSV file ${dataset.fileName}:`, {
-                headers,
-                rowCount: lines.length - 1,
-                columnCount: headers.length
-              });
-            } catch (e) {
-              console.warn('Failed to parse CSV headers for debugging');
             }
           }
           
@@ -150,14 +124,6 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
         });
 
         // Generate summary tables using Gemini AI
-        console.log(`[Report Generation] Generating reports for ${csvFiles.length} file(s):`, 
-          csvFiles.map((file: any) => ({
-            fileName: file.fileName,
-            contentPreview: file.content.substring(0, 200) + '...',
-            firstLineHeaders: file.content.split('\n')[0]
-          }))
-        );
-        
         let reportData: ReportData;
         
         if (csvFiles.length === 1) {
@@ -165,17 +131,6 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
         } else {
           reportData = await generateMultiFileSummaryTables(csvFiles);
         }
-        
-        console.log('[Report Generation] Generated report data:', {
-          tablesCount: reportData.tables?.length || 0,
-          tables: reportData.tables?.map((table: any) => ({
-            id: table.id,
-            title: table.title,
-            description: table.description,
-            columnCount: table.columns?.length || 0,
-            rowCount: table.data?.length || 0
-          }))
-        });
         
         setReportData(reportData);
         

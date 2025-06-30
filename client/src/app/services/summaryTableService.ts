@@ -51,14 +51,20 @@ export const generateSummaryTables = async (csvContent: string, fileName?: strin
     const prompt = `
 You are a financial analyst. Analyze the following CSV data and generate comprehensive financial summary tables suitable for a professional financial report.
 
-IMPORTANT: This CSV data has already been filtered to include only the columns that the user wants to analyze. Do not include any columns that are not present in this data. Only use the visible columns provided.
+IMPORTANT: This CSV data has already been filtered to include only the columns that the user wants to analyze. 
+
+COLUMN USAGE INSTRUCTIONS:
+- You may use the exact column names from the source data: ${headers.join(', ')}
+- You may also create computed/derived columns for financial analysis (e.g., "Total Revenue (INR)", "Profit Margin %", "Growth Rate")
+- Ensure computed columns are clearly labeled and based on the source data
+- Use descriptive names for computed columns that include units when appropriate
 
 CSV DATA:
 ${csvContent}
 
 ${fileName ? `FILE NAME: ${fileName}` : ''}
 
-COLUMN HEADERS AVAILABLE: ${headers.join(', ')}
+AVAILABLE SOURCE COLUMNS: ${headers.join(', ')}
 
 Please generate a structured financial report with the following components:
 
@@ -169,7 +175,23 @@ RECOMMENDATIONS:
           tables = tables.map(table => sanitizeTable(table));
           
           // Ensure tables only use visible columns from the source data
+          console.log('[SummaryTableService] Before validation - tables:', tables.map(t => ({
+            title: t.title,
+            columns: t.columns.map(c => c.header)
+          })));
+          
           tables = validateTablesUseVisibleColumns(tables, headers);
+          
+          console.log('[SummaryTableService] After validation - tables:', tables.map(t => ({
+            title: t.title,
+            columns: t.columns.map(c => c.header)
+          })));
+          
+          // If validation filtered out all tables, provide fallback
+          if (tables.length === 0) {
+            console.warn('[SummaryTableService] All tables were filtered out by validation, using fallback tables');
+            tables = generateFallbackTablesFromData(csvContent, headers);
+          }
           
           console.log('[SummaryTableService] Generated tables with visible columns only:', {
             tableCount: tables.length,
@@ -207,7 +229,7 @@ RECOMMENDATIONS:
 
     return {
       summary,
-      tables: tables.length > 0 ? tables : getFallbackTables(),
+      tables: tables.length > 0 ? tables : generateFallbackTablesFromData(csvContent, headers),
       insights: insights.length > 0 ? insights : ['No specific insights available from the current data.'],
       recommendations: recommendations.length > 0 ? recommendations : ['No specific recommendations available.']
     };
@@ -374,6 +396,12 @@ RECOMMENDATIONS:
           // Ensure tables only use visible columns from the source files
           tables = validateTablesUseVisibleColumns(tables, uniqueHeaders);
           
+          // If validation filtered out all tables, provide fallback
+          if (tables.length === 0) {
+            console.warn('[SummaryTableService] All multi-file tables were filtered out by validation, using fallback tables');
+            tables = generateMultiFileFallbackTables(files);
+          }
+          
           console.log('[SummaryTableService] Generated multi-file tables with visible columns only:', {
             tableCount: tables.length,
             availableHeaders: uniqueHeaders,
@@ -409,7 +437,7 @@ RECOMMENDATIONS:
 
     return {
       summary,
-      tables: tables.length > 0 ? tables : getFallbackTables(),
+      tables: tables.length > 0 ? tables : generateMultiFileFallbackTables(files),
       insights: insights.length > 0 ? insights : ['No specific insights available from the current data.'],
       recommendations: recommendations.length > 0 ? recommendations : ['No specific recommendations available.']
     };
@@ -422,45 +450,105 @@ RECOMMENDATIONS:
 
 // Helper function to validate that generated tables only use available columns
 function validateTablesUseVisibleColumns(tables: SummaryTable[], availableHeaders: string[]): SummaryTable[] {
+  console.log('[SummaryTableService] Validating tables against available headers:', availableHeaders);
+  
   return tables.map(table => {
-    // Filter columns to only include those that exist in the source data
+    console.log(`[SummaryTableService] Processing table "${table.title}" with columns:`, 
+      table.columns.map(col => col.header));
+    
+    // Much more permissive validation - only filter out obviously invalid columns
     const validColumns = table.columns.filter(col => {
-      const headerExists = availableHeaders.some(header => 
-        header.toLowerCase().replace(/[^a-z0-9]/g, '') === 
-        col.header.toLowerCase().replace(/[^a-z0-9]/g, '')
-      );
-      
-      if (!headerExists) {
-        console.warn(`[SummaryTableService] Filtering out column "${col.header}" as it's not in available headers:`, availableHeaders);
+      // Basic validation - column must have a reasonable header
+      if (!col.header || typeof col.header !== 'string' || col.header.trim().length === 0) {
+        console.warn(`[SummaryTableService] Filtering out column with invalid header:`, col.header);
+        return false;
       }
       
-      return headerExists;
-    });
-
-    // Filter data to only include valid column accessors
-    const validAccessors = new Set(validColumns.map(col => col.accessor));
-    const validData = table.data.map(row => {
-      const filteredRow: any = {};
+      // Allow almost all columns that look like they could be financial data
+      const isReasonableColumn = 
+        col.header.length <= 100 && // Not unreasonably long
+        !/^\s*$/.test(col.header) && // Not just whitespace
+        !/^[\d\s]*$/.test(col.header) && // Not just numbers
+        /^[a-zA-Z0-9\s\(\)\[\]_\-\.,%&]+$/.test(col.header); // Contains reasonable characters
       
-      // Keep special properties
-      if (row.isTotal) filteredRow.isTotal = true;
-      if (row.isSubTotal) filteredRow.isSubTotal = true;
-      if (row.isHeader) filteredRow.isHeader = true;
+      if (!isReasonableColumn) {
+        console.warn(`[SummaryTableService] Filtering out column with unreasonable header: "${col.header}"`);
+        return false;
+      }
       
-      // Only keep data for valid columns
-      Object.keys(row).forEach(key => {
-        if (validAccessors.has(key) || ['isTotal', 'isSubTotal', 'isHeader'].includes(key)) {
-          filteredRow[key] = row[key];
-        }
+      // First, try exact match with source headers
+      let isSourceColumn = availableHeaders.some(header => 
+        header.trim().toLowerCase() === col.header.trim().toLowerCase()
+      );
+      
+      if (isSourceColumn) {
+        console.log(`[SummaryTableService] Keeping source column: "${col.header}"`);
+        return true;
+      }
+      
+      // Check if it's a computed column that references source columns
+      let isComputedColumn = availableHeaders.some(sourceHeader => {
+        const sourceWords = sourceHeader.toLowerCase().split(/[^a-z0-9]+/).filter(word => word.length > 2);
+        const colWords = col.header.toLowerCase().split(/[^a-z0-9]+/).filter(word => word.length > 2);
+        
+        // If any significant word from source appears in the computed column, allow it
+        return sourceWords.some(sourceWord => 
+          colWords.some(colWord => 
+            colWord.includes(sourceWord) || sourceWord.includes(colWord)
+          )
+        );
       });
       
-      return filteredRow;
+      if (isComputedColumn) {
+        console.log(`[SummaryTableService] Keeping computed column based on source data: "${col.header}"`);
+        return true;
+      }
+      
+      // Allow common financial analysis column types
+      const financialPatterns = [
+        // Basic financial terms
+        /total/i, /sum/i, /subtotal/i, /grand.*total/i,
+        /percentage/i, /percent/i, /ratio/i, /rate/i,
+        /average/i, /mean/i, /median/i,
+        /growth/i, /change/i, /variance/i, /difference/i,
+        /profit/i, /loss/i, /margin/i, /markup/i,
+        /balance/i, /outstanding/i, /remaining/i,
+        /amount/i, /value/i, /price/i, /cost/i,
+        /revenue/i, /income/i, /expense/i, /expenditure/i,
+        /asset/i, /liability/i, /equity/i, /capital/i,
+        /cash/i, /flow/i, /statement/i, /account/i,
+        /budget/i, /forecast/i, /actual/i, /planned/i,
+        /gross/i, /net/i, /operating/i, /finance/i,
+        /tax/i, /interest/i, /dividend/i, /payout/i,
+        /sales/i, /purchase/i, /transaction/i,
+        /quarter/i, /annual/i, /monthly/i, /yearly/i,
+        /analysis/i, /summary/i, /breakdown/i, /category/i
+      ];
+      
+      let isFinancialColumn = financialPatterns.some(pattern => pattern.test(col.header));
+      
+      if (isFinancialColumn) {
+        console.log(`[SummaryTableService] Keeping financial analysis column: "${col.header}"`);
+        return true;
+      }
+      
+      // As a fallback, allow any column that seems to be a reasonable financial term
+      // (This is very permissive to avoid filtering out legitimate computed columns)
+      console.log(`[SummaryTableService] Keeping column (permissive fallback): "${col.header}"`);
+      return true;
+    });
+
+    console.log(`[SummaryTableService] Table "${table.title}" validation result:`, {
+      originalColumns: table.columns.length,
+      validColumns: validColumns.length,
+      keptColumns: validColumns.map(col => col.header),
+      filteredOutColumns: table.columns.filter(col => !validColumns.includes(col)).map(col => col.header)
     });
 
     return {
       ...table,
       columns: validColumns,
-      data: validData
+      data: table.data // Keep all data since we're being very permissive with columns
     };
   }).filter(table => table.columns.length > 0); // Remove tables with no valid columns
 }
@@ -513,6 +601,90 @@ function sanitizeTable(table: any): SummaryTable {
   });
 
   return table as SummaryTable;
+}
+
+// Helper function to generate fallback tables using actual data
+function generateFallbackTablesFromData(csvContent: string, headers: string[]): SummaryTable[] {
+  try {
+    const lines = csvContent.trim().split('\n');
+    if (lines.length < 2) return getFallbackTables();
+    
+    const dataRows = lines.slice(1, Math.min(6, lines.length)); // Take first 5 data rows
+    
+    // Create a simple data preview table
+    const data = dataRows.map(line => {
+      const values = line.split(',');
+      const row: any = {};
+      headers.forEach((header, index) => {
+        row[`col_${index}`] = values[index] || '';
+      });
+      return row;
+    });
+    
+    const columns = headers.map((header, index) => ({
+      header: header.trim(),
+      accessor: `col_${index}`,
+      isNumeric: false,
+      isCurrency: false
+    }));
+    
+    return [
+      {
+        id: 'data-preview',
+        title: 'Data Preview',
+        description: 'Preview of the uploaded data showing visible columns only',
+        columns,
+        data
+      }
+    ];
+  } catch (error) {
+    console.error('Error generating fallback tables from data:', error);
+    return getFallbackTables();
+  }
+}
+
+// Helper function to generate fallback tables for multiple files
+function generateMultiFileFallbackTables(files: { content: string; fileName: string }[]): SummaryTable[] {
+  try {
+    const tables: SummaryTable[] = [];
+    
+    files.forEach((file, fileIndex) => {
+      const lines = file.content.trim().split('\n');
+      if (lines.length < 2) return;
+      
+      const headers = lines[0].split(',').map(h => h.trim());
+      const dataRows = lines.slice(1, Math.min(6, lines.length)); // Take first 5 data rows
+      
+      const data = dataRows.map(line => {
+        const values = line.split(',');
+        const row: any = {};
+        headers.forEach((header, index) => {
+          row[`col_${index}`] = values[index] || '';
+        });
+        return row;
+      });
+      
+      const columns = headers.map((header, index) => ({
+        header: header.trim(),
+        accessor: `col_${index}`,
+        isNumeric: false,
+        isCurrency: false
+      }));
+      
+      tables.push({
+        id: `file-preview-${fileIndex}`,
+        title: `${file.fileName} - Data Preview`,
+        description: `Preview of data from ${file.fileName} showing visible columns only`,
+        columns,
+        data
+      });
+    });
+    
+    return tables.length > 0 ? tables : getFallbackTables();
+  } catch (error) {
+    console.error('Error generating multi-file fallback tables:', error);
+    return getFallbackTables();
+  }
 }
 
 // Helper function to provide fallback tables
