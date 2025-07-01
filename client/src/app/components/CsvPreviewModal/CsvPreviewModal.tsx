@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, WheelEvent } from 'react';
+import React, { useState, useEffect, WheelEvent, useMemo } from 'react';
 import { parseCsvPreview } from '../../utils/csvParser';
 import { motion, AnimatePresence } from 'framer-motion';
 import { SchemaPreviewModalWrapper } from '../SchemaPreviewModal/SchemaPreviewModalWrapper';
@@ -128,20 +128,12 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     const parsed = files.map((file) => {
       if (file.type === 'excel') {
         const excelData = JSON.parse(file.content);
-        console.log('Excel data parsed:', { 
-          fileName: file.file.name, 
-          primarySheet: excelData.primarySheet, 
-          sheetsKeys: Object.keys(excelData.sheets || {}),
-          sheets: excelData.sheets 
-        });
         
         const sheets = Object.entries(excelData.sheets).map(([name, data]: [string, any]) => ({
           name,
           headers: data.headers,
           rows: data.rows
         }));
-        
-        console.log('Processed sheets:', sheets);
         
         return {
           headers: excelData.sheets[excelData.primarySheet].headers,
@@ -152,7 +144,6 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
         return parseCsvPreview(file.content);
       }
     });
-    console.log('All parsed files:', parsed);
     setParsedFiles(parsed);
   }, [files]);
 
@@ -228,31 +219,13 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     
     setIsLoading(true);
     try {
-      console.log('Processing files with hidden columns:', {
-        hiddenColumnsByFileSheet: Object.fromEntries(hiddenColumnsByFileSheet),
-        activeTabIndex,
-        selectedSheetIndex
-      });
-      
       // Process files before confirming
       const processedFiles = parsedFiles.map((file, index) => {
-        console.log(`Processing file ${index} (${files[index].file.name}):`, {
-          type: files[index].type,
-          hasSheets: !!file.sheets,
-          sheetsCount: file.sheets?.length || 0
-        });
         
         if (files[index].type === 'excel' && file.sheets) {
           const processedSheets = file.sheets.map((sheet, sheetIndex) => {
             const sheetKey = `${index}-${sheetIndex}-${sheet.name || 'default'}`;
             const sheetHiddenColumns = hiddenColumnsByFileSheet.get(sheetKey) || new Set();
-            
-            console.log(`Processing sheet ${sheetIndex} (${sheet.name}):`, {
-              sheetKey,
-              originalHeaders: sheet.headers,
-              hiddenColumns: Array.from(sheetHiddenColumns),
-              visibleHeaders: sheet.headers.filter(header => !sheetHiddenColumns.has(header))
-            });
             
             return {
               name: sheet.name,
@@ -289,13 +262,6 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
           const csvKey = `${index}-${files[index].file.name}`;
           const csvHiddenColumns = hiddenColumnsByFileSheet.get(csvKey) || new Set();
           
-          console.log(`Processing CSV file ${index}:`, {
-            csvKey,
-            originalHeaders: file.headers,
-            hiddenColumns: Array.from(csvHiddenColumns),
-            visibleHeaders: file.headers.filter(header => !csvHiddenColumns.has(header))
-          });
-          
           const visibleHeaders = file.headers.filter(header => !csvHiddenColumns.has(header));
           const visibleRows = file.rows.map(row => 
             row.filter((_, colIndex) => !csvHiddenColumns.has(file.headers[colIndex]))
@@ -314,19 +280,6 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
         }
       });
 
-      console.log('Final processed files:', processedFiles.map((file, index) => ({
-        fileIndex: index,
-        fileName: files[index].file.name,
-        type: files[index].type,
-        headers: file.headers,
-        rowCount: file.rows?.length || 0,
-        sheets: file.sheets?.map(sheet => ({
-          name: sheet.name,
-          headers: sheet.headers,
-          rowCount: sheet.rows.length
-        }))
-      })));
-
       setParsedFiles(processedFiles);
       await onConfirmAction();
     } catch (error) {
@@ -342,6 +295,85 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
       handleClose(e);
     }
   };
+
+  // Compute schema tables data with hidden columns filtered out
+  const schemaTablesData = useMemo(() => {
+    return (parsedFiles || []).flatMap((file, fileIndex) => {
+      if (!file || !files[fileIndex]) return [];
+
+      if (files[fileIndex].type === 'excel' && file.sheets) {
+        return file.sheets.map((sheet, sheetIndex) => {
+          // Get hidden columns for this specific sheet
+          const sheetKey = `${fileIndex}-${sheetIndex}-${sheet.name || 'default'}`;
+          const sheetHiddenColumns = hiddenColumnsByFileSheet.get(sheetKey) || new Set();
+          
+          // Filter out hidden columns from headers
+          const visibleHeaders = (sheet.headers || []).filter(header => !sheetHiddenColumns.has(header));
+          
+          return {
+            name: `${files[fileIndex].file.name.replace(/\.[^/.]+$/, "")}_${sheet.name || 'unnamed'}`,
+            fields: visibleHeaders.map(header => {
+              if (!header) {
+                return {
+                  name: 'unnamed',
+                  type: 'string',
+                  isPrimary: false,
+                  isForeign: false,
+                  references: undefined
+                };
+              }
+              const headerLower = header.trim().toLowerCase();
+              const headerIndex = sheet.headers.indexOf(header);
+              const values = (sheet.rows || []).map(row => 
+                row ? (row[headerIndex] || '') : ''
+              );
+              return {
+                name: header.trim(),
+                type: inferColumnType(values),
+                isPrimary: headerLower === 'id',
+                isForeign: false,
+                references: undefined
+              };
+            })
+          };
+        });
+      } else {
+        // Get hidden columns for this CSV file
+        const csvKey = `${fileIndex}-${files[fileIndex].file.name}`;
+        const csvHiddenColumns = hiddenColumnsByFileSheet.get(csvKey) || new Set();
+        
+        // Filter out hidden columns from headers
+        const visibleHeaders = (file.headers || []).filter(header => !csvHiddenColumns.has(header));
+        
+        return [{
+          name: files[fileIndex].file.name.replace(/\.[^/.]+$/, ""),
+          fields: visibleHeaders.map(header => {
+            if (!header) {
+              return {
+                name: 'unnamed',
+                type: 'string',
+                isPrimary: false,
+                isForeign: false,
+                references: undefined
+              };
+            }
+            const headerLower = header.trim().toLowerCase();
+            const headerIndex = file.headers.indexOf(header);
+            const values = (file.rows || []).map(row => 
+              row ? (row[headerIndex] || '') : ''
+            );
+            return {
+              name: header.trim(),
+              type: inferColumnType(values),
+              isPrimary: headerLower === 'id',
+              isForeign: false,
+              references: undefined
+            };
+          })
+        }];
+      }
+    });
+  }, [parsedFiles, files, hiddenColumnsByFileSheet]);
 
   return (
     <AnimatePresence>
@@ -432,14 +464,6 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                     const isExcel = files[activeTabIndex]?.type === 'excel';
                     const hasSheets = parsedFiles[activeTabIndex]?.sheets;
                     const sheetsLength = parsedFiles[activeTabIndex]?.sheets?.length || 0;
-                    
-                    console.log('Sheet tabs debug:', {
-                      activeTabIndex,
-                      isExcel,
-                      hasSheets: !!hasSheets,
-                      sheetsLength,
-                      sheets: parsedFiles[activeTabIndex]?.sheets
-                    });
                     
                     return isExcel && hasSheets && sheetsLength > 0 ? (
                       <div className={styles.sheetTabs}>
@@ -676,63 +700,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
       <SchemaPreviewModalWrapper
         isOpen={showSchemaVisualization}
         onCloseAction={() => setShowSchemaVisualization(false)}
-        tables={(parsedFiles || []).flatMap((file, fileIndex) => {
-          if (!file || !files[fileIndex]) return [];
-
-          if (files[fileIndex].type === 'excel' && file.sheets) {
-            return file.sheets.map(sheet => ({
-              name: `${files[fileIndex].file.name.replace(/\.[^/.]+$/, "")}_${sheet.name || 'unnamed'}`,
-              fields: (sheet.headers || []).map(header => {
-                if (!header) {
-                  return {
-                    name: 'unnamed',
-                    type: 'string',
-                    isPrimary: false,
-                    isForeign: false,
-                    references: undefined
-                  };
-                }
-                const headerLower = header.trim().toLowerCase();
-                const values = (sheet.rows || []).map(row => 
-                  row ? (row[sheet.headers.indexOf(header)] || '') : ''
-                );
-                return {
-                  name: header.trim(),
-                  type: inferColumnType(values),
-                  isPrimary: headerLower === 'id',
-                  isForeign: false,
-                  references: undefined
-                };
-              })
-            }));
-          } else {
-            return [{
-              name: files[fileIndex].file.name.replace(/\.[^/.]+$/, ""),
-              fields: (file.headers || []).map(header => {
-                if (!header) {
-                  return {
-                    name: 'unnamed',
-                    type: 'string',
-                    isPrimary: false,
-                    isForeign: false,
-                    references: undefined
-                  };
-                }
-                const headerLower = header.trim().toLowerCase();
-                const values = (file.rows || []).map(row => 
-                  row ? (row[file.headers.indexOf(header)] || '') : ''
-                );
-                return {
-                  name: header.trim(),
-                  type: inferColumnType(values),
-                  isPrimary: headerLower === 'id',
-                  isForeign: false,
-                  references: undefined
-                };
-              })
-            }];
-          }
-        })}
+        tables={schemaTablesData}
       />
     </AnimatePresence>
   );
