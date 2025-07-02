@@ -6,6 +6,9 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { SchemaPreviewModalWrapper } from '../SchemaPreviewModal/SchemaPreviewModalWrapper';
 import { prepareTableSchemas } from '../../utils/tableSchemaPreparation';
 import { inferColumnType } from '../../utils/typeInference';
+import { AnomalyDetectionModal } from '../AnomalyDetectionModal/AnomalyDetectionModal';
+import { DataTransformationModal } from '../DataTransformationModal/DataTransformationModal';
+import { anomalyDetectionService, AnomalyDetectionResult, AnomalyCellHighlight } from '../../services/anomalyDetectionService';
 import styles from './CsvPreviewModal.module.css';
 import { LoadingOverlay } from '../LoadingOverlay/LoadingOverlay';
 
@@ -45,6 +48,14 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   const [hiddenColumnsByFileSheet, setHiddenColumnsByFileSheet] = useState<Map<string, Set<string>>>(new Map());
   const [parsedFiles, setParsedFiles] = useState<ParsedFile[]>([]);
   const [zoomLevel, setZoomLevel] = useState(1);
+  
+  // New state for anomaly detection and data transformation
+  const [showAnomalyModal, setShowAnomalyModal] = useState(false);
+  const [showTransformModal, setShowTransformModal] = useState(false);
+  const [anomalyResult, setAnomalyResult] = useState<AnomalyDetectionResult | null>(null);
+  const [isCheckingAnomalies, setIsCheckingAnomalies] = useState(false);
+  const [anomalyCellHighlights, setAnomalyCellHighlights] = useState<AnomalyCellHighlight[]>([]);
+  const [hasCheckedAnomalies, setHasCheckedAnomalies] = useState(false);
 
   // Get unique key for current file/sheet combination
   const getCurrentFileSheetKey = (): string => {
@@ -185,6 +196,139 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     if (!isLoading) {
       onCancelAction();
     }
+  };
+
+  // Handle anomaly detection
+  const handleCheckAnomalies = async () => {
+    const activeData = getActiveData();
+    if (!activeData || isCheckingAnomalies) return;
+
+    setIsCheckingAnomalies(true);
+    try {
+      // Convert data to CSV format for anomaly detection
+      const csvContent = [
+        activeData.headers.join(','),
+        ...activeData.rows.map(row => row.join(','))
+      ].join('\n');
+
+      const fileName = files[activeTabIndex]?.file.name;
+      const result = await anomalyDetectionService.detectAnomalies(csvContent, fileName);
+      
+      setAnomalyResult(result);
+      setHasCheckedAnomalies(true);
+      
+      // Set cell highlights for table display
+      if (result.hasAnomalies) {
+        const highlights = anomalyDetectionService.getAnomalyCellHighlights(result.anomalies);
+        setAnomalyCellHighlights(highlights);
+      } else {
+        setAnomalyCellHighlights([]);
+      }
+      
+      setShowAnomalyModal(true);
+    } catch (error) {
+      console.error('Error checking anomalies:', error);
+      // Show a fallback result
+      setAnomalyResult({
+        hasAnomalies: false,
+        anomalies: [],
+        summary: 'Unable to check for anomalies at this time. Please proceed with manual review.'
+      });
+      setShowAnomalyModal(true);
+    } finally {
+      setIsCheckingAnomalies(false);
+    }
+  };
+
+  // Handle data transformation
+  const handleTransformData = () => {
+    const activeData = getActiveData();
+    if (!activeData) return;
+    
+    setShowTransformModal(true);
+  };
+
+  // Apply transformations to current data
+  const handleApplyTransformations = (transformedData: { headers: string[]; rows: string[][] }) => {
+    const currentFile = parsedFiles[activeTabIndex];
+    if (!currentFile) return;
+
+    // Update the parsed files with transformed data
+    const updatedParsedFiles = [...parsedFiles];
+    
+    if (files[activeTabIndex]?.type === 'excel' && currentFile.sheets) {
+      // Update the specific sheet
+      const updatedSheets = [...currentFile.sheets];
+      updatedSheets[selectedSheetIndex] = {
+        name: updatedSheets[selectedSheetIndex].name,
+        headers: transformedData.headers,
+        rows: transformedData.rows
+      };
+      updatedParsedFiles[activeTabIndex] = {
+        ...currentFile,
+        sheets: updatedSheets,
+        headers: transformedData.headers,
+        rows: transformedData.rows
+      };
+    } else {
+      // Update CSV data
+      updatedParsedFiles[activeTabIndex] = {
+        ...currentFile,
+        headers: transformedData.headers,
+        rows: transformedData.rows
+      };
+    }
+
+    setParsedFiles(updatedParsedFiles);
+    
+    // Clear anomaly data since data has changed
+    setAnomalyResult(null);
+    setAnomalyCellHighlights([]);
+    setHasCheckedAnomalies(false);
+    
+    setShowTransformModal(false);
+  };
+
+  // Handle proceeding with anomalies
+  const handleProceedWithAnomalies = () => {
+    setShowAnomalyModal(false);
+    // Proceed with insight generation
+    handleUpload({ preventDefault: () => {}, stopPropagation: () => {} } as React.MouseEvent<HTMLButtonElement>);
+  };
+
+  // Handle fixing anomalies (redirect to transform modal)
+  const handleFixAnomalies = () => {
+    setShowAnomalyModal(false);
+    handleTransformData();
+  };
+
+  // Check if cell has anomaly
+  const getCellAnomalyClass = (rowIndex: number, columnName: string): string => {
+    const highlight = anomalyCellHighlights.find(
+      h => h.row === rowIndex && h.column === columnName
+    );
+    
+    if (!highlight) return '';
+    
+    switch (highlight.severity) {
+      case 'high':
+        return styles.anomalyHigh;
+      case 'medium':
+        return styles.anomalyMedium;
+      case 'low':
+        return styles.anomalyLow;
+      default:
+        return styles.anomalyDefault;
+    }
+  };
+
+  // Get anomaly tooltip for cell
+  const getCellAnomalyTooltip = (rowIndex: number, columnName: string): string => {
+    const highlight = anomalyCellHighlights.find(
+      h => h.row === rowIndex && h.column === columnName
+    );
+    
+    return highlight ? `${highlight.anomalyType}: ${highlight.description}` : '';
   };
 
   // Handle modal content click
@@ -487,8 +631,8 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
 
                   <div className={styles.tableContainer}>
                     <div
-                      className={styles.tableWrapper}
-                      style={{ transform: `scale(${zoomLevel})` }}
+                      className={`${styles.tableWrapper} ${styles.zoomable}`}
+                      data-zoom-level={Math.round(zoomLevel * 10) / 10}
                       onWheel={handleWheel}
                     >
                       <table className={styles.previewTable}>
@@ -537,7 +681,13 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                               className={rowIndex % 2 === 0 ? styles.evenRow : styles.oddRow}
                             >
                               {row.map((cell, cellIndex) => !hiddenColumns.has(data.headers[cellIndex]) && (
-                                <td key={cellIndex}>{cell || ''}</td>
+                                <td 
+                                  key={cellIndex}
+                                  className={getCellAnomalyClass(rowIndex, data.headers[cellIndex])}
+                                  title={getCellAnomalyTooltip(rowIndex, data.headers[cellIndex])}
+                                >
+                                  {cell || ''}
+                                </td>
                               ))}
                             </tr>
                           ))}
@@ -673,9 +823,62 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
 
             <div className={styles.footerRight}>
               <button
+                className={styles.actionButton}
+                onClick={handleCheckAnomalies}
+                disabled={isLoading || isCheckingAnomalies}
+                title="Check for anomalies in your data"
+              >
+                {isCheckingAnomalies ? (
+                  <>
+                    <span className={styles.loadingSpinner} />
+                    <span>Checking...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="16"
+                      height="16"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="m9 12 2 2 4-4"></path>
+                      <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.66 0 3.22.45 4.56 1.24"></path>
+                    </svg>
+                    <span>Check Anomalies</span>
+                  </>
+                )}
+              </button>
+              
+              <button
+                className={styles.actionButton}
+                onClick={handleTransformData}
+                disabled={isLoading}
+                title="Transform and clean your data"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  fill="none"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path>
+                </svg>
+                <span>Transform Data</span>
+              </button>
+              
+              <button
                 className={styles.cancelButton}
                 onClick={handleClose}
-                disabled={isLoading}              >
+                disabled={isLoading}
+              >
                 Cancel
               </button>
               <button
@@ -702,6 +905,29 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
         onCloseAction={() => setShowSchemaVisualization(false)}
         tables={schemaTablesData}
       />
+
+      {/* Anomaly Detection Modal */}
+      {showAnomalyModal && anomalyResult && (
+        <AnomalyDetectionModal
+          isOpen={showAnomalyModal}
+          result={anomalyResult}
+          onClose={() => setShowAnomalyModal(false)}
+          onProceedWithAnomalies={handleProceedWithAnomalies}
+          onFixAnomalies={handleFixAnomalies}
+          isLoading={false}
+        />
+      )}
+
+      {/* Data Transformation Modal */}
+      {showTransformModal && getActiveData() && (
+        <DataTransformationModal
+          isOpen={showTransformModal}
+          data={getActiveData()!}
+          onClose={() => setShowTransformModal(false)}
+          onApplyTransformations={handleApplyTransformations}
+          isLoading={false}
+        />
+      )}
     </AnimatePresence>
   );
 };
