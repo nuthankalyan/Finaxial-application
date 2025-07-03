@@ -14,6 +14,8 @@ export interface Anomaly {
   description: string;
   severity: 'low' | 'medium' | 'high';
   suggestion?: string;
+  file?: string;
+  sheet?: string;
 }
 
 export interface AnomalyCellHighlight {
@@ -33,7 +35,8 @@ class AnomalyDetectionService {
 
   async detectAnomalies(
     csvContent: string,
-    fileName?: string
+    fileName?: string,
+    sheetName?: string
   ): Promise<AnomalyDetectionResult> {
     try {
       if (!this.apiKey) {
@@ -57,6 +60,7 @@ CSV DATA:
 ${csvContent}
 
 ${fileName ? `FILE NAME: ${fileName}` : ''}
+${sheetName ? `SHEET NAME: ${sheetName}` : ''}
 
 Please provide your analysis in the following JSON format:
 {
@@ -70,7 +74,9 @@ Please provide your analysis in the following JSON format:
       "value": "the_problematic_value",
       "description": "Clear description of the issue",
       "severity": "low|medium|high",
-      "suggestion": "How to fix this issue"
+      "suggestion": "How to fix this issue",
+      "file": "${fileName || 'unknown'}",
+      "sheet": "${sheetName || 'default'}"
     }
   ]
 }
@@ -99,7 +105,7 @@ Return only valid JSON, no additional text.
       const anomalyResult = JSON.parse(jsonMatch[0]) as AnomalyDetectionResult;
 
       // Validate and sanitize the result
-      return this.sanitizeAnomalyResult(anomalyResult);
+      return this.sanitizeAnomalyResult(anomalyResult, fileName, sheetName);
 
     } catch (error: any) {
       console.error('Error detecting anomalies:', error);
@@ -112,7 +118,11 @@ Return only valid JSON, no additional text.
     }
   }
 
-  private sanitizeAnomalyResult(result: any): AnomalyDetectionResult {
+  private sanitizeAnomalyResult(
+    result: any, 
+    fileName?: string,
+    sheetName?: string
+  ): AnomalyDetectionResult {
     return {
       hasAnomalies: Boolean(result.hasAnomalies),
       summary: result.summary || 'Anomaly detection completed.',
@@ -123,7 +133,9 @@ Return only valid JSON, no additional text.
         value: anomaly.value || '',
         description: anomaly.description || 'Data quality issue detected',
         severity: ['low', 'medium', 'high'].includes(anomaly.severity) ? anomaly.severity : 'medium',
-        suggestion: anomaly.suggestion || 'Review and correct the data'
+        suggestion: anomaly.suggestion || 'Review and correct the data',
+        file: anomaly.file || fileName || 'unknown',
+        sheet: anomaly.sheet || sheetName || 'default'
       })) : []
     };
   }
@@ -178,6 +190,47 @@ Return only valid JSON, no additional text.
     });
 
     return anomalies;
+  }
+
+  // Detect anomalies across multiple files and sheets
+  async detectAnomaliesForMultipleFiles(
+    filesData: { csvContent: string, fileName: string, sheetName?: string }[]
+  ): Promise<AnomalyDetectionResult> {
+    try {
+      // Process each file and combine results
+      const results = await Promise.all(
+        filesData.map(fileData => 
+          this.detectAnomalies(fileData.csvContent, fileData.fileName, fileData.sheetName)
+        )
+      );
+
+      // Combine all anomalies
+      const allAnomalies: Anomaly[] = [];
+      results.forEach(result => {
+        if (result.anomalies.length > 0) {
+          allAnomalies.push(...result.anomalies);
+        }
+      });
+
+      const hasAnomalies = allAnomalies.length > 0;
+      const fileCount = new Set(allAnomalies.map(a => a.file)).size;
+      const totalAnomalies = allAnomalies.length;
+
+      return {
+        hasAnomalies,
+        anomalies: allAnomalies,
+        summary: hasAnomalies 
+          ? `Found ${totalAnomalies} data quality issues across ${fileCount} file(s).`
+          : 'No data quality issues found in the uploaded files.'
+      };
+    } catch (error) {
+      console.error('Error detecting anomalies for multiple files:', error);
+      return {
+        hasAnomalies: false,
+        anomalies: [],
+        summary: 'Unable to perform anomaly detection at this time. Please proceed with manual review.'
+      };
+    }
   }
 }
 

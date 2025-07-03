@@ -200,26 +200,55 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
 
   // Handle anomaly detection
   const handleCheckAnomalies = async () => {
-    const activeData = getActiveData();
-    if (!activeData || isCheckingAnomalies) return;
+    if (isCheckingAnomalies) return;
 
     setIsCheckingAnomalies(true);
     try {
-      // Convert data to CSV format for anomaly detection
-      const csvContent = [
-        activeData.headers.join(','),
-        ...activeData.rows.map(row => row.join(','))
-      ].join('\n');
-
-      const fileName = files[activeTabIndex]?.file.name;
-      const result = await anomalyDetectionService.detectAnomalies(csvContent, fileName);
+      // Prepare data from all files and sheets for anomaly detection
+      const filesData = parsedFiles.map((file, fileIndex) => {
+        const fileName = files[fileIndex]?.file.name || `File ${fileIndex + 1}`;
+        
+        if (files[fileIndex]?.type === 'excel' && file.sheets) {
+          // For Excel files with multiple sheets
+          return file.sheets.map((sheet, sheetIndex) => ({
+            csvContent: [
+              sheet.headers.join(','),
+              ...sheet.rows.map(row => row.join(','))
+            ].join('\n'),
+            fileName,
+            sheetName: sheet.name || `Sheet ${sheetIndex + 1}`
+          }));
+        } else {
+          // For CSV files or Excel files with a single sheet
+          return [{
+            csvContent: [
+              file.headers.join(','),
+              ...file.rows.map(row => row.join(','))
+            ].join('\n'),
+            fileName,
+            sheetName: 'default'
+          }];
+        }
+      }).flat();
+      
+      // Process all files and sheets for anomalies
+      const result = await anomalyDetectionService.detectAnomaliesForMultipleFiles(filesData);
       
       setAnomalyResult(result);
       setHasCheckedAnomalies(true);
       
-      // Set cell highlights for table display
+      // Set cell highlights for currently active tab/sheet
       if (result.hasAnomalies) {
-        const highlights = anomalyDetectionService.getAnomalyCellHighlights(result.anomalies);
+        const currentFileName = files[activeTabIndex]?.file.name;
+        const currentSheetName = parsedFiles[activeTabIndex]?.sheets?.[selectedSheetIndex]?.name || 'default';
+        
+        const relevantAnomalies = result.anomalies.filter(
+          anomaly => 
+            anomaly.file === currentFileName && 
+            (anomaly.sheet === currentSheetName || anomaly.sheet === 'default')
+        );
+        
+        const highlights = anomalyDetectionService.getAnomalyCellHighlights(relevantAnomalies);
         setAnomalyCellHighlights(highlights);
       } else {
         setAnomalyCellHighlights([]);

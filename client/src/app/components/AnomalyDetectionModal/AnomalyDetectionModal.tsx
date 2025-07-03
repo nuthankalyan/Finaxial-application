@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AnomalyDetectionResult, Anomaly } from '../../services/anomalyDetectionService';
 import styles from './AnomalyDetectionModal.module.css';
@@ -17,19 +17,76 @@ export const AnomalyDetectionModal: React.FC<AnomalyDetectionModalProps> = ({
   onClose,
   result,
   onProceedWithAnomalies,
-  onFixAnomalies,
   isLoading
 }) => {
+  // State for selected file and sheet
+  const [selectedFile, setSelectedFile] = useState<string | null>(null);
+  const [selectedSheet, setSelectedSheet] = useState<string | null>(null);
+  // State for tracking open/closed issue states
+  const [openIssues, setOpenIssues] = useState<Record<number, boolean>>({});
+  // State for filtered anomalies based on selection
+  const [filteredAnomalies, setFilteredAnomalies] = useState<Anomaly[]>([]);
+
+  // Extract unique files and sheets
+  const files = result?.anomalies
+    ? Array.from(new Set(result.anomalies.map(a => a.file || 'Unknown').filter(Boolean)))
+    : [];
+    
+  // Get sheets for the selected file
+  const sheets = selectedFile && result?.anomalies
+    ? Array.from(new Set(
+        result.anomalies
+          .filter(a => a.file === selectedFile)
+          .map(a => a.sheet || 'Default')
+          .filter(Boolean)
+      ))
+    : [];
+
+  // Initialize with the first file selected
+  useEffect(() => {
+    if (files.length > 0 && !selectedFile) {
+      setSelectedFile(files[0]);
+    }
+  }, [files, selectedFile]);
+
+  // Filter anomalies based on selected file and sheet
+  useEffect(() => {
+    if (!result?.anomalies) {
+      setFilteredAnomalies([]);
+      return;
+    }
+
+    let filtered = [...result.anomalies];
+    
+    if (selectedFile) {
+      filtered = filtered.filter(a => a.file === selectedFile);
+    }
+    
+    if (selectedSheet) {
+      filtered = filtered.filter(a => a.sheet === selectedSheet);
+    }
+    
+    setFilteredAnomalies(filtered);
+  }, [result, selectedFile, selectedSheet]);
+
+  // Toggle issue expansion
+  const toggleIssue = (index: number) => {
+    setOpenIssues(prev => ({
+      ...prev,
+      [index]: !prev[index]
+    }));
+  };
+  
   if (!isOpen) return null;
 
   const getSeverityIcon = (severity: string) => {
     switch (severity) {
       case 'high':
-        return '🔴';
+        return '●'; // Clean circle
       case 'medium':
-        return '🟡';
+        return '●'; // Clean circle 
       case 'low':
-        return '🟢';
+        return '●'; // Clean circle
       default:
         return '⚠️';
     }
@@ -65,7 +122,8 @@ export const AnomalyDetectionModal: React.FC<AnomalyDetectionModalProps> = ({
     }
   };
 
-  const groupedAnomalies = result.anomalies.reduce((groups, anomaly) => {
+  // Group anomalies by severity for summary statistics
+  const groupedAnomalies = filteredAnomalies.reduce((groups, anomaly) => {
     const key = anomaly.severity;
     if (!groups[key]) groups[key] = [];
     groups[key].push(anomaly);
@@ -145,8 +203,10 @@ export const AnomalyDetectionModal: React.FC<AnomalyDetectionModalProps> = ({
               <>
                 <div className={styles.summaryStats}>
                   <div className={styles.statItem}>
-                    <span className={styles.statNumber}>{result.anomalies.length}</span>
-                    <span className={styles.statLabel}>Issues Found</span>
+                    <span className={styles.statNumber}>{filteredAnomalies.length}</span>
+                    <span className={styles.statLabel}>
+                      {selectedFile ? (selectedSheet ? `Issues in Sheet` : `Issues in File`) : 'Total Issues'}
+                    </span>
                   </div>
                   <div className={styles.statItem}>
                     <span className={styles.statNumber}>
@@ -168,60 +228,122 @@ export const AnomalyDetectionModal: React.FC<AnomalyDetectionModalProps> = ({
                   </div>
                 </div>
 
-                <div className={styles.anomaliesList}>
-                  {['high', 'medium', 'low'].map(severity => {
-                    const anomalies = groupedAnomalies[severity];
-                    if (!anomalies?.length) return null;
+                {/* File selection tabs */}
+                {files.length > 0 && (
+                  <div className={styles.tabsContainer}>
+                    <div className={styles.tabsLabel}>Files:</div>
+                    <div className={styles.tabsScrollArea}>
+                      {files.map((file, index) => (
+                        <button
+                          key={file}
+                          className={`${styles.tabButton} ${selectedFile === file ? styles.active : ''}`}
+                          onClick={() => {
+                            setSelectedFile(file);
+                            setSelectedSheet(null);
+                          }}
+                        >
+                          {file.split('/').pop() || `File ${index + 1}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                
+                {/* Sheet selection tabs - only show if a file is selected and it has sheets */}
+                {sheets.length > 0 && (
+                  <div className={styles.tabsContainer}>
+                    <div className={styles.tabsLabel}>Sheets:</div>
+                    <div className={styles.tabsScrollArea}>
+                      {sheets.map((sheet) => (
+                        <button
+                          key={sheet}
+                          className={`${styles.tabButton} ${selectedSheet === sheet ? styles.active : ''}`}
+                          onClick={() => setSelectedSheet(sheet)}
+                        >
+                          {sheet}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
-                    return (
-                      <div key={severity} className={styles.severityGroup}>
-                        <h3 className={`${styles.severityHeader} ${getSeverityClass(severity)}`}>
-                          {getSeverityIcon(severity)} {severity.charAt(0).toUpperCase() + severity.slice(1)} Priority
-                          ({anomalies.length})
-                        </h3>
-                        <div className={styles.anomalyItems}>
-                          {anomalies.slice(0, 10).map((anomaly, index) => (
-                            <div key={index} className={`${styles.anomalyItem} ${getSeverityClass(severity)}`}>
-                              <div className={styles.anomalyHeader}>
-                                <span className={styles.anomalyType}>
-                                  {getAnomalyTypeLabel(anomaly.type)}
+                {/* Collapsible Issues List */}
+                <div className={styles.issuesContainer}>
+                  {filteredAnomalies.length > 0 ? (
+                    filteredAnomalies.map((anomaly, index) => (
+                      <div 
+                        key={index} 
+                        className={`${styles.issueAccordion} ${getSeverityClass(anomaly.severity)}`}
+                      >
+                        <div 
+                          className={styles.issueHeader}
+                          onClick={() => toggleIssue(index)}
+                        >
+                          <div className={styles.issueHeaderContent}>
+                            <span className={styles.issueSeverityIndicator}>
+                              {getSeverityIcon(anomaly.severity)}
+                            </span>
+                            <span className={styles.issueTitle}>
+                              {getAnomalyTypeLabel(anomaly.type)}
+                              {anomaly.row && (
+                                <span className={styles.issueLocation}>
+                                  {` • Row ${anomaly.row}, Col "${anomaly.column}"`}
                                 </span>
-                                {anomaly.row && (
-                                  <span className={styles.anomalyLocation}>
-                                    Row {anomaly.row}, Column "{anomaly.column}"
-                                  </span>
-                                )}
-                              </div>
-                              <p className={styles.anomalyDescription}>
-                                {anomaly.description}
-                              </p>
-                              {anomaly.value && (
-                                <div className={styles.anomalyValue}>
-                                  <strong>Value:</strong> "{anomaly.value}"
-                                </div>
                               )}
-                              {anomaly.suggestion && (
-                                <div className={styles.anomalySuggestion}>
-                                  <strong>Suggestion:</strong> {anomaly.suggestion}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                          {anomalies.length > 10 && (
-                            <div className={styles.moreAnomalies}>
-                              +{anomalies.length - 10} more {severity} priority issues...
-                            </div>
-                          )}
+                            </span>
+                          </div>
+                          <svg
+                            className={`${styles.chevronIcon} ${openIssues[index] ? styles.open : ''}`}
+                            width="20"
+                            height="20"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          >
+                            <polyline points="6 9 12 15 18 9"></polyline>
+                          </svg>
                         </div>
+                        
+                        {openIssues[index] && (
+                          <div className={styles.issueContent}>
+                            <div className={styles.issueDescription}>
+                              {anomaly.description}
+                            </div>
+                            
+                            {anomaly.value && (
+                              <div className={styles.issueValue}>
+                                <strong>Value:</strong> "{anomaly.value}"
+                              </div>
+                            )}
+                            
+                            {anomaly.suggestion && (
+                              <div className={styles.issueSuggestion}>
+                                <strong>Suggestion:</strong> {anomaly.suggestion}
+                              </div>
+                            )}
+                            
+                            <div className={styles.issueMetadata}>
+                              <span className={styles.issueFile}>
+                                File: {anomaly.file || 'Unknown'}
+                              </span>
+                              {anomaly.sheet && anomaly.sheet !== 'default' && (
+                                <span className={styles.issueSheet}>
+                                  Sheet: {anomaly.sheet}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    );
-                  })}
-                </div>
-
-                <div className={styles.actionPrompt}>
-                  <p className={styles.promptText}>
-                    Would you like to correct these anomalies before generating insights, or proceed with the current data?
-                  </p>
+                    ))
+                  ) : (
+                    <div className={styles.noIssuesMessage}>
+                      No issues found for the selected file or sheet.
+                    </div>
+                  )}
                 </div>
               </>
             ) : (
@@ -250,60 +372,13 @@ export const AnomalyDetectionModal: React.FC<AnomalyDetectionModalProps> = ({
           </div>
 
           <div className={styles.footer}>
-            {result.hasAnomalies ? (
-              <>
-                <button
-                  className={styles.fixButton}
-                  onClick={onFixAnomalies}
-                  disabled={isLoading}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="16"
-                    height="16"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 12c-1 0-3-1-3-3s2-3 3-3 3 1 3 3-2 3-3 3"></path>
-                    <path d="M3 12c1 0 3-1 3-3s-2-3-3-3-3 1-3 3 2 3 3 3"></path>
-                    <path d="M13 12h1l2-2-2-2h-1v4z"></path>
-                    <path d="M11 12H9l-2-2 2-2h2v4z"></path>
-                  </svg>
-                  Fix Anomalies First
-                </button>
-                <button
-                  className={styles.proceedButton}
-                  onClick={onProceedWithAnomalies}
-                  disabled={isLoading}
-                >
-                  <svg
-                    viewBox="0 0 24 24"
-                    width="16"
-                    height="16"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    fill="none"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  >
-                    <path d="M5 12h14"></path>
-                    <path d="M12 5l7 7-7 7"></path>
-                  </svg>
-                  Proceed with Insight Generation
-                </button>
-              </>
-            ) : (
-              <button
-                className={styles.proceedButton}
-                onClick={onProceedWithAnomalies}
-                disabled={isLoading}
-              >
-                Proceed with Insight Generation
-              </button>
-            )}
+            <button
+              className={styles.proceedButton}
+              onClick={onProceedWithAnomalies}
+              disabled={isLoading}
+            >
+              Proceed with Insight Generation
+            </button>
           </div>
         </motion.div>
       </motion.div>

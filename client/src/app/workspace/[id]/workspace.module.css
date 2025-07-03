@@ -410,6 +410,8 @@
   cursor: pointer;
   transition: all 0.2s ease;
   font-family: inherit;
+  margin-bottom: 10px;
+  margin-right: 10px;
 }
 
 .saveButton {
