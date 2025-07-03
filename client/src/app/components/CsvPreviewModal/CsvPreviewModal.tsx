@@ -93,6 +93,12 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
       newMap.set(key, newHidden);
       return newMap;
     });
+    
+    // Clear anomaly results since column visibility has changed
+    setAnomalyResult(null);
+    setAnomalyCellHighlights([]);
+    setHasCheckedAnomalies(false);
+    
     setShowHiddenColumnsMenu(false);
   };
   // Get active data based on current tab and sheet
@@ -204,26 +210,47 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
 
     setIsCheckingAnomalies(true);
     try {
-      // Prepare data from all files and sheets for anomaly detection
+      // Prepare data from all files and sheets for anomaly detection, excluding hidden columns
       const filesData = parsedFiles.map((file, fileIndex) => {
         const fileName = files[fileIndex]?.file.name || `File ${fileIndex + 1}`;
         
         if (files[fileIndex]?.type === 'excel' && file.sheets) {
           // For Excel files with multiple sheets
-          return file.sheets.map((sheet, sheetIndex) => ({
-            csvContent: [
-              sheet.headers.join(','),
-              ...sheet.rows.map(row => row.join(','))
-            ].join('\n'),
-            fileName,
-            sheetName: sheet.name || `Sheet ${sheetIndex + 1}`
-          }));
+          return file.sheets.map((sheet, sheetIndex) => {
+            // Get hidden columns for this specific sheet
+            const sheetKey = `${fileIndex}-${sheetIndex}-${sheet.name || 'default'}`;
+            const sheetHiddenColumns = hiddenColumnsByFileSheet.get(sheetKey) || new Set();
+            
+            // Filter out hidden columns
+            const visibleHeaders = sheet.headers.filter(header => !sheetHiddenColumns.has(header));
+            const visibleRows = sheet.rows.map(row => 
+              row.filter((_, colIndex) => !sheetHiddenColumns.has(sheet.headers[colIndex]))
+            );
+            
+            return {
+              csvContent: [
+                visibleHeaders.join(','),
+                ...visibleRows.map(row => row.join(','))
+              ].join('\n'),
+              fileName,
+              sheetName: sheet.name || `Sheet ${sheetIndex + 1}`
+            };
+          });
         } else {
-          // For CSV files or Excel files with a single sheet
+          // For CSV files, get the file-specific hidden columns
+          const csvKey = `${fileIndex}-${fileName}`;
+          const csvHiddenColumns = hiddenColumnsByFileSheet.get(csvKey) || new Set();
+          
+          // Filter out hidden columns
+          const visibleHeaders = file.headers.filter(header => !csvHiddenColumns.has(header));
+          const visibleRows = file.rows.map(row => 
+            row.filter((_, colIndex) => !csvHiddenColumns.has(file.headers[colIndex]))
+          );
+          
           return [{
             csvContent: [
-              file.headers.join(','),
-              ...file.rows.map(row => row.join(','))
+              visibleHeaders.join(','),
+              ...visibleRows.map(row => row.join(','))
             ].join('\n'),
             fileName,
             sheetName: 'default'
@@ -855,7 +882,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 className={styles.actionButton}
                 onClick={handleCheckAnomalies}
                 disabled={isLoading || isCheckingAnomalies}
-                title="Check for anomalies in your data"
+                title={`Check for anomalies in your data${hiddenColumnsCount > 0 ? ` (${hiddenColumnsCount} hidden column${hiddenColumnsCount > 1 ? 's' : ''} will be excluded)` : ''}`}
               >
                 {isCheckingAnomalies ? (
                   <>
