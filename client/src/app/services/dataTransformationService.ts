@@ -248,7 +248,7 @@ class DataTransformationService {
     rows: string[][],
     rule: TransformationRule
   ): { headers: string[]; rows: string[][] } {
-    const { findValue, replaceValue } = rule.parameters;
+    const { findValue, replaceValue, isRegex } = rule.parameters;
     const columnIndex = rule.column ? headers.indexOf(rule.column) : -1;
 
     const replacedRows = rows.map(row => {
@@ -256,13 +256,25 @@ class DataTransformationService {
       
       if (columnIndex >= 0) {
         // Replace in specific column
-        if (newRow[columnIndex] === findValue) {
+        if (isRegex && findValue instanceof RegExp) {
+          // Handle regex replacement for specific column
+          if (newRow[columnIndex]) {
+            newRow[columnIndex] = newRow[columnIndex].replace(findValue, replaceValue);
+          }
+        } else if (newRow[columnIndex] === findValue) {
+          // Handle exact match replacement
           newRow[columnIndex] = replaceValue;
         }
       } else {
         // Replace in all columns
         for (let i = 0; i < newRow.length; i++) {
-          if (newRow[i] === findValue) {
+          if (!newRow[i]) continue; // Skip empty cells
+          
+          if (isRegex && findValue instanceof RegExp) {
+            // Handle regex replacement for all columns
+            newRow[i] = newRow[i].replace(findValue, replaceValue);
+          } else if (newRow[i] === findValue) {
+            // Handle exact match replacement
             newRow[i] = replaceValue;
           }
         }
@@ -290,20 +302,54 @@ class DataTransformationService {
       const newRow = [...row];
       const value = newRow[columnIndex];
       
-      try {
-        switch (targetType) {
-          case 'number':
-            newRow[columnIndex] = value ? parseFloat(value.replace(/[^0-9.-]/g, '')).toString() : '0';
-            break;
-          case 'date':
-            if (value) {
-              const date = new Date(value);
-              newRow[columnIndex] = isNaN(date.getTime()) ? value : date.toISOString().split('T')[0];
-            }
-            break;
-          case 'text':
-            newRow[columnIndex] = value ? value.toString() : '';
-            break;
+      try {          switch (targetType) {
+            case 'number':
+              if (value) {
+                // Handle various number formats including currency symbols, commas, and percentages
+                const cleanValue = value.replace(/[$,€£¥]/g, '').replace(/[^0-9.-]/g, '');
+                const parsedValue = parseFloat(cleanValue);
+                
+                if (!isNaN(parsedValue)) {
+                  // Format numbers with two decimal places for financial data
+                  newRow[columnIndex] = parsedValue.toFixed(2);
+                } else {
+                  // Keep original if parsing fails
+                  newRow[columnIndex] = value;
+                }
+              } else {
+                newRow[columnIndex] = '0.00';
+              }
+              break;
+            case 'date':
+              if (value) {
+                try {
+                  const date = new Date(value);
+                  if (!isNaN(date.getTime())) {
+                    // ISO format YYYY-MM-DD
+                    newRow[columnIndex] = date.toISOString().split('T')[0];
+                  } else {
+                    // Try to parse common formats
+                    const parts = value.split(/[\/\-\.]/);
+                    if (parts.length === 3) {
+                      // Assume MM/DD/YYYY or DD/MM/YYYY
+                      const month = parseInt(parts[0]) <= 12 ? parts[0] : parts[1];
+                      const day = parseInt(parts[0]) <= 12 ? parts[1] : parts[0];
+                      const year = parts[2].length === 2 ? `20${parts[2]}` : parts[2];
+                      const formattedDate = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+                      newRow[columnIndex] = formattedDate;
+                    } else {
+                      // Keep original if parsing fails
+                      newRow[columnIndex] = value;
+                    }
+                  }
+                } catch (e) {
+                  newRow[columnIndex] = value;
+                }
+              }
+              break;
+            case 'text':
+              newRow[columnIndex] = value ? value.toString() : '';
+              break;
         }
       } catch (error) {
         // Keep original value if conversion fails
