@@ -1075,7 +1075,7 @@
   }
 }
 
-/* Action buttons for anomaly detection and data transformation */
+/* Action buttons for anomaly detection, compliance checking, and data transformation */
 .actionButton {
   padding: 8px 16px;
   min-width: 140px;
@@ -1182,6 +1182,75 @@
   width: 6px;
   height: 6px;
   background-color: #6b7280;
+  border-radius: 50%;
+}
+
+/* Compliance cell highlighting */
+.complianceCritical {
+  background-color: rgba(220, 38, 127, 0.15) !important;
+  border: 1px solid rgba(220, 38, 127, 0.3) !important;
+  position: relative;
+}
+
+.complianceCritical::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background-color: #dc2626;
+  border-radius: 50%;
+}
+
+.complianceWarning {
+  background-color: rgba(251, 191, 36, 0.15) !important;
+  border: 1px solid rgba(251, 191, 36, 0.3) !important;
+  position: relative;
+}
+
+.complianceWarning::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background-color: #fbbf24;
+  border-radius: 50%;
+}
+
+.complianceInfo {
+  background-color: rgba(59, 130, 246, 0.15) !important;
+  border: 1px solid rgba(59, 130, 246, 0.3) !important;
+  position: relative;
+}
+
+.complianceInfo::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background-color: #3b82f6;
+  border-radius: 50%;
+}
+
+.complianceDefault {
+  background-color: rgba(156, 163, 175, 0.15) !important;
+  border: 1px solid rgba(156, 163, 175, 0.3) !important;
+  position: relative;
+}
+
+.complianceDefault::after {
+  content: '';
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 6px;
+  height: 6px;
+  background-color: #9ca3af;
   border-radius: 50%;
 }
 

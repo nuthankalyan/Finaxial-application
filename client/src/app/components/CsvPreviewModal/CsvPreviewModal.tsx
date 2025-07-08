@@ -9,6 +9,8 @@ import { inferColumnType } from '../../utils/typeInference';
 import { AnomalyDetectionModal } from '../AnomalyDetectionModal/AnomalyDetectionModal';
 import { DataTransformationModal } from '../DataTransformationModal/DataTransformationModal';
 import { anomalyDetectionService, AnomalyDetectionResult, AnomalyCellHighlight } from '../../services/anomalyDetectionService';
+import { complianceService, ComplianceResult, ComplianceCellHighlight, BatchComplianceInput } from '../../services/complianceService';
+import ComplianceModal from '../ComplianceModal/ComplianceModal';
 import styles from './CsvPreviewModal.module.css';
 import { LoadingOverlay } from '../LoadingOverlay/LoadingOverlay';
 
@@ -57,6 +59,12 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   const [anomalyCellHighlights, setAnomalyCellHighlights] = useState<AnomalyCellHighlight[]>([]);
   const [hasCheckedAnomalies, setHasCheckedAnomalies] = useState(false);
 
+  // New state for compliance checking
+  const [showComplianceModal, setShowComplianceModal] = useState(false);
+  const [complianceResult, setComplianceResult] = useState<ComplianceResult | null>(null);
+  const [isCheckingCompliance, setIsCheckingCompliance] = useState(false);
+  const [complianceCellHighlights, setComplianceCellHighlights] = useState<ComplianceCellHighlight[]>([]);
+
   // Get unique key for current file/sheet combination
   const getCurrentFileSheetKey = (): string => {
     const currentFile = files[activeTabIndex];
@@ -98,6 +106,10 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     setAnomalyResult(null);
     setAnomalyCellHighlights([]);
     setHasCheckedAnomalies(false);
+    
+    // Clear compliance results since column visibility has changed
+    setComplianceResult(null);
+    setComplianceCellHighlights([]);
     
     setShowHiddenColumnsMenu(false);
   };
@@ -296,6 +308,153 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     }
   };
 
+  // Handle compliance checking
+  // Handle compliance checking for all files and sheets
+  const handleCheckCompliance = async () => {
+    if (isCheckingCompliance) return;
+
+    setIsCheckingCompliance(true);
+    try {
+      const batchInputs: BatchComplianceInput[] = [];
+
+      // Prepare data from all files and sheets for compliance checking
+      for (let fileIndex = 0; fileIndex < files.length; fileIndex++) {
+        const file = files[fileIndex];
+        const parsedFile = parsedFiles[fileIndex];
+        
+        if (!parsedFile) continue;
+
+        const fileName = file.file.name;
+        
+        if (file.type === 'excel' && parsedFile.sheets) {
+          // Handle Excel files with multiple sheets
+          for (const sheet of parsedFile.sheets) {
+            // Filter out hidden columns for this file/sheet
+            const fileSheetKey = `${fileIndex}-${sheet.name}`;
+            const hiddenColumns = hiddenColumnsByFileSheet.get(fileSheetKey) || new Set<string>();
+            
+            const visibleHeaders = sheet.headers.filter(header => !hiddenColumns.has(header));
+            const visibleRows = sheet.rows.map(row => 
+              row.filter((_, colIndex) => !hiddenColumns.has(sheet.headers[colIndex]))
+            );
+
+            // Create CSV content for compliance analysis
+            const csvContent = [
+              visibleHeaders.join(','),
+              ...visibleRows.map(row => row.join(','))
+            ].join('\n');
+
+            batchInputs.push({
+              fileName,
+              sheetName: sheet.name,
+              csvContent
+            });
+          }
+        } else {
+          // Handle CSV files or single-sheet Excel files
+          const fileSheetKey = `${fileIndex}-default`;
+          const hiddenColumns = hiddenColumnsByFileSheet.get(fileSheetKey) || new Set<string>();
+          
+          const visibleHeaders = parsedFile.headers.filter(header => !hiddenColumns.has(header));
+          const visibleRows = parsedFile.rows.map(row => 
+            row.filter((_, colIndex) => !hiddenColumns.has(parsedFile.headers[colIndex]))
+          );
+
+          // Create CSV content for compliance analysis
+          const csvContent = [
+            visibleHeaders.join(','),
+            ...visibleRows.map(row => row.join(','))
+          ].join('\n');
+
+          batchInputs.push({
+            fileName,
+            csvContent
+          });
+        }
+      }
+
+      if (batchInputs.length === 0) {
+        throw new Error('No data available for compliance checking');
+      }
+
+      // Run batch compliance validation
+      const result = await complianceService.validateBatchCompliance(batchInputs);
+      
+      setComplianceResult(result);
+      
+      // Extract cell highlights for violations (only for currently active file/sheet)
+      const activeData = getActiveData();
+      if (activeData && result.violations) {
+        const currentFileName = files[activeTabIndex]?.file.name;
+        const currentSheetName = parsedFiles[activeTabIndex]?.sheets?.[selectedSheetIndex]?.name;
+        
+        // Filter violations for current file/sheet
+        const currentFileViolations = result.violations.filter(violation => {
+          const violationMessage = violation.message;
+          const expectedPrefix = `[${currentFileName}${currentSheetName ? ` - ${currentSheetName}` : ''}]`;
+          return violationMessage.startsWith(expectedPrefix);
+        });
+        
+        const cellHighlights = complianceService.getComplianceCellHighlights(currentFileViolations);
+        setComplianceCellHighlights(cellHighlights);
+      } else {
+        setComplianceCellHighlights([]);
+      }
+      
+      setShowComplianceModal(true);
+    } catch (error) {
+      console.error('Error checking compliance:', error);
+      
+      // Show a fallback result
+      setComplianceResult({
+        isCompliant: false,
+        totalChecks: 1,
+        passedChecks: 0,
+        failedChecks: 1,
+        violations: [{
+          ruleId: 'system-error',
+          rule: {
+            id: 'system-error',
+            standard: 'SOX',
+            category: 'System Error',
+            description: 'Unable to perform compliance analysis',
+            severity: 'critical',
+            requirement: 'System must be able to analyze data for compliance'
+          },
+          row: -1,
+          column: '',
+          value: '',
+          message: 'Unable to check compliance at this time. Please ensure your data contains valid financial information and try again.',
+          severity: 'critical',
+          suggestion: 'Review data format and ensure it contains recognizable financial data patterns'
+        }],
+        summary: 'Compliance analysis could not be completed due to system error',
+        recommendations: ['Verify data format and try again', 'Ensure data contains financial information', 'Contact support if the issue persists'],
+        executiveReport: 'Compliance analysis encountered an error and could not be completed. Please review your data and try again.'
+      });
+      setShowComplianceModal(true);
+    } finally {
+      setIsCheckingCompliance(false);
+    }
+  };
+
+  // Handle compliance report export
+  const handleExportComplianceReport = (report: string) => {
+    try {
+      const blob = new Blob([report], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `compliance-report-${files[activeTabIndex]?.file.name || 'financial-data'}-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error exporting compliance report:', error);
+    }
+  };
+
   // Handle data transformation
   const handleTransformData = () => {
     const activeData = getActiveData();
@@ -342,6 +501,10 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     setAnomalyCellHighlights([]);
     setHasCheckedAnomalies(false);
     
+    // Clear compliance data since data has changed
+    setComplianceResult(null);
+    setComplianceCellHighlights([]);
+    
     setShowTransformModal(false);
   };
 
@@ -385,6 +548,49 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
     );
     
     return highlight ? `${highlight.anomalyType}: ${highlight.description}` : '';
+  };
+
+  // Check if cell has compliance violation
+  const getCellComplianceClass = (rowIndex: number, columnName: string): string => {
+    const highlight = complianceCellHighlights.find(
+      h => h.row === rowIndex && h.column === columnName
+    );
+    
+    if (!highlight) return '';
+    
+    switch (highlight.severity) {
+      case 'critical':
+        return styles.complianceCritical;
+      case 'warning':
+        return styles.complianceWarning;
+      case 'info':
+        return styles.complianceInfo;
+      default:
+        return styles.complianceDefault;
+    }
+  };
+
+  // Get compliance tooltip for cell
+  const getCellComplianceTooltip = (rowIndex: number, columnName: string): string => {
+    const highlight = complianceCellHighlights.find(
+      h => h.row === rowIndex && h.column === columnName
+    );
+    
+    return highlight ? `${highlight.violationType}: ${highlight.description}` : '';
+  };
+
+  // Combine cell classes (anomaly and compliance)
+  const getCombinedCellClass = (rowIndex: number, columnName: string): string => {
+    const anomalyClass = getCellAnomalyClass(rowIndex, columnName);
+    const complianceClass = getCellComplianceClass(rowIndex, columnName);
+    return [anomalyClass, complianceClass].filter(Boolean).join(' ');
+  };
+
+  // Combine cell tooltips (anomaly and compliance)
+  const getCombinedCellTooltip = (rowIndex: number, columnName: string): string => {
+    const anomalyTooltip = getCellAnomalyTooltip(rowIndex, columnName);
+    const complianceTooltip = getCellComplianceTooltip(rowIndex, columnName);
+    return [anomalyTooltip, complianceTooltip].filter(Boolean).join(' | ');
   };
 
   // Handle modal content click
@@ -739,8 +945,8 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                               {row.map((cell, cellIndex) => !hiddenColumns.has(data.headers[cellIndex]) && (
                                 <td 
                                   key={cellIndex}
-                                  className={getCellAnomalyClass(rowIndex, data.headers[cellIndex])}
-                                  title={getCellAnomalyTooltip(rowIndex, data.headers[cellIndex])}
+                                  className={getCombinedCellClass(rowIndex, data.headers[cellIndex])}
+                                  title={getCombinedCellTooltip(rowIndex, data.headers[cellIndex])}
                                 >
                                   {cell || ''}
                                 </td>
@@ -931,6 +1137,38 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
               </button>
               
               <button
+                className={styles.actionButton}
+                onClick={handleCheckCompliance}
+                disabled={isLoading || isCheckingCompliance}
+                title={`Check GAAP, IFRS, and SOX compliance across all ${files.length} file(s) and sheets${hiddenColumnsCount > 0 ? ` (${hiddenColumnsCount} hidden column${hiddenColumnsCount > 1 ? 's' : ''} will be excluded)` : ''}`}
+              >
+                {isCheckingCompliance ? (
+                  <>
+                    <span className={styles.loadingSpinner} />
+                    <span>Checking All Files...</span>
+                  </>
+                ) : (
+                  <>
+                    <svg
+                      viewBox="0 0 24 24"
+                      width="16"
+                      height="16"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      fill="none"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <path d="M9 12l2 2 4-4"></path>
+                      <path d="M21 12c0 4.97-4.03 9-9 9s-9-4.03-9-9 4.03-9 9-9c1.66 0 3.22.45 4.56 1.24"></path>
+                      <circle cx="12" cy="12" r="9"></circle>
+                    </svg>
+                    <span>Compliance Check (All Files)</span>
+                  </>
+                )}
+              </button>
+              
+              <button
                 className={styles.cancelButton}
                 onClick={handleClose}
                 disabled={isLoading}
@@ -984,6 +1222,15 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
           isLoading={false}
         />
       )}
+
+      {/* Compliance Check Modal */}
+      <ComplianceModal
+        isOpen={showComplianceModal}
+        result={complianceResult}
+        fileName={files[activeTabIndex]?.file.name}
+        onCloseAction={() => setShowComplianceModal(false)}
+        onExportReportAction={handleExportComplianceReport}
+      />
     </AnimatePresence>
   );
 };
