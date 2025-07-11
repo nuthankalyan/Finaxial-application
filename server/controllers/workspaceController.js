@@ -428,64 +428,40 @@ exports.saveReport = async (req, res) => {
 // @desc    Upload dataset to workspace
 // @route   POST /api/workspaces/:id/datasets
 // @access  Private
+// @desc    Upload dataset to workspace
+// @route   POST /api/workspaces/:id/datasets
+// @access  Private
 exports.uploadDataset = async (req, res) => {
-  try {
-    const { content, fileName, type } = req.body;
-    
-    const workspace = await Workspace.findById(req.params.id);
+  const MAX_RETRIES = 5;
+  const BASE_DELAY = 100; // Base delay in milliseconds
 
-    if (!workspace) {
-      return res.status(404).json({
-        success: false,
-        message: 'Workspace not found'
-      });
-    }
+  const uploadWithRetry = async (retryCount = 0) => {
+    try {
+      const { content, fileName, type } = req.body;
+      
+      // Fetch fresh workspace document on each retry
+      const workspace = await Workspace.findById(req.params.id);
 
-    // Check if user has access to workspace
-    if (!workspace.members.includes(req.user.id) && workspace.owner.toString() !== req.user.id) {
-      return res.status(403).json({
-        success: false,
-        message: 'Not authorized to access this workspace'
-      });
-    }
+      if (!workspace) {
+        throw new Error('Workspace not found');
+      }
 
-    // Helper function to get content metadata
-    const getContentMetadata = (content, type) => {
-      if (type === 'csv') {
-        const lines = content.trim().split('\n');
-        const headers = lines[0].split(',');
-        const dataTypes = {};
-        
-        if (lines.length > 1) {
-          const firstDataRow = lines[1].split(',');
-          headers.forEach((header, index) => {
-            const value = firstDataRow[index];
-            if (!isNaN(Number(value))) {
-              dataTypes[header] = 'number';
-            } else if (Date.parse(value)) {
-              dataTypes[header] = 'date';
-            } else {
-              dataTypes[header] = 'string';
-            }
-          });
-        }
+      // Check if user has access to workspace
+      if (!workspace.members.includes(req.user.id) && workspace.owner.toString() !== req.user.id) {
+        throw new Error('Not authorized to access this workspace');
+      }
 
-        return {
-          columnCount: headers.length,
-          rowCount: lines.length - 1,
-          headers,
-          dataTypes
-        };
-      } else {
-        try {
-          const data = JSON.parse(content);
-          const sheets = Object.keys(data.sheets);
-          const primarySheet = data.sheets[data.primarySheet];
+      // Helper function to get content metadata
+      const getContentMetadata = (content, type) => {
+        if (type === 'csv') {
+          const lines = content.trim().split('\n');
+          const headers = lines[0].split(',');
           const dataTypes = {};
-
-          if (primarySheet.rows.length > 0) {
-            primarySheet.headers.forEach((header, index) => {
-              const value = primarySheet.rows[0][index];
+          
+          if (lines.length > 1) {
+            const firstDataRow = lines[1].split(',');
+            headers.forEach((header, index) => {
+              const value = firstDataRow[index];
               if (!isNaN(Number(value))) {
                 dataTypes[header] = 'number';
               } else if (Date.parse(value)) {
@@ -497,144 +473,204 @@ exports.uploadDataset = async (req, res) => {
           }
 
           return {
-            columnCount: primarySheet.headers.length,
-            rowCount: primarySheet.rows.length,
-            sheets,
-            headers: primarySheet.headers,
+            columnCount: headers.length,
+            rowCount: lines.length - 1,
+            headers,
             dataTypes
           };
-        } catch (e) {
-          return {
-            columnCount: 0,
-            rowCount: 0,
-            headers: []
-          };
+        } else {
+          try {
+            const data = JSON.parse(content);
+            const sheets = Object.keys(data.sheets);
+            const primarySheet = data.sheets[data.primarySheet];
+            const dataTypes = {};
+
+            if (primarySheet.rows.length > 0) {
+              primarySheet.headers.forEach((header, index) => {
+                const value = primarySheet.rows[0][index];
+                if (!isNaN(Number(value))) {
+                  dataTypes[header] = 'number';
+                } else if (Date.parse(value)) {
+                  dataTypes[header] = 'date';
+                } else {
+                  dataTypes[header] = 'string';
+                }
+              });
+            }
+
+            return {
+              columnCount: primarySheet.headers.length,
+              rowCount: primarySheet.rows.length,
+              sheets,
+              headers: primarySheet.headers,
+              dataTypes
+            };
+          } catch (e) {
+            return {
+              columnCount: 0,
+              rowCount: 0,
+              headers: []
+            };
+          }
         }
-      }
-    };
-
-    // Helper function to detect changes
-    const detectChanges = (previousVersion, newContent, type) => {
-      const changes = {
-        addedRows: 0,
-        removedRows: 0,
-        modifiedRows: 0,
-        addedColumns: [],
-        removedColumns: [],
-        modifiedColumns: []
       };
 
-      const oldContent = previousVersion.content;
-      const newMetadata = getContentMetadata(newContent, type);
-      
-      changes.addedRows = Math.max(0, newMetadata.rowCount - previousVersion.metadata.rowCount);
-      changes.removedRows = Math.max(0, previousVersion.metadata.rowCount - newMetadata.rowCount);
+      // Helper function to detect changes
+      const detectChanges = (previousVersion, newContent, type) => {
+        const changes = {
+          addedRows: 0,
+          removedRows: 0,
+          modifiedRows: 0,
+          addedColumns: [],
+          removedColumns: [],
+          modifiedColumns: []
+        };
 
-      const oldHeaders = previousVersion.metadata.headers;
-      const newHeaders = newMetadata.headers;
+        const oldContent = previousVersion.content;
+        const newMetadata = getContentMetadata(newContent, type);
+        
+        changes.addedRows = Math.max(0, newMetadata.rowCount - previousVersion.metadata.rowCount);
+        changes.removedRows = Math.max(0, previousVersion.metadata.rowCount - newMetadata.rowCount);
 
-      changes.addedColumns = newHeaders.filter(h => !oldHeaders.includes(h));
-      changes.removedColumns = oldHeaders.filter(h => !newHeaders.includes(h));
+        const oldHeaders = previousVersion.metadata.headers;
+        const newHeaders = newMetadata.headers;
 
-      // Generate change description
-      const descriptions = [];
-      if (changes.addedRows > 0) descriptions.push(`Added ${changes.addedRows} rows`);
-      if (changes.removedRows > 0) descriptions.push(`Removed ${changes.removedRows} rows`);
-      if (changes.addedColumns.length > 0) descriptions.push(`Added columns: ${changes.addedColumns.join(', ')}`);
-      if (changes.removedColumns.length > 0) descriptions.push(`Removed columns: ${changes.removedColumns.join(', ')}`);
+        changes.addedColumns = newHeaders.filter(h => !oldHeaders.includes(h));
+        changes.removedColumns = oldHeaders.filter(h => !newHeaders.includes(h));
 
-      changes.changeDescription = descriptions.join('. ');
-      return changes;
-    };
+        // Generate change description
+        const descriptions = [];
+        if (changes.addedRows > 0) descriptions.push(`Added ${changes.addedRows} rows`);
+        if (changes.removedRows > 0) descriptions.push(`Removed ${changes.removedRows} rows`);
+        if (changes.addedColumns.length > 0) descriptions.push(`Added columns: ${changes.addedColumns.join(', ')}`);
+        if (changes.removedColumns.length > 0) descriptions.push(`Removed columns: ${changes.removedColumns.join(', ')}`);
 
-    // Helper function to check similar structure
-    const isSimilarStructure = (existingDataset, newContent, type) => {
-      const latestVersion = existingDataset.versions[existingDataset.versions.length - 1];
-      const existingMetadata = latestVersion.metadata;
-      const newMetadata = getContentMetadata(newContent, type);
-
-      if (!existingMetadata?.headers || !newMetadata?.headers) return false;
-
-      const headerSimilarity = existingMetadata.headers.filter(h => 
-        newMetadata.headers?.includes(h)
-      ).length / Math.min(existingMetadata.headers.length, newMetadata.headers.length);
-
-      return headerSimilarity >= 0.7;
-    };
-
-    const baseName = fileName.replace(/\.[^/.]+$/, "");
-    const existingDataset = workspace.datasets.find(dataset => 
-      dataset.name === baseName || isSimilarStructure(dataset, content, type)
-    );
-
-    let response;
-
-    if (existingDataset) {
-      // Add new version to existing dataset
-      const previousVersion = existingDataset.versions[existingDataset.versions.length - 1];
-      const metadata = getContentMetadata(content, type);
-      const changeMetadata = detectChanges(previousVersion, content, type);
-
-      const newVersion = {
-        id: new Date().getTime().toString(),
-        version: existingDataset.currentVersion + 1,
-        fileName,
-        createdAt: new Date(),
-        userId: req.user.id,
-        content,
-        type,
-        metadata,
-        changeMetadata,
-        parentVersionId: previousVersion.id
+        changes.changeDescription = descriptions.join('. ');
+        return changes;
       };
 
-      existingDataset.versions.push(newVersion);
-      existingDataset.currentVersion++;
-      existingDataset.updatedAt = new Date();
+      // Helper function to check similar structure
+      const isSimilarStructure = (existingDataset, newContent, type) => {
+        const latestVersion = existingDataset.versions[existingDataset.versions.length - 1];
+        const existingMetadata = latestVersion.metadata;
+        const newMetadata = getContentMetadata(newContent, type);
 
-      response = {
-        dataset: existingDataset,
-        isNewDataset: false,
-        version: newVersion.version
+        if (!existingMetadata?.headers || !newMetadata?.headers) return false;
+
+        const headerSimilarity = existingMetadata.headers.filter(h => 
+          newMetadata.headers?.includes(h)
+        ).length / Math.min(existingMetadata.headers.length, newMetadata.headers.length);
+
+        return headerSimilarity >= 0.7;
       };
-    } else {
-      // Create new dataset
-      const newDataset = {
-        id: new Date().getTime().toString(),
-        name: baseName,
-        currentVersion: 1,
-        versions: [{
-          id: new Date().getTime().toString() + '_v1',
-          version: 1,
+
+      const baseName = fileName.replace(/\.[^/.]+$/, "");
+      const existingDataset = workspace.datasets.find(dataset => 
+        dataset.name === baseName || isSimilarStructure(dataset, content, type)
+      );
+
+      let response;
+
+      if (existingDataset) {
+        // Add new version to existing dataset
+        const previousVersion = existingDataset.versions[existingDataset.versions.length - 1];
+        const metadata = getContentMetadata(content, type);
+        const changeMetadata = detectChanges(previousVersion, content, type);
+
+        const newVersion = {
+          id: new Date().getTime().toString(),
+          version: existingDataset.currentVersion + 1,
           fileName,
           createdAt: new Date(),
           userId: req.user.id,
           content,
           type,
-          metadata: getContentMetadata(content, type)
-        }],
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        userId: req.user.id
-      };
+          metadata,
+          changeMetadata,
+          parentVersionId: previousVersion.id
+        };
 
-      workspace.datasets.push(newDataset);
+        existingDataset.versions.push(newVersion);
+        existingDataset.currentVersion++;
+        existingDataset.updatedAt = new Date();
 
-      response = {
-        dataset: newDataset,
-        isNewDataset: true,
-        version: 1
-      };
+        response = {
+          dataset: existingDataset,
+          isNewDataset: false,
+          version: newVersion.version
+        };
+      } else {
+        // Create new dataset
+        const newDataset = {
+          id: new Date().getTime().toString(),
+          name: baseName,
+          currentVersion: 1,
+          versions: [{
+            id: new Date().getTime().toString() + '_v1',
+            version: 1,
+            fileName,
+            createdAt: new Date(),
+            userId: req.user.id,
+            content,
+            type,
+            metadata: getContentMetadata(content, type)
+          }],
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: req.user.id
+        };
+
+        workspace.datasets.push(newDataset);
+
+        response = {
+          dataset: newDataset,
+          isNewDataset: true,
+          version: 1
+        };
+      }
+
+      await workspace.save();
+      return response;
+
+    } catch (error) {
+      // Check if it's a version error and we can retry
+      if ((error.name === 'VersionError' || error.message.includes('version')) && retryCount < MAX_RETRIES) {
+        console.log(`Version conflict detected, retrying (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`);
+        
+        // Exponential backoff with jitter
+        const delay = BASE_DELAY * Math.pow(2, retryCount) + Math.random() * 100;
+        await new Promise(resolve => setTimeout(resolve, delay));
+        
+        return uploadWithRetry(retryCount + 1);
+      }
+      throw error;
     }
+  };
 
-    await workspace.save();
-
+  try {
+    const response = await uploadWithRetry();
+    
     res.status(201).json({
       success: true,
       data: response
     });
   } catch (error) {
     console.error('Error uploading dataset:', error);
+    
+    if (error.message === 'Workspace not found') {
+      return res.status(404).json({
+        success: false,
+        message: 'Workspace not found'
+      });
+    }
+    
+    if (error.message === 'Not authorized to access this workspace') {
+      return res.status(403).json({
+        success: false,
+        message: 'Not authorized to access this workspace'
+      });
+    }
+    
     res.status(500).json({
       success: false,
       message: error.message

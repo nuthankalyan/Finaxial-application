@@ -10,6 +10,8 @@ import InsightsList, { SavedInsight } from '../../components/InsightsList';
 import VisualizationPanel from '../../components/VisualizationPanel';
 import VisualizationHistory from '../../components/VisualizationHistory';
 import { analyzeCsvWithGemini, generateChartData, analyzeMultipleCsvFiles, generateMultipleFilesChartData, FinancialInsights, ChartData, FileInfo } from '../../services/geminiService';
+import { taxOptimizationService, TaxOptimizationResult } from '../../services/taxOptimizationService';
+import TaxOptimizationModal from '../../components/TaxOptimizationModal/TaxOptimizationModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -272,6 +274,11 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [showVersionHistory, setShowVersionHistory] = useState(false);
   const [datasetVersions, setDatasetVersions] = useState<DatasetVersion[]>([]);
   const [loadingVersions, setLoadingVersions] = useState(false);
+  
+  // Add new state for tax optimization
+  const [taxOptimizationResult, setTaxOptimizationResult] = useState<TaxOptimizationResult | null>(null);
+  const [showTaxOptimizationModal, setShowTaxOptimizationModal] = useState(false);
+  const [generatingTaxOptimization, setGeneratingTaxOptimization] = useState(false);
   
   // Simple helper function to format chat messages for display
   const formatChatMessage = (text: string): React.ReactNode => {
@@ -1126,6 +1133,88 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     setNotification(prev => ({ ...prev, show: false }));
   };
 
+  // Function to generate tax optimization suggestions
+  const generateTaxOptimizationSuggestions = async () => {
+    if (!csvContent || !fileName) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'No Data Available',
+        message: 'Please upload and analyze financial data first before generating tax optimization suggestions.'
+      });
+      return;
+    }
+
+    setGeneratingTaxOptimization(true);
+    
+    try {
+      console.log('Generating tax optimization suggestions...');
+      const result = await taxOptimizationService.generateTaxOptimizationSuggestions(
+        csvContent,
+        fileName
+      );
+      
+      setTaxOptimizationResult(result);
+      setShowTaxOptimizationModal(true);
+      
+      // Show success notification
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Tax Optimization Complete',
+        message: 'AI-powered tax optimization suggestions have been generated successfully.'
+      });
+    } catch (err: any) {
+      console.error('Error generating tax optimization suggestions:', err);
+      setError(`Failed to generate tax optimization suggestions: ${err.message}`);
+      
+      // Show error notification
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Tax Optimization Failed',
+        message: err.message || 'Failed to generate tax optimization suggestions'
+      });
+    } finally {
+      setGeneratingTaxOptimization(false);
+    }
+  };
+
+  // Function to handle tax optimization modal close
+  const handleTaxOptimizationModalClose = () => {
+    setShowTaxOptimizationModal(false);
+  };
+
+  // Function to export tax optimization report
+  const handleTaxOptimizationReportExport = (report: string) => {
+    try {
+      const blob = new Blob([report], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `tax-optimization-report-${fileName?.replace(/\.[^/.]+$/, '') || 'analysis'}-${new Date().toISOString().split('T')[0]}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Report Downloaded',
+        message: 'Tax optimization report has been downloaded successfully.'
+      });
+    } catch (error) {
+      console.error('Error exporting tax optimization report:', error);
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Export Failed',
+        message: 'Failed to export tax optimization report.'
+      });
+    }
+  };
+
   // Add a component for data validation error popup
   const DataValidationErrorModal = () => {
     if (!showDataValidationError) return null;
@@ -1480,6 +1569,31 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         ) : (
                           <p>No recommendations available for this analysis.</p>
                         )}
+                        
+                        {/* Tax Optimization Button */}
+                        <div className={styles.taxOptimizationSection}>
+                          <h4>AI-Powered Tax Optimization</h4>
+                          <p>Get personalized tax optimization suggestions based on your financial data.</p>
+                          <button
+                            className={styles.taxOptimizationButton}
+                            onClick={generateTaxOptimizationSuggestions}
+                            disabled={generatingTaxOptimization || !csvContent}
+                          >
+                            {generatingTaxOptimization ? (
+                              <>
+                                <div className={styles.buttonSpinner}></div>
+                                Generating Suggestions...
+                              </>
+                            ) : (
+                              <>
+                                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                                  <path d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M17,13H13V17H11V13H7V11H11V7H13V11H17V13Z"/>
+                                </svg>
+                                Get Tax Optimization Suggestions
+                              </>
+                            )}
+                          </button>
+                        </div>
                       </div>
                     </div>
                     
@@ -2454,6 +2568,15 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       <AnimatePresence>
         {showDataValidationError && <DataValidationErrorModal />}
       </AnimatePresence>
+      
+      {/* Tax Optimization Modal */}
+      <TaxOptimizationModal
+        isOpen={showTaxOptimizationModal}
+        result={taxOptimizationResult}
+        fileName={fileName || undefined}
+        onClose={handleTaxOptimizationModalClose}
+        onExportReport={handleTaxOptimizationReportExport}
+      />
       
       {/* Existing notification */}
       <AnimatePresence>
