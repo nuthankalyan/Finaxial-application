@@ -60,7 +60,6 @@ export default function CsvUploader({ onFileUploadAction, isLoading, workspaceId
           type: file.type
         }));        const uploadResults = await datasetService.uploadMultipleDatasets(
           filesForUpload,
-          'current-user-id', // In a real app, get this from auth context
           workspaceId
         );
 
@@ -117,9 +116,27 @@ export default function CsvUploader({ onFileUploadAction, isLoading, workspaceId
         setTimeout(() => {
           setShowNotification(false);
         }, 5000);
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error uploading files:', error);
-        setError('Failed to upload files. Please try again.');
+        console.error('Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        });
+        
+        // More detailed error message
+        let errorMessage = 'Failed to upload files. Please try again.';
+        if (error.message?.includes('Network')) {
+          errorMessage = 'Network error. Please check your connection and try again.';
+        } else if (error.message?.includes('401')) {
+          errorMessage = 'Authentication error. Please log in again.';
+        } else if (error.message?.includes('403')) {
+          errorMessage = 'Permission denied. You may not have access to this workspace.';
+        } else if (error.message?.includes('500')) {
+          errorMessage = 'Server error. Please try again later.';
+        }
+        
+        setError(errorMessage);
       }
     }
   }, [uploadedFiles, onFileUploadAction, workspaceId]);

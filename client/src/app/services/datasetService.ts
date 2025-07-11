@@ -21,6 +21,7 @@ class DatasetService {  private async makeRequest(url: string, options: RequestI
     if (!response.ok) {
       const errorText = await response.text();
       console.error('API Error response:', errorText);
+      console.error('Response headers:', Object.fromEntries(response.headers.entries()));
       throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
     }
 
@@ -31,7 +32,6 @@ class DatasetService {  private async makeRequest(url: string, options: RequestI
     content: string, 
     fileName: string, 
     type: 'csv' | 'excel',
-    userId: string,
     workspaceId: string
   ): Promise<DatasetResponse> {
     const result = await this.makeRequest(buildApiUrl(`api/workspaces/${workspaceId}/datasets`), {
@@ -48,11 +48,10 @@ class DatasetService {  private async makeRequest(url: string, options: RequestI
 
   async uploadMultipleDatasets(
     files: { content: string; fileName: string; type: 'csv' | 'excel' }[],
-    userId: string,
     workspaceId: string
   ): Promise<{ dataset: Dataset; isNewDataset: boolean; version: number }[]> {
     const results = await Promise.all(
-      files.map(file => this.uploadDataset(file.content, file.fileName, file.type, userId, workspaceId))
+      files.map(file => this.uploadDataset(file.content, file.fileName, file.type, workspaceId))
     );
     return results;
   }  async getDataset(workspaceId: string, datasetId: string): Promise<Dataset | undefined> {

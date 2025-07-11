@@ -38,7 +38,7 @@ export const WorkspaceDatasetManager: React.FC<WorkspaceDatasetManagerProps> = (
       const content = await file.text();
       const type = file.name.endsWith('.csv') ? 'csv' : 'excel';
       
-      return datasetService.uploadDataset(content, file.name, type, userId, workspaceId);
+      return datasetService.uploadDataset(content, file.name, type, workspaceId);
     });
 
     try {
