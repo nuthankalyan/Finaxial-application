@@ -11,6 +11,15 @@
   background-color: var(--background);
 }
 
+/* Dark theme styles for the entire page */
+:global(.dark) .page {
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --background: #111827;
+  --border-color: #374151;
+  background-color: var(--background);
+}
+
 .sparklesWrapper {
   position: relative;
   width: 100%;
@@ -114,6 +123,12 @@
   transition: transform 0.3s ease;
 }
 
+/* Dark theme for dashboard preview */
+:global(.dark) .dashboardPreview {
+  background: #1f2937;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+}
+
 .dashboardPreview:hover {
   transform: rotateY(0deg) rotateX(0deg);
 }
@@ -133,9 +148,19 @@
   color: var(--text-primary);
 }
 
+/* Dark theme for dashboard title */
+:global(.dark) .dashboardTitle {
+  color: #f9fafb;
+}
+
 .dashboardDate {
   color: var(--text-secondary);
   font-size: 0.875rem;
+}
+
+/* Dark theme for dashboard date */
+:global(.dark) .dashboardDate {
+  color: #9ca3af;
 }
 
 .dashboardGrid {
@@ -153,6 +178,12 @@
   border: 1px solid rgba(78, 113, 255, 0.1);
 }
 
+/* Dark theme for dashboard cards */
+:global(.dark) .dashboardCard {
+  background: #374151;
+  border-color: rgba(78, 113, 255, 0.2);
+}
+
 .dashboardCard:hover {
   transform: translateY(-4px);
   box-shadow: 0 10px 15px -3px rgba(78, 113, 255, 0.1);
@@ -164,11 +195,21 @@
   margin-bottom: 0.5rem;
 }
 
+/* Dark theme for card labels */
+:global(.dark) .cardLabel {
+  color: #9ca3af;
+}
+
 .cardValue {
   font-size: 1.5rem;
   font-weight: 700;
   color: var(--text-primary);
   margin-bottom: 0.5rem;
+}
+
+/* Dark theme for card values */
+:global(.dark) .cardValue {
+  color: #f9fafb;
 }
 
 .cardTrend {
@@ -195,10 +236,20 @@
   margin-top: 1rem;
 }
 
+/* Dark theme for dashboard chart */
+:global(.dark) .dashboardChart {
+  background: #374151;
+}
+
 .chartTitle {
   font-size: 0.875rem;
   color: var(--text-secondary);
   margin-bottom: 1rem;
+}
+
+/* Dark theme for chart title */
+:global(.dark) .chartTitle {
+  color: #9ca3af;
 }
 
 .chartBars {
@@ -242,6 +293,11 @@
   background: linear-gradient(180deg, #F8FAFF 0%, #FFFFFF 100%);
 }
 
+/* Dark theme for features section */
+:global(.dark) .featuresSection {
+  background: linear-gradient(180deg, #1f2937 0%, #111827 100%);
+}
+
 .mainTitle {
   font-size: 2.5rem;
   font-weight: 800;
@@ -275,6 +331,13 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
+/* Dark theme for feature cards */
+:global(.dark) .featureCard {
+  background: #1f2937;
+  border-color: #374151;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
 .featureCard:hover {
   transform: translateY(-8px);
   box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -291,6 +354,11 @@
   justify-content: center;
   margin-bottom: 1.5rem;
   position: relative;
+}
+
+/* Dark theme for feature icons */
+:global(.dark) .featureIcon {
+  background: linear-gradient(135deg, #374151 0%, #4b5563 100%);
 }
 
 .featureIcon::after {
@@ -330,6 +398,11 @@
   justify-content: center;
 }
 
+/* Dark theme for feature titles */
+:global(.dark) .featureTitle {
+  color: #f9fafb;
+}
+
 .featureDescription {
   color: var(--text-secondary);
   line-height: 1.6;
@@ -337,10 +410,20 @@
   margin-top: 1rem;
 }
 
+/* Dark theme for feature descriptions */
+:global(.dark) .featureDescription {
+  color: #9ca3af;
+}
+
 /* Analytics Section */
 .analyticsSection {
   padding: 6rem 0;
   background: linear-gradient(180deg, #FFFFFF 0%, #F8FAFF 100%);
+}
+
+/* Dark theme for analytics section */
+:global(.dark) .analyticsSection {
+  background: linear-gradient(180deg, #111827 0%, #1f2937 100%);
 }
 
 .sectionTitle {
@@ -376,6 +459,12 @@
   position: relative;
   border: 1px solid #E5E7EB;
   overflow: hidden;
+}
+
+/* Dark theme for analytics features */
+:global(.dark) .analyticsFeature {
+  background: #1f2937;
+  border-color: #374151;
 }
 
 .analyticsFeature::before {
@@ -414,6 +503,11 @@
   overflow: hidden;
 }
 
+/* Dark theme for feature visuals */
+:global(.dark) .featureVisual {
+  background: #374151;
+}
+
 .featureVisual::after {
   content: '';
   position: absolute;
@@ -445,6 +539,11 @@
   margin: 1.5rem 0 1rem;
 }
 
+/* Dark theme for analytics feature headings */
+:global(.dark) .analyticsFeature h3 {
+  color: #f9fafb;
+}
+
 .analyticsFeature p {
   color: var(--text-secondary);
   line-height: 1.6;
@@ -452,10 +551,20 @@
   margin-bottom: 1rem;
 }
 
+/* Dark theme for analytics feature paragraphs */
+:global(.dark) .analyticsFeature p {
+  color: #9ca3af;
+}
+
 /* Testimonial Section */
 .testimonialSection {
   padding: 6rem 0;
   background: linear-gradient(135deg, #F5F7FF 0%, #FFFFFF 100%);
+}
+
+/* Dark theme for testimonial section */
+:global(.dark) .testimonialSection {
+  background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
 }
 
 .metricsHighlight {
@@ -468,6 +577,12 @@
   box-shadow: 0 20px 40px rgba(78, 113, 255, 0.15);
   border: 2px solid var(--primary);
   transform: translateY(-20px);
+}
+
+/* Dark theme for metrics highlight */
+:global(.dark) .metricsHighlight {
+  background: #1f2937;
+  border-color: #4E71FF;
 }
 
 .metricNumber {
@@ -488,12 +603,22 @@
   font-weight: 600;
 }
 
+/* Dark theme for metric label */
+:global(.dark) .metricLabel {
+  color: #9ca3af;
+}
+
 .sectionTitle {
   text-align: center;
   font-size: 2.5rem;
   font-weight: 800;
   margin-bottom: 4rem;
   color: var(--text-primary);
+}
+
+/* Dark theme for section titles */
+:global(.dark) .sectionTitle {
+  color: #f9fafb;
 }
 
 .trustCardGrid {
@@ -513,6 +638,12 @@
   box-shadow: 0 4px 6px rgba(78, 113, 255, 0.1);
 }
 
+/* Dark theme for trust cards */
+:global(.dark) .trustCard {
+  background: #1f2937;
+  border-color: rgba(78, 113, 255, 0.2);
+}
+
 .trustCard:hover {
   transform: translateY(-10px);
   box-shadow: 0 20px 40px rgba(78, 113, 255, 0.15);
@@ -527,6 +658,11 @@
   font-weight: 500;
   position: relative;
   padding-left: 2rem;
+}
+
+/* Dark theme for testimonial quotes */
+:global(.dark) .testimonialQuote {
+  color: #f9fafb;
 }
 
 .testimonialQuote::before {
@@ -557,6 +693,11 @@
   color: var(--text-secondary);
   font-size: 0.875rem;
   line-height: 1.4;
+}
+
+/* Dark theme for author role */
+:global(.dark) .authorRole {
+  color: #9ca3af;
 }
 
 .metricNumber {
@@ -609,6 +750,11 @@
   background: var(--background);
 }
 
+/* Dark theme for FAQ section */
+:global(.dark) .faqSection {
+  background: #111827;
+}
+
 .faqContainer {
   display: grid;
   grid-template-columns: 2fr 1fr;
@@ -625,6 +771,11 @@
   margin-bottom: 3rem;
 }
 
+/* Dark theme for FAQ title */
+:global(.dark) .faqTitle {
+  color: #f9fafb;
+}
+
 .faqList {
   display: flex;
   flex-direction: column;
@@ -638,6 +789,12 @@
   padding: 1.5rem;
   cursor: pointer;
   transition: all 0.3s ease;
+}
+
+/* Dark theme for FAQ questions */
+:global(.dark) .faqQuestion {
+  background: #1f2937;
+  border-color: #374151;
 }
 
 .faqQuestion:hover {
@@ -659,6 +816,11 @@
   margin: 0;
 }
 
+/* Dark theme for question text */
+:global(.dark) .questionText {
+  color: #f9fafb;
+}
+
 .chevronIcon {
   width: 24px;
   height: 24px;
@@ -675,6 +837,12 @@
   border: 1px solid #E5E7EB;
 }
 
+/* Dark theme for contact box */
+:global(.dark) .contactBox {
+  background: #1f2937;
+  border-color: #374151;
+}
+
 .contactTitle {
   font-size: 1.5rem;
   font-weight: 600;
@@ -683,9 +851,19 @@
   line-height: 1.4;
 }
 
+/* Dark theme for contact title */
+:global(.dark) .contactTitle {
+  color: #f9fafb;
+}
+
 .contactText {
   color: #6B7280;
   margin-bottom: 1.5rem;
+}
+
+/* Dark theme for contact text */
+:global(.dark) .contactText {
+  color: #9ca3af;
 }
 
 .contactLink {
@@ -898,6 +1076,12 @@
   font-size: 1rem;
   line-height: 1.6;
   display: none;
+}
+
+/* Dark theme for FAQ answers */
+:global(.dark) .faqAnswer {
+  color: #9ca3af;
+  border-top-color: #374151;
 }
 
 .faqQuestion.active .faqAnswer {

@@ -332,3 +332,35 @@
   border-color: rgba(37, 99, 235, 0.2);
   transform: translateY(-1px);
 }
+
+.dark .showVersionsButton button, :global(.dark) .showVersionsButton button {
+  background-color: var(--card-background) !important;
+  color: var(--primary-color) !important;
+  border: 1.5px solid var(--border-color) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  transition: background 0.2s, color 0.2s;
+}
+.dark .showVersionsButton button:hover, :global(.dark) .showVersionsButton button:hover {
+  background-color: rgba(99, 102, 241, 0.10) !important;
+  color: var(--primary-hover) !important;
+  border-color: var(--primary-color) !important;
+}
+
+.dark .dropzone, :global(.dark) .dropzone {
+  background-color: var(--card-background) !important;
+  border: 2px dashed var(--border-color) !important;
+  color: var(--text-color) !important;
+}
+.dark .dropzone:hover, :global(.dark) .dropzone:hover {
+  background-color: rgba(99, 102, 241, 0.10) !important;
+  border-color: var(--primary-color) !important;
+}
+.dark .mainText, :global(.dark) .mainText {
+  color: var(--text-color) !important;
+}
+.dark .subText, :global(.dark) .subText {
+  color: var(--muted-color) !important;
+}
+.dark .uploadIcon, :global(.dark) .uploadIcon {
+  color: var(--muted-color) !important;
+}

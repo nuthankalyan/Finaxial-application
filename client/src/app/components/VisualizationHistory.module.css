@@ -98,6 +98,31 @@
   margin: 0;
 }
 
+.dark .container, :global(.dark) .container {
+  background-color: #23293a !important;
+  color: #f9fafb !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+}
+.dark .title, :global(.dark) .title {
+  color: #fff !important;
+}
+.dark .chartDescription, :global(.dark) .chartDescription {
+  background-color: #181c24 !important;
+  border-left: 2px solid #6366f1 !important;
+}
+.dark .chartTitle, :global(.dark) .chartTitle {
+  color: #f9fafb !important;
+}
+.dark .description, :global(.dark) .description {
+  color: #9ca3af !important;
+}
+.dark .emptyState, :global(.dark) .emptyState {
+  background-color: #181c24 !important;
+}
+.dark .emptyState p, :global(.dark) .emptyState p {
+  color: #64748b !important;
+}
+
 @media (max-width: 768px) {
   .chartContainer {
     height: 200px;

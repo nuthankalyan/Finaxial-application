@@ -1096,3 +1096,147 @@
   border: none;
   border-top: 1px solid var(--border-color);
 }
+
+/* Dark theme styles for dashboard page */
+:global(.dark) .container {
+  background-color: #111827;
+  color: #f9fafb;
+}
+
+:global(.dark) .header {
+  background-color: #1f2937;
+  border-bottom: 1px solid #374151;
+  color: #f9fafb;
+}
+
+:global(.dark) .welcomeSection h2,
+:global(.dark) .header h1 {
+  color: #8DD8FF;
+}
+
+:global(.dark) .dashboardStats {
+  background: #1f2937;
+}
+
+:global(.dark) .statCard {
+  background: #232946;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+:global(.dark) .statCard h4,
+:global(.dark) .statValue,
+:global(.dark) .statChange {
+  color: #f9fafb;
+}
+
+:global(.dark) .statChangePositive {
+  color: #10b981;
+}
+
+:global(.dark) .statChangeNegative {
+  color: #ef4444;
+}
+
+:global(.dark) .workspaceCard {
+  background: #1f2937;
+  color: #f9fafb;
+  border-color: #374151;
+}
+
+:global(.dark) .workspaceCard.createCard {
+  background: #232946;
+  color: #8DD8FF;
+}
+
+:global(.dark) .workspaceCard:hover {
+  background: #374151;
+  border-color: #4E71FF;
+}
+
+:global(.dark) .workspaceTitle,
+:global(.dark) .workspaceDesc,
+:global(.dark) .workspaceDate {
+  color: #9ca3af;
+}
+
+:global(.dark) .dashboardSection {
+  background-color: #1f2937;
+  border-color: #374151;
+  color: #f9fafb;
+}
+
+:global(.dark) .dashboardSection h3 {
+  color: #f9fafb;
+}
+
+:global(.dark) .dashboardSection p {
+  color: #9ca3af;
+}
+
+:global(.dark) .activityButtonInner {
+  background-color: #232946;
+  color: #8DD8FF;
+  border-color: #374151;
+}
+
+:global(.dark) .activityButtonInner:hover {
+  background-color: #374151;
+}
+
+:global(.dark) .searchInput {
+  background-color: #232946;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
+:global(.dark) .searchInput::placeholder {
+  color: #9ca3af;
+}
+
+:global(.dark) .modal {
+  background-color: #232946;
+  color: #f9fafb;
+}
+
+:global(.dark) .modalHeader {
+  border-bottom: 1px solid #374151;
+}
+
+:global(.dark) .modalTitle {
+  color: #8DD8FF;
+}
+
+:global(.dark) .modalForm {
+  color: #f9fafb;
+}
+
+:global(.dark) .formGroup label {
+  color: #f9fafb;
+}
+
+:global(.dark) .formGroup input,
+:global(.dark) .formGroup textarea {
+  background-color: #1f2937;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
+:global(.dark) .formGroup input::placeholder,
+:global(.dark) .formGroup textarea::placeholder {
+  color: #9ca3af;
+}
+
+:global(.dark) .submitButton {
+  background-color: #4E71FF;
+  color: #f9fafb;
+}
+
+:global(.dark) .closeButton {
+  color: #9ca3af;
+}
+
+:global(.dark) .closeButton:hover {
+  color: #8DD8FF;
+  background-color: #232946;
+}

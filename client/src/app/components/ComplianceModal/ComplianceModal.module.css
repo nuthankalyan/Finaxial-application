@@ -942,3 +942,298 @@
   background: #eff6ff;
   border-left: 3px solid #3b82f6;
 }
+
+:global(.dark) .modalContent {
+  background: #1f2937;
+  color: #f9fafb;
+}
+:global(.dark) .modalHeader {
+  background: #111827;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .modalTitle {
+  color: #f9fafb;
+}
+:global(.dark) .fileName {
+  color: #9ca3af;
+}
+:global(.dark) .closeButton {
+  color: #d1d5db;
+}
+:global(.dark) .closeButton:hover {
+  background-color: #374151;
+  color: #fff;
+}
+:global(.dark) .summaryStats {
+  background: #1e293b;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .statCard {
+  background: #111827;
+  color: #f9fafb;
+  border: 2px solid #374151;
+}
+:global(.dark) .statValue {
+  color: #f9fafb;
+}
+:global(.dark) .statLabel {
+  color: #9ca3af;
+}
+:global(.dark) .tabNavigation {
+  background: #1e293b;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .tab {
+  color: #9ca3af;
+}
+:global(.dark) .tab.activeTab {
+  color: #60a5fa;
+  background: #374151;
+  border-bottom-color: #60a5fa;
+}
+:global(.dark) .tabContent {
+  background: #1f2937;
+  color: #d1d5db;
+}
+:global(.dark) .modalFooter {
+  background: #111827;
+  border-top: 1px solid #374151;
+}
+:global(.dark) .standardsGrid {
+  background: transparent;
+}
+:global(.dark) .standardCard {
+  background: #23293a;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+:global(.dark) .standardCard:hover {
+  background: #1e293b;
+  box-shadow: 0 8px 25px -8px rgba(30,41,59,0.25);
+}
+:global(.dark) .standardBadge {
+  background: #374151;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+:global(.dark) .gaapBadge {
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  color: #f9fafb;
+}
+:global(.dark) .ifrsBadge {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #f9fafb;
+}
+:global(.dark) .soxBadge {
+  background: linear-gradient(135deg, #f59e42 0%, #fbbf24 100%);
+  color: #23293a;
+}
+:global(.dark) .standardInfo {
+  color: #f9fafb;
+}
+:global(.dark) .standardTitle {
+  color: #f9fafb;
+}
+:global(.dark) .standardDescription {
+  color: #d1d5db;
+}
+:global(.dark) .executiveSummary {
+  background: #1e2330;
+  border-radius: 12px;
+}
+:global(.dark) .executiveSummary h3 {
+  color: #60a5fa;
+}
+:global(.dark) .executiveSummary p {
+  color: #d1d5db;
+}
+:global(.dark) .complianceBreakdown h3 {
+  color: #60a5fa;
+}
+:global(.dark) .recommendationsContent {
+  background: transparent;
+}
+:global(.dark) .recommendationsContent h3 {
+  color: #60a5fa;
+}
+:global(.dark) .recommendationsList {
+  background: transparent;
+}
+:global(.dark) .recommendationCard {
+  background: #23293a;
+  border: 1px solid #374151;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+}
+:global(.dark) .recommendationNumber {
+  background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+  color: #f9fafb;
+}
+:global(.dark) .recommendationText {
+  color: #d1d5db;
+}
+:global(.dark) .violationsContent {
+  background: transparent;
+}
+:global(.dark) .violationsHeader {
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .violationsCount {
+  color: #60a5fa;
+}
+:global(.dark) .violationsList {
+  background: transparent;
+}
+:global(.dark) .noViolations {
+  background: #23293a;
+  color: #9ca3af;
+  border: 2px dashed #374151;
+}
+:global(.dark) .violationCard {
+  background: #23293a;
+  border-left: 4px solid #374151;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.18);
+}
+:global(.dark) .violationCard.critical {
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #23293a 0%, #3b1d1d 100%);
+}
+:global(.dark) .violationCard.warning {
+  border-left-color: #fbbf24;
+  background: linear-gradient(135deg, #23293a 0%, #3b2f1d 100%);
+}
+:global(.dark) .violationCard.info {
+  border-left-color: #60a5fa;
+  background: linear-gradient(135deg, #23293a 0%, #1e293b 100%);
+}
+:global(.dark) .violationHeader {
+  color: #f9fafb;
+}
+:global(.dark) .violationSeverity {
+  color: #f9fafb;
+}
+:global(.dark) .severityText {
+  color: #60a5fa;
+}
+:global(.dark) .violationContent {
+  color: #d1d5db;
+}
+:global(.dark) .violationTitle {
+  color: #f9fafb;
+}
+:global(.dark) .violationMessage {
+  color: #d1d5db;
+}
+:global(.dark) .violationLocation {
+  color: #9ca3af;
+}
+:global(.dark) .violationLocation svg {
+  color: #60a5fa;
+}
+:global(.dark) .violationValue {
+  background: #1e293b;
+  color: #f9fafb;
+}
+:global(.dark) .violationSuggestion {
+  background: #1e293b;
+  border: 1px solid #60a5fa;
+  color: #60a5fa;
+}
+:global(.dark) .auditReadiness {
+  background: #23293a;
+  border: 1px solid #374151;
+}
+:global(.dark) .auditReadiness h3 {
+  color: #60a5fa;
+}
+:global(.dark) .auditReadiness p {
+  color: #d1d5db;
+}
+:global(.dark) .filesContent {
+  background: transparent;
+}
+:global(.dark) .filesList {
+  background: transparent;
+}
+:global(.dark) .fileCard {
+  background: #23293a;
+  border: 1px solid #374151;
+}
+:global(.dark) .fileCard:hover {
+  box-shadow: 0 4px 6px -1px rgba(30,41,59,0.18);
+}
+:global(.dark) .compliantFile {
+  border-left: 4px solid #10b981;
+}
+:global(.dark) .nonCompliantFile {
+  border-left: 4px solid #ef4444;
+}
+:global(.dark) .fileHeader {
+  color: #f9fafb;
+}
+:global(.dark) .fileName {
+  color: #f9fafb;
+}
+:global(.dark) .sheetName {
+  color: #9ca3af;
+}
+:global(.dark) .fileStatus {
+  background: #374151;
+  color: #f9fafb;
+}
+:global(.dark) .statusCompliant {
+  background-color: #047857;
+  color: #d1fae5;
+}
+:global(.dark) .statusNonCompliant {
+  background-color: #991b1b;
+  color: #fee2e2;
+}
+:global(.dark) .fileStats {
+  background: transparent;
+}
+:global(.dark) .statItem {
+  color: #f9fafb;
+}
+:global(.dark) .statLabel {
+  color: #9ca3af;
+}
+:global(.dark) .statValue {
+  color: #f9fafb;
+}
+:global(.dark) .fileViolations {
+  border-top: 1px solid #374151;
+}
+:global(.dark) .fileViolations h4 {
+  color: #60a5fa;
+}
+:global(.dark) .violationSummary {
+  background: #1e293b;
+}
+:global(.dark) .violationSeverity {
+  color: #f9fafb;
+}
+:global(.dark) .violationSummaryText {
+  color: #d1d5db;
+}
+:global(.dark) .violationMessage {
+  color: #d1d5db;
+}
+:global(.dark) .violationRule {
+  color: #60a5fa;
+}
+:global(.dark) .moreViolations {
+  background: #23293a;
+  color: #9ca3af;
+}
+:global(.dark) .severity-critical {
+  background: #3b1d1d;
+  border-left: 3px solid #ef4444;
+}
+:global(.dark) .severity-warning {
+  background: #3b2f1d;
+  border-left: 3px solid #fbbf24;
+}
+:global(.dark) .severity-info {
+  background: #1e293b;
+  border-left: 3px solid #60a5fa;
+}

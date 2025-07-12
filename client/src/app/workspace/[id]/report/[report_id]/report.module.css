@@ -425,3 +425,121 @@
     transform: rotate(360deg);
   }
 }
+
+:global(.dark) .reportContainer {
+  background-color: #111827 !important;
+  color: #f9fafb !important;
+}
+:global(.dark) .sidebar {
+  background-color: #1f2937 !important;
+  border-right: 1px solid #374151 !important;
+}
+:global(.dark) .sidebarTitle {
+  color: #f9fafb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+:global(.dark) .tabItem {
+  color: #9ca3af !important;
+}
+:global(.dark) .tabItem:hover {
+  background-color: #23293a !important;
+  color: #fff !important;
+}
+:global(.dark) .tabItemActive {
+  background-color: #23293a !important;
+  color: #6366f1 !important;
+}
+:global(.dark) .mainContent {
+  background: none !important;
+  color: #f9fafb !important;
+}
+:global(.dark) .reportHeader {
+  color: #f9fafb !important;
+}
+:global(.dark) .reportTitle {
+  color: #fff !important;
+}
+:global(.dark) .reportMeta {
+  color: #9ca3af !important;
+}
+:global(.dark) .backButton {
+  background-color: #23293a !important;
+  color: #9ca3af !important;
+}
+:global(.dark) .backButton:hover {
+  background-color: #6366f1 !important;
+  color: #fff !important;
+}
+:global(.dark) .summaryTables {
+  background: none !important;
+}
+:global(.dark) .tableSection {
+  background-color: #23293a !important;
+  color: #f9fafb !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+}
+:global(.dark) .tableHeader {
+  color: #fff !important;
+}
+:global(.dark) .tableDescription {
+  color: #9ca3af !important;
+}
+:global(.dark) .table th {
+  background-color: #181c24 !important;
+  color: #f9fafb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+:global(.dark) .table td {
+  color: #f9fafb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+:global(.dark) .loadingContainer {
+  background-color: #181c24 !important;
+  color: #f9fafb !important;
+}
+
+:global(.dark) .summaryCard,
+:global(.dark) .insightsCard,
+:global(.dark) .recommendationsCard {
+  background: #23293a !important;
+  color: #f9fafb !important;
+  border: 1px solid #374151 !important;
+  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.18);
+}
+:global(.dark) .summaryCard h3,
+:global(.dark) .insightsCard h3,
+:global(.dark) .recommendationsCard h3 {
+  color: #fff !important;
+  border-bottom: 2px solid #374151 !important;
+}
+:global(.dark) .summaryContent {
+  color: #f9fafb !important;
+}
+:global(.dark) .insightsList li,
+:global(.dark) .recommendationsList li {
+  color: #f9fafb !important;
+  border-bottom: 1px solid #374151 !important;
+}
+:global(.dark) .tablesOverview {
+  background: #23293a !important;
+  color: #f9fafb !important;
+  border: 1px solid #374151 !important;
+}
+:global(.dark) .tablesOverview h3 {
+  color: #fff !important;
+  border-bottom: 2px solid #374151 !important;
+}
+:global(.dark) .tableCard {
+  background: #181c24 !important;
+  color: #f9fafb !important;
+  border: 1px solid #374151 !important;
+}
+:global(.dark) .tableCard h4 {
+  color: #fff !important;
+}
+:global(.dark) .tableCard p {
+  color: #9ca3af !important;
+}
+:global(.dark) .tableStats {
+  color: #9ca3af !important;
+}

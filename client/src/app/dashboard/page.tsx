@@ -8,6 +8,7 @@ import { useAuth } from '../context/AuthContext';
 import { buildApiUrl, fetchWithErrorHandling } from '../utils/apiConfig';
 import { getActivityStats } from '../services/activityService';
 import DescriptionPopup from '../components/DescriptionPopup';
+import ThemeToggle from '../components/ThemeToggle';
 
 interface Workspace {
   _id: string;
@@ -676,6 +677,7 @@ export default function Dashboard() {
               </div>
             )}
           </div>
+          <ThemeToggle />
         </div>
       </div>
 

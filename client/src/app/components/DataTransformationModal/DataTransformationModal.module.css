@@ -1525,3 +1525,190 @@
   border-color: #94a3b8;
   box-shadow: 0 0 0 2px rgba(148, 163, 184, 0.2);
 }
+
+:global(.dark) .modal {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+}
+:global(.dark) .header {
+  background: #111827;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .title {
+  color: #f9fafb;
+}
+:global(.dark) .subtitle {
+  color: #9ca3af;
+}
+:global(.dark) .closeButton {
+  color: #d1d5db;
+}
+:global(.dark) .closeButton:hover {
+  background-color: #374151;
+  color: #fff;
+}
+:global(.dark) .tabs {
+  background-color: #1e293b;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .tab {
+  color: #9ca3af;
+}
+:global(.dark) .tab.activeTab {
+  color: #6366f1;
+  background-color: #374151;
+  border-bottom: 2px solid #6366f1;
+}
+:global(.dark) .content {
+  background-color: #1f2937;
+  color: #d1d5db;
+}
+:global(.dark) .summary {
+  background: #1e293b;
+  border: 1px solid #0284c7;
+}
+:global(.dark) .summaryText {
+  color: #60a5fa;
+}
+:global(.dark) .transformationItems {
+  background-color: #23293a;
+}
+:global(.dark) .transformationItem {
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .transformationItem.selected {
+  background-color: #374151;
+  border-left: 3px solid #6366f1;
+}
+:global(.dark) .transformationLabel {
+  color: #f9fafb;
+}
+:global(.dark) .selectedSummary {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+:global(.dark) .selectedTitle {
+  color: #f9fafb;
+}
+:global(.dark) .selectedChip {
+  background-color: #374151;
+  color: #60a5fa;
+}
+:global(.dark) .previewContainer {
+  background-color: #1f2937;
+}
+:global(.dark) .previewHeader {
+  background-color: #1e2330;
+}
+:global(.dark) .previewTitle {
+  color: #f9fafb;
+}
+:global(.dark) .previewStat {
+  color: #9ca3af;
+}
+:global(.dark) .previewTable {
+  background-color: #23293a;
+  border: 1px solid #374151;
+}
+:global(.dark) .previewTable th {
+  background-color: #1e293b;
+  color: #f9fafb;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .previewTable td {
+  color: #d1d5db;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .previewTable tr:nth-child(even) {
+  background-color: #1f2937;
+}
+:global(.dark) .previewNote {
+  background-color: #23293a;
+  color: #9ca3af;
+  border-top: 1px solid #374151;
+}
+:global(.dark) .footer {
+  background-color: #1e2330;
+  border-top: 1px solid #374151;
+}
+:global(.dark) .previewButton {
+  background-color: #2563eb;
+  color: #f9fafb;
+}
+:global(.dark) .previewButton:hover:not(:disabled) {
+  background-color: #1d4ed8;
+  color: #fff;
+}
+:global(.dark) .cancelButton {
+  background-color: #374151;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+:global(.dark) .cancelButton:hover:not(:disabled) {
+  background-color: #2563eb;
+  color: #fff;
+  border: 1px solid #2563eb;
+}
+:global(.dark) .anomaliesContainer {
+  background-color: #1f2937;
+}
+:global(.dark) .anomalySummary {
+  background: #23293a;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+:global(.dark) .anomalySummary h3 {
+  color: #60a5fa;
+}
+:global(.dark) .anomalySummary p {
+  color: #d1d5db;
+}
+:global(.dark) .recommendationsContainer {
+  background: #23293a;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+:global(.dark) .recommendationsContainer h4 {
+  color: #38bdf8;
+}
+:global(.dark) .recommendationItem {
+  background: #1e293b;
+  border: 1px solid #374151;
+}
+:global(.dark) .recommendationItem:hover {
+  background: #23293a;
+  border-color: #60a5fa;
+}
+:global(.dark) .recommendationItem label {
+  color: #f9fafb;
+}
+:global(.dark) .anomalyList {
+  background: #23293a;
+  border: 1px solid #374151;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+}
+:global(.dark) .anomalyList h4 {
+  color: #60a5fa;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .anomalyItem {
+  background-color: #1e293b;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+}
+:global(.dark) .anomalyTypeText {
+  color: #f9fafb;
+}
+:global(.dark) .anomalyIcon {
+  background-color: #23293a;
+}
+:global(.dark) .severityHigh .anomalyIcon {
+  color: #f87171;
+  background-color: #3b1d1d;
+}
+:global(.dark) .severityMedium .anomalyIcon {
+  color: #fbbf24;
+  background-color: #3b2f1d;
+}
+:global(.dark) .severityLow .anomalyIcon {
+  color: #38bdf8;
+  background-color: #1e293b;
+}

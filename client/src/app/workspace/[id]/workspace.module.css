@@ -1879,3 +1879,251 @@
 }
 
 /* Content styling enhancements */
+
+/* Dark theme overrides for workspace */
+:global(.dark) .container {
+  background-color: #111827;
+  color: #f9fafb;
+}
+:global(.dark) .sidebar {
+  background-color: #1f2937;
+  border-right: 1px solid #374151;
+}
+:global(.dark) .sidebarTitle {
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .previousInsights h3 {
+  color: #9ca3af;
+}
+:global(.dark) .insightItem {
+  background-color: #1e293b;
+}
+:global(.dark) .insightItem:hover {
+  background-color: #374151;
+  border-color: #4b5563;
+}
+:global(.dark) .mainContent {
+  background-color: #111827;
+}
+:global(.dark) .header {
+  background-color: #1f2937;
+  border-bottom: 1px solid #374151;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+:global(.dark) .backButton {
+  background-color: #1f2937;
+  color: #9ca3af;
+}
+:global(.dark) .backButton:hover {
+  background-color: #6366f1;
+  color: #fff;
+}
+:global(.dark) .workspaceTitle h1 {
+  color: #f9fafb;
+}
+:global(.dark) .workspaceDate {
+  color: #9ca3af;
+}
+:global(.dark) .uploadArea {
+  background-color: #111827;
+}
+:global(.dark) .disclaimerBox {
+  background-color: rgba(30,41,59,0.8);
+  color: #60a5fa;
+}
+:global(.dark) .tabsContainer {
+  background-color: #1e293b;
+  border: 1px solid #374151;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+}
+:global(.dark) .tabButton {
+  color: #9ca3af;
+}
+:global(.dark) .tabButton:hover {
+  color: #f9fafb;
+  background-color: #374151;
+}
+:global(.dark) .activeTab {
+  color: #f9fafb;
+  background-color: #1f2937;
+  border: 1px solid #6366f1;
+}
+:global(.dark) .tabContent {
+  background-color: #1f2937;
+}
+:global(.dark) .allTabContents {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+}
+:global(.dark) .tabContentWrapper {
+  background-color: #1f2937;
+}
+:global(.dark) .summaryContent,
+:global(.dark) .insightsContent,
+:global(.dark) .recommendationsContent,
+:global(.dark) .visualizationsContent,
+:global(.dark) .storyModeContent,
+:global(.dark) .assistantContent {
+  color: #f9fafb;
+}
+:global(.dark) .summaryContent h3,
+:global(.dark) .insightsContent h3,
+:global(.dark) .recommendationsContent h3 {
+  color: #f9fafb;
+}
+:global(.dark) .summaryContent p,
+:global(.dark) .insightsContent p,
+:global(.dark) .recommendationsContent p {
+  color: #d1d5db;
+}
+:global(.dark) .insightsContent li,
+:global(.dark) .recommendationsContent li {
+  background-color: #1e293b;
+  border-left: 4px solid #6366f1;
+  color: #f9fafb;
+}
+:global(.dark) .insightsContent li:hover,
+:global(.dark) .recommendationsContent li:hover {
+  background-color: #374151;
+}
+
+:global(.dark) .versionHistoryModal {
+  background-color: #1f2937;
+  box-shadow: 0 20px 25px -5px rgba(0,0,0,0.5), 0 10px 10px -5px rgba(0,0,0,0.3);
+  border: 1px solid #374151;
+}
+:global(.dark) .versionModalHeader {
+  background-color: #111827;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .versionModalTitle h3 {
+  color: #f9fafb;
+}
+:global(.dark) .versionModalIcon {
+  color: #60a5fa;
+}
+:global(.dark) .versionModalClose {
+  color: #d1d5db;
+}
+:global(.dark) .versionModalClose:hover {
+  background-color: #374151;
+  color: #fff;
+}
+:global(.dark) .versionModalContent {
+  background-color: #1f2937;
+}
+:global(.dark) .versionTableContainer {
+  background-color: #1f2937;
+}
+:global(.dark) .versionTable {
+  background-color: #1f2937;
+}
+:global(.dark) .versionTable thead {
+  background-color: #111827;
+}
+:global(.dark) .versionTable th {
+  color: #f9fafb;
+  border-bottom: 2px solid #374151;
+}
+:global(.dark) .versionRow {
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .versionRow:hover {
+  background-color: #374151;
+}
+:global(.dark) .versionTable td {
+  color: #d1d5db;
+}
+:global(.dark) .versionBadge {
+  background-color: #374151;
+  color: #60a5fa;
+}
+:global(.dark) .fileName {
+  color: #f9fafb;
+}
+:global(.dark) .dataInfo {
+  color: #9ca3af;
+}
+:global(.dark) .changeChip {
+  background-color: #374151;
+}
+:global(.dark) .changeChip.added {
+  background-color: #166534;
+  color: #bbf7d0;
+}
+:global(.dark) .changeChip.modified {
+  background-color: #a16207;
+  color: #fef9c3;
+}
+:global(.dark) .changeChip.removed {
+  background-color: #7f1d1d;
+  color: #fee2e2;
+}
+:global(.dark) .versionModalFooter {
+  background-color: #111827;
+  border-top: 1px solid #374151;
+}
+:global(.dark) .versionModalButton {
+  background-color: #6366f1;
+  color: #f9fafb;
+}
+:global(.dark) .versionModalButton:hover {
+  background-color: #4f46e5;
+}
+:global(.dark) .dateText {
+  color: #9ca3af;
+}
+:global(.dark) .modalOverlay {
+  background-color: rgba(0, 0, 0, 0.7) !important;
+}
+:global(.dark) .modalContent {
+  background-color: #23293a !important;
+  color: #fff !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.35);
+}
+:global(.dark) .modalContent h3 {
+  color: #fff !important;
+}
+:global(.dark) .formGroup label {
+  color: #e5e7eb !important;
+}
+:global(.dark) .formGroup input {
+  background-color: #181c24 !important;
+  color: #fff !important;
+  border: 1px solid #374151 !important;
+}
+:global(.dark) .formGroup input:focus {
+  border-color: #6366f1 !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18) !important;
+}
+:global(.dark) .formGroup input:disabled {
+  background-color: #23293a !important;
+  color: #9ca3af !important;
+}
+:global(.dark) .formError {
+  color: #f87171 !important;
+}
+:global(.dark) .modalButtons {
+  background: none !important;
+}
+:global(.dark) .cancelButton {
+  background-color: #23293a !important;
+  color: #e5e7eb !important;
+  border: 1px solid #374151 !important;
+}
+:global(.dark) .cancelButton:hover:not(:disabled) {
+  background-color: #181c24 !important;
+  color: #fff !important;
+  border-color: #6366f1 !important;
+}
+:global(.dark) .sendButton {
+  background-color: #10b981 !important;
+  color: #fff !important;
+}
+:global(.dark) .sendButton:hover:not(:disabled) {
+  background-color: #059669 !important;
+}
+:global(.dark) .cancelButton:disabled, :global(.dark) .sendButton:disabled {
+  opacity: 0.5 !important;
+  cursor: not-allowed !important;
+}

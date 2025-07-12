@@ -201,3 +201,85 @@
   margin: 0;
   max-width: 80%;
 } 
+
+.dark .container, :global(.dark) .container {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.18);
+}
+
+.dark .header, :global(.dark) .header {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.dark .title, :global(.dark) .title {
+  color: var(--text-color) !important;
+}
+
+.dark .fileName, :global(.dark) .fileName {
+  color: var(--muted-color) !important;
+}
+
+.dark .chartSelector, :global(.dark) .chartSelector {
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.dark .chartTab, :global(.dark) .chartTab {
+  color: var(--muted-color) !important;
+  background: none !important;
+}
+
+.dark .chartTab:hover, :global(.dark) .chartTab:hover {
+  color: var(--primary-color) !important;
+  background-color: rgba(99, 102, 241, 0.10) !important;
+}
+
+.dark .activeChartTab, :global(.dark) .activeChartTab {
+  color: var(--primary-color) !important;
+}
+
+.dark .activeIndicator, :global(.dark) .activeIndicator {
+  background-color: var(--primary-color) !important;
+}
+
+.dark .chartDescription, :global(.dark) .chartDescription {
+  background-color: #23293a !important;
+  border-left: 4px solid var(--primary-color) !important;
+}
+
+.dark .chartDescription p, :global(.dark) .chartDescription p {
+  color: var(--text-color) !important;
+}
+
+.dark .loadingContainer, :global(.dark) .loadingContainer {
+  background-color: #23293a !important;
+}
+
+.dark .loadingContainer p, :global(.dark) .loadingContainer p {
+  color: var(--muted-color) !important;
+}
+
+.dark .emptyState, :global(.dark) .emptyState {
+  background-color: #23293a !important;
+}
+
+.dark .emptyState h3, :global(.dark) .emptyState h3 {
+  color: var(--text-color) !important;
+}
+
+.dark .emptyState p, :global(.dark) .emptyState p {
+  color: var(--muted-color) !important;
+}
+
+.dark .emptyIcon, :global(.dark) .emptyIcon {
+  color: var(--muted-color) !important;
+}
+
+.dark .chartError, :global(.dark) .chartError {
+  background-color: rgba(239, 68, 68, 0.10) !important;
+  border: 1px dashed var(--error-color) !important;
+}
+
+.dark .chartError p, :global(.dark) .chartError p {
+  color: var(--error-color) !important;
+} 

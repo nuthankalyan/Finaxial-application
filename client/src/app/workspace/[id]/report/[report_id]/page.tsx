@@ -12,6 +12,7 @@ import type { TableRow, TableColumn } from '@/app/types/tables';
 import type { SummaryTable } from '@/app/types/csv';
 import { generateSummaryTables, generateMultiFileSummaryTables, type ReportData } from '@/app/services/summaryTableService';
 import { buildApiUrl } from '../../../../utils/apiConfig';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 interface ReportPageProps {
   params: {
@@ -43,15 +44,215 @@ interface WorkspaceData {
   }>;
 }
 
+interface DetailedTableAnalysis {
+  businessContext: string;
+  keyTrends: string[];
+  financialImplications: string;
+  riskFactors: string[];
+  opportunities: string[];
+  recommendations: string[];
+  industryBenchmark: string;
+  forecastInsights: string;
+}
+
+interface EnhancedReportData extends ReportData {
+  detailedAnalysis?: {
+    [tableId: string]: DetailedTableAnalysis;
+  };
+}
+
 const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<string>('overview');
-  const [reportData, setReportData] = useState<ReportData | null>(null);
+  const [reportData, setReportData] = useState<EnhancedReportData | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [reportName, setReportName] = useState<string>('Financial Report');
   const [reportDate, setReportDate] = useState<Date>(new Date());
   const [workspaceData, setWorkspaceData] = useState<WorkspaceData | null>(null);
+
+  // Function to generate detailed analysis for a table
+  const generateDetailedTableAnalysis = async (
+    table: SummaryTable,
+    csvContent: string,
+    fileName: string
+  ): Promise<DetailedTableAnalysis> => {
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      
+      if (!apiKey) {
+        throw new Error('Gemini API key is not configured');
+      }
+
+      const genAI = new GoogleGenerativeAI(apiKey);
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+      // Convert table data to a readable format for analysis
+      const tableDataString = table.data.map(row => 
+        Object.entries(row)
+          .filter(([key]) => key !== 'isTotal' && key !== 'isSubTotal' && key !== 'isHeader')
+          .map(([key, value]) => `${key}: ${value}`)
+          .join(', ')
+      ).join('\n');
+
+      const prompt = `
+You are a senior financial analyst preparing a detailed analysis for a financial table in an annual report. Analyze the following financial table and provide comprehensive insights.
+
+TABLE INFORMATION:
+Title: ${table.title}
+Description: ${table.description}
+Columns: ${table.columns.map(col => col.header).join(', ')}
+
+TABLE DATA:
+${tableDataString}
+
+ORIGINAL CSV DATA:
+${csvContent}
+
+FILE NAME: ${fileName}
+
+Please provide a detailed financial analysis with the following sections:
+
+1. BUSINESS CONTEXT: Explain what this table represents in the context of financial reporting and business operations. Use professional financial terminology.
+
+2. KEY TRENDS: Identify 3-5 important trends or patterns in the data. Focus on significant changes, growth patterns, or anomalies.
+
+3. FINANCIAL IMPLICATIONS: Explain what this data means for the business's financial health, performance, and strategic position.
+
+4. RISK FACTORS: Identify 2-4 potential risks or concerns based on this data analysis.
+
+5. OPPORTUNITIES: Identify 2-4 potential opportunities or positive indicators from this data.
+
+6. RECOMMENDATIONS: Provide 3-5 specific, actionable recommendations based on this analysis.
+
+7. INDUSTRY BENCHMARK: Compare this data to industry standards or benchmarks where applicable.
+
+8. FORECAST INSIGHTS: Provide forward-looking insights and projections based on the current data trends.
+
+Format your response as follows:
+
+BUSINESS CONTEXT:
+(Your business context analysis here)
+
+KEY TRENDS:
+- Trend 1
+- Trend 2
+- Trend 3
+
+FINANCIAL IMPLICATIONS:
+(Your financial implications analysis here)
+
+RISK FACTORS:
+- Risk 1
+- Risk 2
+- Risk 3
+
+OPPORTUNITIES:
+- Opportunity 1
+- Opportunity 2
+- Opportunity 3
+
+RECOMMENDATIONS:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
+
+INDUSTRY BENCHMARK:
+(Your industry benchmark analysis here)
+
+FORECAST INSIGHTS:
+(Your forecast insights here)
+
+Your analysis should be:
+- Professional and comprehensive
+- Data-driven with specific insights
+- Forward-looking and strategic
+- Suitable for executive decision-making
+- Clear and well-structured
+`;
+
+      const result = await model.generateContent(prompt);
+      const response = await result.response;
+      const text = response.text();
+
+      // Parse the response to extract different sections
+      const businessContextMatch = text.match(/BUSINESS CONTEXT:([\s\S]*?)(?=KEY TRENDS:|$)/i);
+      const keyTrendsMatch = text.match(/KEY TRENDS:([\s\S]*?)(?=FINANCIAL IMPLICATIONS:|$)/i);
+      const financialImplicationsMatch = text.match(/FINANCIAL IMPLICATIONS:([\s\S]*?)(?=RISK FACTORS:|$)/i);
+      const riskFactorsMatch = text.match(/RISK FACTORS:([\s\S]*?)(?=OPPORTUNITIES:|$)/i);
+      const opportunitiesMatch = text.match(/OPPORTUNITIES:([\s\S]*?)(?=RECOMMENDATIONS:|$)/i);
+      const recommendationsMatch = text.match(/RECOMMENDATIONS:([\s\S]*?)(?=INDUSTRY BENCHMARK:|$)/i);
+      const industryBenchmarkMatch = text.match(/INDUSTRY BENCHMARK:([\s\S]*?)(?=FORECAST INSIGHTS:|$)/i);
+      const forecastInsightsMatch = text.match(/FORECAST INSIGHTS:([\s\S]*?)(?=$)/i);
+
+      const businessContext = businessContextMatch ? businessContextMatch[1].trim() : 
+        'This table provides important financial metrics for business analysis.';
+      
+      const keyTrends = keyTrendsMatch ? 
+        keyTrendsMatch[1]
+          .split(/\n\s*[-•*]\s*/)
+          .map(item => item.trim())
+          .filter(item => item.length > 0)
+          .slice(0, 5) : 
+        ['Data analysis reveals important patterns and trends.'];
+      
+      const financialImplications = financialImplicationsMatch ? financialImplicationsMatch[1].trim() : 
+        'The data indicates important financial implications for business strategy.';
+      
+      const riskFactors = riskFactorsMatch ? 
+        riskFactorsMatch[1]
+          .split(/\n\s*[-•*]\s*/)
+          .map(item => item.trim())
+          .filter(item => item.length > 0)
+          .slice(0, 4) : 
+        ['Consider potential risks in financial planning.'];
+      
+      const opportunities = opportunitiesMatch ? 
+        opportunitiesMatch[1]
+          .split(/\n\s*[-•*]\s*/)
+          .map(item => item.trim())
+          .filter(item => item.length > 0)
+          .slice(0, 4) : 
+        ['Identify growth opportunities in the data.'];
+      
+      const recommendations = recommendationsMatch ? 
+        recommendationsMatch[1]
+          .split(/\n\s*[-•*]\s*/)
+          .map(item => item.trim())
+          .filter(item => item.length > 0)
+          .slice(0, 5) : 
+        ['Develop strategic recommendations based on analysis.'];
+      
+      const industryBenchmark = industryBenchmarkMatch ? industryBenchmarkMatch[1].trim() : 
+        'Compare performance against industry standards and benchmarks.';
+      
+      const forecastInsights = forecastInsightsMatch ? forecastInsightsMatch[1].trim() : 
+        'Project future trends and performance based on current data.';
+
+      return {
+        businessContext,
+        keyTrends,
+        financialImplications,
+        riskFactors,
+        opportunities,
+        recommendations,
+        industryBenchmark,
+        forecastInsights
+      };
+    } catch (error: any) {
+      console.error('Error generating detailed table analysis:', error);
+      return {
+        businessContext: 'This table provides important financial metrics for business analysis.',
+        keyTrends: ['Data analysis reveals important patterns and trends.'],
+        financialImplications: 'The data indicates important financial implications for business strategy.',
+        riskFactors: ['Consider potential risks in financial planning.'],
+        opportunities: ['Identify growth opportunities in the data.'],
+        recommendations: ['Develop strategic recommendations based on analysis.'],
+        industryBenchmark: 'Compare performance against industry standards and benchmarks.',
+        forecastInsights: 'Project future trends and performance based on current data.'
+      };
+    }
+  };
 
   // Load data on mount
   useEffect(() => {
@@ -132,7 +333,29 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
           reportData = await generateMultiFileSummaryTables(csvFiles);
         }
         
-        setReportData(reportData);
+        // Generate detailed analysis for each table
+        const detailedAnalysis: { [tableId: string]: DetailedTableAnalysis } = {};
+        
+        try {
+          // Generate detailed analysis for each table
+          for (const table of reportData.tables) {
+            const csvContent = csvFiles.length === 1 ? csvFiles[0].content : csvFiles.map((f: { content: string; fileName: string }) => f.content).join('\n\n');
+            const fileName = csvFiles.length === 1 ? csvFiles[0].fileName : 'Multiple Files';
+            
+            detailedAnalysis[table.id] = await generateDetailedTableAnalysis(table, csvContent, fileName);
+          }
+        } catch (analysisError) {
+          console.error('Error generating detailed analysis:', analysisError);
+          // Continue without detailed analysis if there's an error
+        }
+        
+        // Combine the basic report data with detailed analysis
+        const enhancedReportData: EnhancedReportData = {
+          ...reportData,
+          detailedAnalysis
+        };
+        
+        setReportData(enhancedReportData);
         
         // Set the first available tab as active if not already set to overview
         if (activeTab !== 'overview' && reportData.tables.length > 0) {
@@ -282,7 +505,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
       yPos += summaryLines.length * 5 + 10;
     }
     
-    // Add each table
+    // Add each table with detailed analysis
     reportData.tables.forEach(table => {
       // Check if we need to add a new page
       if (yPos > 230) {
@@ -326,6 +549,140 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
       
       // Update position for next content
       yPos = (doc as any).lastAutoTable.finalY + 20;
+      
+      // Add detailed analysis if available
+      const detailedAnalysis = reportData.detailedAnalysis?.[table.id];
+      if (detailedAnalysis) {
+        // Check if we need a new page for analysis
+        if (yPos > 200) {
+          doc.addPage();
+          yPos = 20;
+        }
+        
+        // Business Context
+        doc.setFontSize(12);
+        doc.setTextColor(33, 37, 41);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Business Context:', 20, yPos);
+        yPos += 8;
+        doc.setFontSize(9);
+        doc.setTextColor(75, 85, 99);
+        doc.setFont('helvetica', 'normal');
+        const contextLines = doc.splitTextToSize(detailedAnalysis.businessContext, 170);
+        doc.text(contextLines, 20, yPos);
+        yPos += contextLines.length * 4 + 10;
+        
+        // Key Trends
+        if (detailedAnalysis.keyTrends && detailedAnalysis.keyTrends.length > 0) {
+          doc.setFontSize(11);
+          doc.setTextColor(33, 37, 41);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Key Trends:', 20, yPos);
+          yPos += 8;
+          doc.setFontSize(9);
+          doc.setTextColor(75, 85, 99);
+          doc.setFont('helvetica', 'normal');
+          detailedAnalysis.keyTrends.forEach(trend => {
+            const trendLines = doc.splitTextToSize(`• ${trend}`, 160);
+            doc.text(trendLines, 25, yPos);
+            yPos += trendLines.length * 4 + 2;
+          });
+          yPos += 5;
+        }
+        
+        // Financial Implications
+        doc.setFontSize(11);
+        doc.setTextColor(33, 37, 41);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Financial Implications:', 20, yPos);
+        yPos += 8;
+        doc.setFontSize(9);
+        doc.setTextColor(75, 85, 99);
+        doc.setFont('helvetica', 'normal');
+        const implicationsLines = doc.splitTextToSize(detailedAnalysis.financialImplications, 170);
+        doc.text(implicationsLines, 20, yPos);
+        yPos += implicationsLines.length * 4 + 10;
+        
+        // Risk Factors
+        if (detailedAnalysis.riskFactors && detailedAnalysis.riskFactors.length > 0) {
+          doc.setFontSize(11);
+          doc.setTextColor(220, 53, 69);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Risk Factors:', 20, yPos);
+          yPos += 8;
+          doc.setFontSize(9);
+          doc.setTextColor(75, 85, 99);
+          doc.setFont('helvetica', 'normal');
+          detailedAnalysis.riskFactors.forEach(risk => {
+            const riskLines = doc.splitTextToSize(`• ${risk}`, 160);
+            doc.text(riskLines, 25, yPos);
+            yPos += riskLines.length * 4 + 2;
+          });
+          yPos += 5;
+        }
+        
+        // Opportunities
+        if (detailedAnalysis.opportunities && detailedAnalysis.opportunities.length > 0) {
+          doc.setFontSize(11);
+          doc.setTextColor(40, 167, 69);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Opportunities:', 20, yPos);
+          yPos += 8;
+          doc.setFontSize(9);
+          doc.setTextColor(75, 85, 99);
+          doc.setFont('helvetica', 'normal');
+          detailedAnalysis.opportunities.forEach(opportunity => {
+            const opportunityLines = doc.splitTextToSize(`• ${opportunity}`, 160);
+            doc.text(opportunityLines, 25, yPos);
+            yPos += opportunityLines.length * 4 + 2;
+          });
+          yPos += 5;
+        }
+        
+        // Recommendations
+        if (detailedAnalysis.recommendations && detailedAnalysis.recommendations.length > 0) {
+          doc.setFontSize(11);
+          doc.setTextColor(33, 37, 41);
+          doc.setFont('helvetica', 'bold');
+          doc.text('Strategic Recommendations:', 20, yPos);
+          yPos += 8;
+          doc.setFontSize(9);
+          doc.setTextColor(75, 85, 99);
+          doc.setFont('helvetica', 'normal');
+          detailedAnalysis.recommendations.forEach(recommendation => {
+            const recommendationLines = doc.splitTextToSize(`• ${recommendation}`, 160);
+            doc.text(recommendationLines, 25, yPos);
+            yPos += recommendationLines.length * 4 + 2;
+          });
+          yPos += 5;
+        }
+        
+        // Industry Benchmark
+        doc.setFontSize(11);
+        doc.setTextColor(33, 37, 41);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Industry Benchmark:', 20, yPos);
+        yPos += 8;
+        doc.setFontSize(9);
+        doc.setTextColor(75, 85, 99);
+        doc.setFont('helvetica', 'normal');
+        const benchmarkLines = doc.splitTextToSize(detailedAnalysis.industryBenchmark, 170);
+        doc.text(benchmarkLines, 20, yPos);
+        yPos += benchmarkLines.length * 4 + 10;
+        
+        // Forecast Insights
+        doc.setFontSize(11);
+        doc.setTextColor(33, 37, 41);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Forecast Insights:', 20, yPos);
+        yPos += 8;
+        doc.setFontSize(9);
+        doc.setTextColor(75, 85, 99);
+        doc.setFont('helvetica', 'normal');
+        const forecastLines = doc.splitTextToSize(detailedAnalysis.forecastInsights, 170);
+        doc.text(forecastLines, 20, yPos);
+        yPos += forecastLines.length * 4 + 10;
+      }
     });
     
     // Save the PDF
@@ -478,50 +835,134 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
                 </div>
               )}
               
-              {/* Summary tables for specific tabs */}
+              {/* Summary tables for specific tabs with detailed analysis */}
               {activeTab !== 'overview' && (
                 <div className={styles.summaryTables}>
-                  {getVisibleTables().map(table => (
-                    <div key={table.id} className={styles.tableSection} id={table.id}>
-                      <h3 className={styles.tableHeader}>{table.title}</h3>
-                      <p className={styles.tableDescription}>{table.description}</p>
-                      
-                      <div className={styles.tableWrapper}>
-                        <table className={styles.table}>
-                          <thead>
-                            <tr>
-                              {table.columns.map(column => (
-                                <th key={column.accessor} className={column.isNumeric ? styles.number : ''}>
-                                  {column.header}
-                                </th>
-                              ))}
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {table.data.map((row, index) => (
-                              <tr key={index} className={getRowClass(row)}>
-                                {table.columns.map(column => {
-                                  const value = row[column.accessor];
-                                  return (
-                                    <td 
-                                      key={column.accessor}
-                                      className={getCellClass(value, column.isNumeric)}
-                                    >
-                                      {column.isNumeric && column.isCurrency && typeof value === 'number'
-                                        ? formatCurrency(value)
-                                        : column.isNumeric
-                                        ? formatNumber(value)
-                                        : value || ''}
-                                    </td>
-                                  );
-                                })}
+                  {getVisibleTables().map(table => {
+                    const detailedAnalysis = reportData.detailedAnalysis?.[table.id];
+                    
+                    return (
+                      <div key={table.id} className={styles.tableSection} id={table.id}>
+                        <h3 className={styles.tableHeader}>{table.title}</h3>
+                        <p className={styles.tableDescription}>{table.description}</p>
+                        
+                        {/* Financial Table */}
+                        <div className={styles.tableWrapper}>
+                          <table className={styles.table}>
+                            <thead>
+                              <tr>
+                                {table.columns.map(column => (
+                                  <th key={column.accessor} className={column.isNumeric ? styles.number : ''}>
+                                    {column.header}
+                                  </th>
+                                ))}
                               </tr>
-                            ))}
-                          </tbody>
-                        </table>
+                            </thead>
+                            <tbody>
+                              {table.data.map((row, index) => (
+                                <tr key={index} className={getRowClass(row)}>
+                                  {table.columns.map(column => {
+                                    const value = row[column.accessor];
+                                    return (
+                                      <td 
+                                        key={column.accessor}
+                                        className={getCellClass(value, column.isNumeric)}
+                                      >
+                                        {column.isNumeric && column.isCurrency && typeof value === 'number'
+                                          ? formatCurrency(value)
+                                          : column.isNumeric
+                                          ? formatNumber(value)
+                                          : value || ''}
+                                      </td>
+                                    );
+                                  })}
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+                        
+                        {/* Detailed Analysis Section */}
+                        {detailedAnalysis && (
+                          <div className={styles.detailedAnalysis}>
+                            <h4 className={styles.analysisTitle}>Comprehensive Financial Analysis</h4>
+                            
+                            {/* Business Context */}
+                            <div className={styles.analysisSection}>
+                              <h5 className={styles.analysisSubtitle}>Business Context</h5>
+                              <p className={styles.analysisText}>{detailedAnalysis.businessContext}</p>
+                            </div>
+                            
+                            {/* Key Trends */}
+                            {detailedAnalysis.keyTrends && detailedAnalysis.keyTrends.length > 0 && (
+                              <div className={styles.analysisSection}>
+                                <h5 className={styles.analysisSubtitle}>Key Trends</h5>
+                                <ul className={styles.analysisList}>
+                                  {detailedAnalysis.keyTrends.map((trend, index) => (
+                                    <li key={index} className={styles.analysisListItem}>{trend}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {/* Financial Implications */}
+                            <div className={styles.analysisSection}>
+                              <h5 className={styles.analysisSubtitle}>Financial Implications</h5>
+                              <p className={styles.analysisText}>{detailedAnalysis.financialImplications}</p>
+                            </div>
+                            
+                            {/* Risk Factors */}
+                            {detailedAnalysis.riskFactors && detailedAnalysis.riskFactors.length > 0 && (
+                              <div className={styles.analysisSection}>
+                                <h5 className={`${styles.analysisSubtitle} ${styles.riskTitle}`}>Risk Factors</h5>
+                                <ul className={styles.analysisList}>
+                                  {detailedAnalysis.riskFactors.map((risk, index) => (
+                                    <li key={index} className={`${styles.analysisListItem} ${styles.riskItem}`}>{risk}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {/* Opportunities */}
+                            {detailedAnalysis.opportunities && detailedAnalysis.opportunities.length > 0 && (
+                              <div className={styles.analysisSection}>
+                                <h5 className={`${styles.analysisSubtitle} ${styles.opportunityTitle}`}>Opportunities</h5>
+                                <ul className={styles.analysisList}>
+                                  {detailedAnalysis.opportunities.map((opportunity, index) => (
+                                    <li key={index} className={`${styles.analysisListItem} ${styles.opportunityItem}`}>{opportunity}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {/* Recommendations */}
+                            {detailedAnalysis.recommendations && detailedAnalysis.recommendations.length > 0 && (
+                              <div className={styles.analysisSection}>
+                                <h5 className={styles.analysisSubtitle}>Strategic Recommendations</h5>
+                                <ul className={styles.analysisList}>
+                                  {detailedAnalysis.recommendations.map((recommendation, index) => (
+                                    <li key={index} className={styles.analysisListItem}>{recommendation}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            )}
+                            
+                            {/* Industry Benchmark */}
+                            <div className={styles.analysisSection}>
+                              <h5 className={styles.analysisSubtitle}>Industry Benchmark</h5>
+                              <p className={styles.analysisText}>{detailedAnalysis.industryBenchmark}</p>
+                            </div>
+                            
+                            {/* Forecast Insights */}
+                            <div className={styles.analysisSection}>
+                              <h5 className={styles.analysisSubtitle}>Forecast Insights</h5>
+                              <p className={styles.analysisText}>{detailedAnalysis.forecastInsights}</p>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </>
