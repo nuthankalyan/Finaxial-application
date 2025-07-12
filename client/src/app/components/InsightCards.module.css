@@ -74,6 +74,45 @@
   color: #2563eb;
 }
 
+:global(.dark) .card {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+  border: 1.5px solid var(--border-color) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+  transition: background 0.2s, color 0.2s;
+}
+
+:global(.dark) .cardLabel {
+  color: var(--text-color) !important;
+  opacity: 1 !important;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.18);
+}
+
+:global(.dark) .cardValue {
+  color: var(--text-color) !important;
+  opacity: 1 !important;
+}
+
+:global(.dark) .cardIcon {
+  background-color: rgba(99, 102, 241, 0.12) !important;
+  color: var(--primary-color) !important;
+}
+
+:global(.dark) .change {
+  color: var(--text-color) !important;
+  opacity: 1 !important;
+}
+
+:global(.dark) .positive {
+  color: #10b981 !important;
+  opacity: 1 !important;
+}
+
+:global(.dark) .negative {
+  color: #ef4444 !important;
+  opacity: 1 !important;
+}
+
 @media (max-width: 768px) {
   .cardsContainer {
     grid-template-columns: 1fr 1fr;

@@ -135,3 +135,61 @@
     transform: rotate(360deg);
   }
 }
+
+/* Dark theme overrides */
+:global(.dark) .container {
+  background: #1f2937;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.4);
+}
+:global(.dark) .table {
+  background: #1f2937;
+}
+:global(.dark) .header th {
+  background: #111827;
+  color: #f9fafb;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .row td {
+  color: #d1d5db;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .row:nth-child(even) {
+  background: #111827;
+}
+:global(.dark) .version {
+  color: #60a5fa;
+}
+:global(.dark) .metadata {
+  color: #9ca3af;
+}
+:global(.dark) .chip {
+  background: #374151;
+  color: #f9fafb;
+}
+:global(.dark) .timestamp {
+  color: #9ca3af;
+}
+:global(.dark) .deleteButton {
+  color: #f87171;
+}
+:global(.dark) .deleteButton:hover:not(:disabled) {
+  background-color: #7f1d1d;
+}
+:global(.dark) .changes {
+  color: #d1d5db;
+}
+:global(.dark) .changeChip {
+  background: #374151;
+}
+:global(.dark) .added {
+  background: #166534;
+  color: #bbf7d0;
+}
+:global(.dark) .modified {
+  background: #a16207;
+  color: #fef9c3;
+}
+:global(.dark) .removed {
+  background: #7f1d1d;
+  color: #fee2e2;
+}

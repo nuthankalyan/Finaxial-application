@@ -197,3 +197,66 @@
 .transformWrapper::-webkit-scrollbar-corner {
   background: #f1f5f9;
 }
+
+:global(.dark) .visualizationContainer {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+}
+:global(.dark) .transformWrapper {
+  background-color: #1f2937;
+}
+:global(.dark) .tableHeader {
+  fill: #1e293b;
+  stroke: #374151;
+}
+:global(.dark) .tableBody {
+  fill: #111827;
+  stroke: #374151;
+}
+:global(.dark) .tableName {
+  fill: #f9fafb;
+}
+:global(.dark) .fieldName {
+  fill: #d1d5db;
+}
+:global(.dark) .fieldType {
+  fill: #60a5fa;
+}
+:global(.dark) .relationshipLabel {
+  fill: #9ca3af;
+  background-color: #1e293b;
+}
+:global(.dark) .junctionTableLabel {
+  fill: #60a5fa;
+}
+:global(.dark) .schemaModal {
+  background: #111827;
+  color: #f9fafb;
+}
+:global(.dark) .schemaModalHeader {
+  background: #1f2937;
+  color: #f9fafb;
+}
+:global(.dark) .schemaModalTitle {
+  color: #f9fafb;
+}
+:global(.dark) .schemaModalContent {
+  background: #1f2937;
+  color: #f9fafb;
+}
+:global(.dark) .visualizationContainer::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+:global(.dark) .visualizationContainer::-webkit-scrollbar-thumb {
+  background: #374151;
+}
+:global(.dark) .transformWrapper::-webkit-scrollbar-track {
+  background: #1f2937;
+}
+:global(.dark) .transformWrapper::-webkit-scrollbar-thumb {
+  background-color: #374151;
+  border: 3px solid #1f2937;
+}
+:global(.dark) .transformWrapper::-webkit-scrollbar-corner {
+  background: #1f2937;
+}

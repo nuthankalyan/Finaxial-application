@@ -699,3 +699,134 @@
     text-align: left;
   }
 }
+
+.dark .modalOverlay, :global(.dark) .modalOverlay {
+  background-color: rgba(0, 0, 0, 0.85) !important;
+}
+.dark .modalContent, :global(.dark) .modalContent {
+  background: #181c24 !important;
+  color: #f9fafb !important;
+}
+.dark .header, :global(.dark) .header {
+  background: linear-gradient(135deg, #23293a 0%, #181c24 100%) !important;
+  border-bottom: 1px solid #374151 !important;
+}
+.dark .headerTitle h2, :global(.dark) .headerTitle h2 {
+  color: #fff !important;
+}
+.dark .fileName, :global(.dark) .fileName {
+  color: #9ca3af !important;
+}
+.dark .exportButton, :global(.dark) .exportButton {
+  background: #059669 !important;
+  color: #fff !important;
+}
+.dark .exportButton:hover:not(:disabled), :global(.dark) .exportButton:hover:not(:disabled) {
+  background: #10b981 !important;
+}
+.dark .closeButton, :global(.dark) .closeButton {
+  background: #23293a !important;
+  color: #9ca3af !important;
+}
+.dark .closeButton:hover, :global(.dark) .closeButton:hover {
+  background: #374151 !important;
+  color: #fff !important;
+}
+.dark .summaryBanner, :global(.dark) .summaryBanner {
+  background: #23293a !important;
+  border-bottom: 1px solid #374151 !important;
+}
+.dark .summaryValue, :global(.dark) .summaryValue {
+  color: #10b981 !important;
+}
+.dark .summaryLabel, :global(.dark) .summaryLabel {
+  color: #9ca3af !important;
+}
+.dark .tabNavigation, :global(.dark) .tabNavigation {
+  background: #181c24 !important;
+  border-bottom: 1px solid #374151 !important;
+}
+.dark .tab, :global(.dark) .tab {
+  color: #9ca3af !important;
+}
+.dark .tab:hover, :global(.dark) .tab:hover {
+  background: #23293a !important;
+  color: #fff !important;
+}
+.dark .activeTab, :global(.dark) .activeTab {
+  color: #10b981 !important;
+  background: #23293a !important;
+  border-bottom-color: #10b981 !important;
+}
+.dark .tabContent, :global(.dark) .tabContent {
+  background: #181c24 !important;
+  color: #f9fafb !important;
+}
+.dark .executiveSummary, :global(.dark) .executiveSummary {
+  background: #23293a !important;
+  color: #f9fafb !important;
+}
+.dark .executiveSummary h3, :global(.dark) .executiveSummary h3 {
+  color: #10b981 !important;
+}
+.dark .categoriesGrid, :global(.dark) .categoriesGrid {
+  background: none !important;
+}
+.dark .categoryCard, :global(.dark) .categoryCard {
+  background: #23293a !important;
+  color: #f9fafb !important;
+  border: 1px solid #374151 !important;
+}
+.dark .categoryTitle, :global(.dark) .categoryTitle {
+  color: #fff !important;
+}
+.dark .categoryCount, :global(.dark) .categoryCount {
+  color: #10b981 !important;
+}
+.dark .categoryDescription, :global(.dark) .categoryDescription {
+  color: #9ca3af !important;
+}
+.dark .suggestionCard, :global(.dark) .suggestionCard {
+  background: #23293a !important;
+  color: #f9fafb !important;
+  border: 1px solid #374151 !important;
+}
+.dark .suggestionTitle, :global(.dark) .suggestionTitle {
+  color: #fff !important;
+}
+.dark .suggestionDescription, :global(.dark) .suggestionDescription {
+  color: #9ca3af !important;
+}
+.dark .priorityHigh, :global(.dark) .priorityHigh {
+  color: #f87171 !important;
+}
+.dark .priorityMedium, :global(.dark) .priorityMedium {
+  color: #fbbf24 !important;
+}
+.dark .priorityLow, :global(.dark) .priorityLow {
+  color: #10b981 !important;
+}
+.dark .strategicCard, :global(.dark) .strategicCard {
+  background: #23293a !important;
+  color: #f9fafb !important;
+  border: 1px solid #374151 !important;
+}
+.dark .strategicText, :global(.dark) .strategicText {
+  color: #f9fafb !important;
+}
+.dark .strategicNumber, :global(.dark) .strategicNumber {
+  background: #059669 !important;
+  color: #fff !important;
+}
+.dark .complianceCard, :global(.dark) .complianceCard {
+  background: #23293a !important;
+  color: #f9fafb !important;
+  border: 1px solid #374151 !important;
+}
+.dark .complianceText, :global(.dark) .complianceText {
+  color: #f9fafb !important;
+}
+.dark .complianceIcon, :global(.dark) .complianceIcon {
+  background: #374151 !important;
+  color: #60a5fa !important;
+}

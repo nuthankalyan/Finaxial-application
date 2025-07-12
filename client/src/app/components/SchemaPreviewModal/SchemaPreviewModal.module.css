@@ -94,3 +94,36 @@
   margin: 0;
   line-height: 1.5;
 }
+
+:global(.dark) .modalOverlay {
+  background-color: rgba(15, 23, 42, 0.85);
+}
+:global(.dark) .modalContent {
+  background-color: #1f2937;
+  border: 1px solid #374151;
+  color: #f9fafb;
+}
+:global(.dark) .modalHeader {
+  background-color: #111827;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .modalHeader h2 {
+  color: #f9fafb;
+}
+:global(.dark) .closeButton {
+  color: #d1d5db;
+}
+:global(.dark) .closeButton:hover {
+  background-color: #374151;
+  color: #fff;
+}
+:global(.dark) .visualizationContainer {
+  background-color: #1f2937;
+}
+:global(.dark) .modalFooter {
+  background-color: #1e2330;
+  border-top: 1px solid #374151;
+}
+:global(.dark) .zoomHelp {
+  color: #9ca3af;
+}

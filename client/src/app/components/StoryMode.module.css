@@ -528,3 +528,102 @@
   from { transform: translateY(20px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 } 
+
+.dark .container, :global(.dark) .container {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+}
+
+.dark .presentationContainer, :global(.dark) .presentationContainer {
+  background-color: #23293a !important;
+}
+
+.dark .presentationHeader, :global(.dark) .presentationHeader {
+  background-color: var(--card-background) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+
+.dark .presentationHeader h3, :global(.dark) .presentationHeader h3 {
+  color: var(--text-color) !important;
+}
+
+.dark .slideContent, :global(.dark) .slideContent {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.18);
+}
+
+.dark .chartTitle, :global(.dark) .chartTitle {
+  color: var(--text-color) !important;
+}
+
+.dark .narrativePointContainer, :global(.dark) .narrativePointContainer {
+  background-color: #23293a !important;
+}
+
+.dark .narrativePoint, :global(.dark) .narrativePoint {
+  color: var(--text-color) !important;
+}
+
+.dark .presentationControls, :global(.dark) .presentationControls {
+  background: none !important;
+}
+
+.dark .progressDot, :global(.dark) .progressDot {
+  background-color: var(--border-color) !important;
+}
+
+.dark .activeDot, :global(.dark) .activeDot {
+  background-color: var(--primary-color) !important;
+}
+
+.dark .controlButton, :global(.dark) .controlButton {
+  background-color: #23293a !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--muted-color) !important;
+}
+
+.dark .controlButton:hover, :global(.dark) .controlButton:hover {
+  background-color: var(--border-color) !important;
+  color: var(--primary-color) !important;
+}
+
+.dark .presentationIntro, :global(.dark) .presentationIntro {
+  background-color: var(--card-background) !important;
+}
+
+.dark .introContent h2, :global(.dark) .introContent h2 {
+  color: var(--text-color) !important;
+}
+
+.dark .introSummary, :global(.dark) .introSummary {
+  color: var(--text-color) !important;
+}
+
+.dark .styleButton, :global(.dark) .styleButton {
+  background-color: var(--background-color) !important;
+  color: var(--muted-color) !important;
+  border: 1px solid var(--border-color) !important;
+}
+
+.dark .activeStyle, :global(.dark) .activeStyle {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+.dark .startButton, :global(.dark) .startButton {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+
+.dark .startButton:hover, :global(.dark) .startButton:hover {
+  background-color: var(--primary-hover) !important;
+} 
+
+.dark .infoLabel, :global(.dark) .infoLabel {
+  color: #fff !important;
+}
+.dark .infoValue, :global(.dark) .infoValue {
+  color: #fff !important;
+} 

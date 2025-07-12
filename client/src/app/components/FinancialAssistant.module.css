@@ -684,3 +684,86 @@
   background-color: #f0f9ff;
   border: 1px solid #e0f2fe;
 } 
+
+.dark .suggestedQuestions, :global(.dark) .suggestedQuestions {
+  border-top: 1px solid var(--border-color) !important;
+  background-color: #23293a !important;
+}
+.dark .suggestedQuestionsHeader p, :global(.dark) .suggestedQuestionsHeader p {
+  color: var(--muted-color) !important;
+}
+.dark .questionButton, :global(.dark) .questionButton {
+  background-color: #23293a !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+}
+.dark .questionButton:hover, :global(.dark) .questionButton:hover {
+  background-color: var(--border-color) !important;
+  color: var(--primary-color) !important;
+}
+.dark .inputForm, :global(.dark) .inputForm {
+  border-top: 1px solid var(--border-color) !important;
+  background-color: #23293a !important;
+}
+.dark .input, :global(.dark) .input {
+  background-color: #23293a !important;
+  color: var(--text-color) !important;
+  border: 1px solid var(--border-color) !important;
+}
+.dark .input:focus, :global(.dark) .input:focus {
+  border-color: var(--primary-color) !important;
+}
+.dark .sendButton, :global(.dark) .sendButton {
+  background-color: var(--primary-color) !important;
+  color: #fff !important;
+}
+.dark .sendButton:hover:not(:disabled), :global(.dark) .sendButton:hover:not(:disabled) {
+  background-color: var(--primary-hover) !important;
+}
+.dark .messageCode, :global(.dark) .messageCode {
+  background-color: #181c24 !important;
+  color: #fff !important;
+  border: 1px solid var(--border-color) !important;
+}
+.dark .codeHeader, :global(.dark) .codeHeader {
+  background-color: #23293a !important;
+  color: var(--muted-color) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+.dark .messageSqlCode, :global(.dark) .messageSqlCode {
+  background-color: #181c24 !important;
+  color: #fff !important;
+  border: 1px solid var(--border-color) !important;
+  border-left: 4px solid var(--primary-color) !important;
+}
+.dark .messageSqlCode code, :global(.dark) .messageSqlCode code {
+  color: #60a5fa !important;
+} 
+
+.dark .container, :global(.dark) .container {
+  background-color: var(--card-background) !important;
+  color: var(--text-color) !important;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+} 
+
+.dark .header, :global(.dark) .header {
+  background-color: var(--card-background) !important;
+  border-bottom: 1px solid var(--border-color) !important;
+}
+.dark .header h3, :global(.dark) .header h3 {
+  color: #fff !important;
+}
+.dark .datasetName, :global(.dark) .datasetName {
+  color: #fff !important;
+}
+.dark .messagesContainer, :global(.dark) .messagesContainer {
+  background: none !important;
+} 
+
+.dark .assistantMessage, :global(.dark) .assistantMessage {
+  background-color: #23293a !important;
+  color: #fff !important;
+}
+.dark .messageContent, :global(.dark) .messageContent {
+  color: #fff !important;
+} 

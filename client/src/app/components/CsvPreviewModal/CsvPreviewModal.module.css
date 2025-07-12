@@ -21,8 +21,8 @@
   max-height: 90vh;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
+  border: 1.5px solid #e5e7eb;
   overflow: hidden;
 }
 
@@ -33,6 +33,7 @@
   justify-content: space-between;
   align-items: center;
   background-color: #f8fafc;
+  border-radius: 18px 18px 0 0;
 }
 
 .modalHeader h2 {
@@ -184,6 +185,8 @@
   /* Ensure table maintains its width for horizontal scrolling */
   width: max-content;
   min-width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
 }
 
 .previewTable thead {
@@ -193,37 +196,34 @@
 }
 
 .previewTable th {
-  background-color: #f8fafc;
-  padding: 0.875rem 1.5rem;
-  text-align: left;
-  font-weight: 600;
+  background: #f8fafc;
   color: #334155;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  font-weight: 500;
+  font-size: 0.97rem;
   border-bottom: 1px solid #e2e8f0;
-  white-space: nowrap;
-  min-width: 150px;
-  max-width: 300px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  letter-spacing: 0;
 }
 
 .previewTable td {
   padding: 0.875rem 1.5rem;
   color: #475569;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #374151;
   white-space: nowrap;
   min-width: 150px;
   max-width: 300px;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-size: 0.97rem;
 }
 
 .evenRow {
   background-color: white;
+  border-radius: 0 0 12px 12px;
 }
 
 .oddRow {
   background-color: #f8fafc;
+  border-radius: 0 0 12px 12px;
 }
 
 .previewTable tr:hover td {
@@ -264,6 +264,7 @@
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
 }
 
 .cancelButton {
@@ -277,11 +278,13 @@
   color: #4b5563;
   cursor: pointer;
   transition: all 0.2s ease;
+  background: #f3f4f6;
 }
 
 .cancelButton:hover {
-  background-color: #f3f4f6;
+  background-color: #e0e7ff;
   border-color: #d1d5db;
+  color: #2563eb;
 }
 
 .uploadButton {
@@ -299,10 +302,12 @@
   justify-content: center;
   gap: 0.5rem;
   transition: all 0.2s ease;
+  background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
 }
 
 .uploadButton:hover {
   background-color: #1d4ed8;
+  background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
 }
 
 /* Button disabled states */
@@ -344,6 +349,11 @@
   border-bottom: 1px solid #e5e7eb;
   gap: 0.25rem;
   flex-wrap: nowrap;
+  border-radius: 10px 10px 0 0;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1.25rem 0.25rem;
+  background: #f1f5f9;
+  gap: 0.5rem;
 }
 
 .fileTabs::-webkit-scrollbar {
@@ -372,11 +382,20 @@
   max-width: 200px;
   overflow: hidden;
   text-overflow: ellipsis;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: transparent;
+  color: #2563eb;
+  transition: background 0.2s, color 0.2s;
 }
 
 .fileTab:hover {
   color: #334155;
   background-color: rgba(241, 245, 249, 0.8);
+  background: #e0e7ff;
+  color: #1e40af;
 }
 
 .activeTab {
@@ -387,6 +406,9 @@
   position: relative;
   top: 1px;
   z-index: 1;
+  background: #2563eb;
+  color: #fff !important;
+  box-shadow: 0 2px 8px rgba(37,99,235,0.08);
 }
 
 .activeTab:hover {
@@ -409,6 +431,11 @@
   padding: 0 1rem;
   min-height: 48px;
   align-items: center;
+  border-radius: 10px 10px 0 0;
+  margin-bottom: 0.5rem;
+  padding: 0.75rem 1.25rem 0.25rem;
+  background: #f1f5f9;
+  gap: 0.5rem;
 }
 
 .sheetTabs::-webkit-scrollbar {
@@ -446,12 +473,21 @@
   position: relative;
   margin-bottom: -1px;
   border-bottom: 1px solid #e2e8f0;
+  border-radius: 8px;
+  padding: 0.7rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  background: transparent;
+  color: #2563eb;
+  transition: background 0.2s, color 0.2s;
 }
 
 .sheetTab:hover {
   color: #334155;
   background-color: #f1f5f9;
   border-color: #cbd5e1;
+  background: #e0e7ff;
+  color: #1e40af;
 }
 
 .activeSheetTab {
@@ -461,6 +497,8 @@
   border-color: #3b82f6;
   border-bottom-color: white;
   z-index: 1;
+  background: #2563eb;
+  color: #fff !important;
 }
 
 .activeSheetTab::after {
@@ -1331,4 +1369,165 @@
 
 .zoomable[data-zoom-level="2"] {
   transform: scale(2);
+}
+
+/* Dark theme overrides for Data Preview modal */
+:global(.dark) .modalContent {
+  background-color: #1f2937;
+  border: 1.5px solid #374151;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.32), 0 1.5px 6px rgba(0,0,0,0.18);
+}
+:global(.dark) .modalHeader {
+  background-color: #111827;
+  border-bottom: 1px solid #374151;
+  border-radius: 18px 18px 0 0;
+}
+:global(.dark) .modalHeader h2 {
+  color: #f9fafb;
+}
+:global(.dark) .closeButton {
+  color: #d1d5db;
+}
+:global(.dark) .closeButton:hover {
+  background-color: #374151;
+  color: #fff;
+}
+:global(.dark) .tableContainer {
+  background-color: #1f2937;
+}
+:global(.dark) .previewTable {
+  background-color: #1f2937;
+  border-radius: 12px;
+}
+:global(.dark) .previewTable th {
+  background: #1e293b;
+  color: #f9fafb;
+  font-weight: 500;
+  font-size: 0.97rem;
+  border-bottom: 1px solid #374151;
+  letter-spacing: 0;
+}
+:global(.dark) .previewTable td {
+  color: #d1d5db;
+  background-color: #1f2937;
+  border-bottom: 1px solid #374151;
+}
+:global(.dark) .evenRow {
+  background-color: #1e293b;
+  border-radius: 0 0 12px 12px;
+}
+:global(.dark) .oddRow {
+  background-color: #111827;
+  border-radius: 0 0 12px 12px;
+}
+:global(.dark) .fileTabs {
+  background: #1e293b;
+}
+:global(.dark) .sheetTabs {
+  background: #1e293b;
+}
+:global(.dark) .activeTab {
+  background-color: #374151;
+  color: #f9fafb;
+  background: #2563eb;
+  color: #fff !important;
+}
+:global(.dark) .modalFooter {
+  background-color: #111827;
+  border-top: 1px solid #374151;
+}
+:global(.dark) .cancelButton {
+  background: #374151;
+  color: #f9fafb;
+  border: 1.5px solid #374151;
+}
+:global(.dark) .cancelButton:hover {
+  background: #2563eb;
+  color: #fff;
+}
+:global(.dark) .uploadButton {
+  background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
+  color: #fff;
+}
+:global(.dark) .uploadButton:hover {
+  background: linear-gradient(90deg, #1e40af 0%, #2563eb 100%);
+}
+:global(.dark) .schemaButton {
+  background-color: #374151;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+:global(.dark) .schemaButton:hover:not(:disabled) {
+  background-color: #2563eb;
+  color: #fff;
+  border: 1px solid #2563eb;
+}
+:global(.dark) .footerRight > button {
+  background-color: #374151;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+:global(.dark) .footerRight > button:hover:not(:disabled) {
+  background-color: #2563eb;
+  color: #fff;
+  border: 1px solid #2563eb;
+}
+:global(.dark) .previewTable tr:hover td {
+  background-color: #23293a;
+}
+:global(.dark) .userGuidance {
+  background-color: #23293a;
+  color: #9ca3af;
+  border: 1px solid #374151;
+}
+:global(.dark) .userGuidance svg {
+  color: #60a5fa;
+}
+:global(.dark) .tableContainer::-webkit-scrollbar,
+:global(.dark) .tableWrapper::-webkit-scrollbar,
+:global(.dark) .horizontalScrollContainer::-webkit-scrollbar,
+:global(.dark) .verticalScrollContainer::-webkit-scrollbar,
+:global(.dark) .fileTabs::-webkit-scrollbar,
+:global(.dark) .sheetTabs::-webkit-scrollbar,
+:global(.dark) .tableScrollContainer::-webkit-scrollbar {
+  background: #23293a;
+}
+:global(.dark) .tableContainer::-webkit-scrollbar-track,
+:global(.dark) .tableWrapper::-webkit-scrollbar-track,
+:global(.dark) .horizontalScrollContainer::-webkit-scrollbar-track,
+:global(.dark) .verticalScrollContainer::-webkit-scrollbar-track,
+:global(.dark) .fileTabs::-webkit-scrollbar-track,
+:global(.dark) .sheetTabs::-webkit-scrollbar-track,
+:global(.dark) .tableScrollContainer::-webkit-scrollbar-track {
+  background: #23293a;
+  border: 1px solid #374151;
+}
+:global(.dark) .tableContainer::-webkit-scrollbar-thumb,
+:global(.dark) .tableWrapper::-webkit-scrollbar-thumb,
+:global(.dark) .horizontalScrollContainer::-webkit-scrollbar-thumb,
+:global(.dark) .verticalScrollContainer::-webkit-scrollbar-thumb,
+:global(.dark) .fileTabs::-webkit-scrollbar-thumb,
+:global(.dark) .sheetTabs::-webkit-scrollbar-thumb,
+:global(.dark) .tableScrollContainer::-webkit-scrollbar-thumb {
+  background: #374151;
+  border-radius: 7px;
+  border: 2px solid #23293a;
+}
+:global(.dark) .tableContainer::-webkit-scrollbar-thumb:hover,
+:global(.dark) .tableWrapper::-webkit-scrollbar-thumb:hover,
+:global(.dark) .horizontalScrollContainer::-webkit-scrollbar-thumb:hover,
+:global(.dark) .verticalScrollContainer::-webkit-scrollbar-thumb:hover,
+:global(.dark) .fileTabs::-webkit-scrollbar-thumb:hover,
+:global(.dark) .sheetTabs::-webkit-scrollbar-thumb:hover,
+:global(.dark) .tableScrollContainer::-webkit-scrollbar-thumb:hover {
+  background: #60a5fa;
+}
+:global(.dark) .tableContainer::-webkit-scrollbar-corner,
+:global(.dark) .tableWrapper::-webkit-scrollbar-corner,
+:global(.dark) .horizontalScrollContainer::-webkit-scrollbar-corner,
+:global(.dark) .verticalScrollContainer::-webkit-scrollbar-corner,
+:global(.dark) .fileTabs::-webkit-scrollbar-corner,
+:global(.dark) .sheetTabs::-webkit-scrollbar-corner,
+:global(.dark) .tableScrollContainer::-webkit-scrollbar-corner {
+  background: #23293a;
 }

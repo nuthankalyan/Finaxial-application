@@ -25,6 +25,7 @@ import { logReportGeneration } from '../../services/activityService';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { DatasetVersion } from '../../types/datasetVersions';
+import ThemeToggle from '../../components/ThemeToggle';
 
 interface Workspace {
   _id: string;
@@ -787,20 +788,17 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       // Get insight cards - use saved ones if available, otherwise generate from insights
       const insightCardsData = savedInsightCards || getNumericalInsightsFromData(insights);
       
-      // Add Key Metrics section for insight cards
+      // Add Key Metrics section for insight cards (keep on cover page)
       if (insightCardsData && insightCardsData.length > 0) {
         doc.setFontSize(16);
         doc.setTextColor(33, 37, 41);
         doc.text('Key Metrics', 15, currentY);
-        
-        // Create a table for insight cards
         const cardsTableData = insightCardsData.map(card => {
           const changeText = card.change ? 
             `${card.change.positive ? '+' : '-'}${Math.abs(card.change.value)}%` : 
             'N/A';
           return [card.label, card.value.toString(), changeText];
         });
-        
         autoTable(doc, {
           startY: currentY + 5,
           head: [['Metric', 'Value', 'Change']],
@@ -821,36 +819,28 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           },
           margin: { bottom: 10 }
         });
-        
-        // Update current Y position after drawing the insight cards table
-        currentY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 85;
       }
-      
-      // Add summary section
+
+      // --- Start Summary on a new page ---
+      doc.addPage();
       doc.setFontSize(16);
       doc.setTextColor(33, 37, 41);
-      doc.text('Summary', 15, currentY);
-      
-      // Split summary into lines to fit page width
+      doc.text('Summary', 15, 20);
       doc.setFontSize(11);
       doc.setTextColor(75, 85, 99);
       const textLines = doc.splitTextToSize(insights.summary, 170);
-      doc.text(textLines, 15, currentY + 10);
-      
-      summaryEndY = Math.min(currentY + 10 + textLines.length * 5, 260);
-      
-      // Add key insights section
+      doc.text(textLines, 15, 30);
+
+      // --- Start Key Insights on a new page ---
+      doc.addPage();
       doc.setFontSize(16);
       doc.setTextColor(33, 37, 41);
-      doc.text('Key Insights', 15, summaryEndY + 10);
-      
-      // Format insights as a table
+      doc.text('Key Insights', 15, 20);
       const insightsData = Array.isArray(insights.insights) 
         ? insights.insights.map((insight, index) => [`${index + 1}.`, insight]) 
         : [['', 'No insights available']];
-      
       autoTable(doc, {
-        startY: summaryEndY + 15,
+        startY: 30,
         head: [['#', 'Insight']],
         body: insightsData,
         theme: 'grid',
@@ -868,28 +858,17 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         },
         margin: { bottom: footerMargin + 10 }
       });
-      
-      // Check if we need a new page for recommendations
-      if (doc.lastAutoTable && doc.lastAutoTable.finalY > 220) {
-        doc.addPage();
-        // Reset Y position for new page
-        doc.lastAutoTable.finalY = 20;
-      }
-      
-      // Add recommendations section
+
+      // --- Start Recommendations on a new page ---
+      doc.addPage();
       doc.setFontSize(16);
       doc.setTextColor(33, 37, 41);
-      
-      const yPosition = doc.lastAutoTable ? doc.lastAutoTable.finalY + 10 : summaryEndY + 130;
-      doc.text('Recommendations', 15, yPosition);
-      
-      // Format recommendations as a table
+      doc.text('Recommendations', 15, 20);
       const recommendationsData = Array.isArray(insights.recommendations) 
         ? insights.recommendations.map((recommendation, index) => [`${index + 1}.`, recommendation]) 
         : [['', 'No recommendations available']];
-      
       autoTable(doc, {
-        startY: doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : yPosition + 5,
+        startY: 30,
         head: [['#', 'Recommendation']],
         body: recommendationsData,
         theme: 'grid',
@@ -907,52 +886,28 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         },
         margin: { bottom: footerMargin + 10 }
       });
-      
-      // Add visualizations section if charts are available
+
+      // --- Start Visualizations on a new page ---
       if (charts && charts.length > 0) {
-        // Add a new page for charts
-        doc.addPage();
-        
-        // Add visualizations section title
-        doc.setFontSize(16);
-        doc.setTextColor(33, 37, 41);
-        doc.text('Visualizations', 15, 20);
-        
-        let currentY = 30;
-        const chartWidth = 180;
-        const chartHeight = 100;
-        
-        // Loop through charts (max 2 per page)
         charts.forEach((chart, index) => {
-          // Calculate estimated height for this chart (title + chart + description)
-          const estimatedHeight = 8 + chartHeight + 20; // Basic height without description
-          
-          // Check if we need a new page based on vertical space
-          if (currentY + estimatedHeight > footerPosition - footerMargin) {
-            doc.addPage();
-            currentY = 30;
-          } else if (index > 0 && index % 2 === 0) {
-            // Create a new page after every 2 charts (original logic)
-            doc.addPage();
-            currentY = 30;
-          }
-          
-          // Add chart title
+          doc.addPage();
+          doc.setFontSize(16);
+          doc.setTextColor(33, 37, 41);
+          doc.text('Visualizations', 15, 20);
+          let currentY = 30;
+          const chartWidth = 180;
+          const chartHeight = 100;
           doc.setFontSize(14);
           doc.setTextColor(33, 37, 41);
           doc.text(chart.title, 15, currentY);
           currentY += 8;
-          
           try {
-            // Create a temporary canvas for chart rendering
             const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = chartWidth * 5;  // Higher resolution for better quality
+            tempCanvas.width = chartWidth * 5;
             tempCanvas.height = chartHeight * 5;
             tempCanvas.style.width = `${chartWidth}px`;
             tempCanvas.style.height = `${chartHeight}px`;
             document.body.appendChild(tempCanvas);
-            
-            // Create chart instance
             const chartInstance = new ChartJS(tempCanvas, {
               type: chart.type as keyof ChartTypeRegistry,
               data: chart.data,
@@ -971,32 +926,21 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                 }
               }
             });
-            
-            // Render chart and add to PDF
             chartInstance.render();
             const imageData = tempCanvas.toDataURL('image/png', 1.0);
             doc.addImage(imageData, 'PNG', 15, currentY, chartWidth, chartHeight);
-            
-            // Clean up
             chartInstance.destroy();
             document.body.removeChild(tempCanvas);
-            
-            // Add chart description
             currentY += chartHeight + 10;
             doc.setFontSize(10);
             doc.setTextColor(75, 85, 99);
             const descriptionLines = doc.splitTextToSize(chart.description, 170);
             doc.text(descriptionLines, 15, currentY);
-            
-            // Update Y position for next chart
-            currentY += descriptionLines.length * 5 + 20;
           } catch (chartError) {
             console.error('Error rendering chart in PDF:', chartError);
-            // Add error message instead of chart
             doc.setFontSize(10);
             doc.setTextColor(220, 53, 69);
             doc.text(`Could not render chart: ${chart.title}`, 15, currentY);
-            currentY += 20;
           }
         });
       }
@@ -1424,9 +1368,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                 <h1>{workspace?.name || 'Session name'}</h1>
               </div>
               
-              <div className={styles.workspaceDate}>
-                <p>Created: {workspace ? formatDate(workspace.createdAt) : '—'}</p>
-                <p>Last updated: {workspace ? formatDate(workspace.updatedAt) : '—'}</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <div className={styles.workspaceDate}>
+                  <p>Created: {workspace ? formatDate(workspace.createdAt) : '—'}</p>
+                  <p>Last updated: {workspace ? formatDate(workspace.updatedAt) : '—'}</p>
+                </div>
+                <ThemeToggle />
               </div>
             </motion.div>
 
