@@ -129,7 +129,10 @@ const WorkspaceSchema = new mongoose.Schema({
     ref: 'User'
   }],
   financialInsights: [InsightSchema],
-  reports: [ReportSchema],  // Add reports field to store report data
+  reports: {
+    type: Map,
+    of: mongoose.Schema.Types.Mixed  // This allows storing any JSON data structure as values
+  },
   datasets: [DatasetSchema], // Add datasets field to store dataset versions
   createdAt: {
     type: Date,

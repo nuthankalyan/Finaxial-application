@@ -340,6 +340,11 @@ exports.logReportGeneration = async (req, res) => {
 // @access  Private
 exports.getReport = async (req, res) => {
   try {
+    console.log('[Server] Fetching report:', {
+      workspaceId: req.params.id,
+      reportId: req.params.reportId
+    });
+
     const workspace = await Workspace.findById(req.params.id);
 
     if (!workspace) {
@@ -357,15 +362,29 @@ exports.getReport = async (req, res) => {
       });
     }
 
-    // Get the report data
+    // Handle migration from array to Map structure
+    if (Array.isArray(workspace.reports)) {
+      console.log('[Server] Found array structure for reports, migrating to Map');
+      workspace.reports = new Map();
+    }
+
+    // Get the report data (workspace.reports is a Map)
     const report = workspace.reports?.get(req.params.reportId);
 
     if (!report) {
+      console.log('[Server] Report not found');
       return res.status(404).json({
         success: false,
         message: 'Report not found'
       });
     }
+
+    console.log('[Server] Report found:', {
+      hasReportData: !!report.reportData,
+      hasUploadedFiles: !!report.uploadedFiles,
+      uploadedFilesCount: report.uploadedFiles ? report.uploadedFiles.length : 0,
+      reportKeys: Object.keys(report)
+    });
 
     res.status(200).json({
       success: true,
@@ -385,6 +404,14 @@ exports.getReport = async (req, res) => {
 // @access  Private
 exports.saveReport = async (req, res) => {
   try {
+    console.log('[Server] Saving report data:', {
+      workspaceId: req.params.id,
+      reportId: req.params.reportId,
+      hasData: !!req.body.data,
+      dataKeys: req.body.data ? Object.keys(req.body.data) : [],
+      uploadedFilesCount: req.body.data?.uploadedFiles ? req.body.data.uploadedFiles.length : 0
+    });
+
     const workspace = await Workspace.findById(req.params.id);
     
     if (!workspace) {
@@ -402,19 +429,33 @@ exports.saveReport = async (req, res) => {
       });
     }
 
+    // Handle migration from array to Map structure
+    if (Array.isArray(workspace.reports)) {
+      console.log('[Server] Migrating reports from array to Map structure');
+      workspace.reports = new Map();
+    } else if (!workspace.reports) {
+      workspace.reports = new Map();
+    }
+
+    // Ensure workspace.reports is a Map
+    if (!(workspace.reports instanceof Map)) {
+      workspace.reports = new Map();
+    }
+
     // Save report data
-    workspace.reports = workspace.reports || {};
-    workspace.reports[req.params.reportId] = {
+    workspace.reports.set(req.params.reportId, {
       ...req.body.data,
       updatedAt: new Date(),
       updatedBy: req.user.id
-    };
+    });
 
     await workspace.save();
 
+    console.log('[Server] Report saved successfully');
+
     res.status(200).json({
       success: true,
-      data: workspace.reports[req.params.reportId]
+      data: workspace.reports.get(req.params.reportId)
     });
   } catch (error) {
     console.error('Error saving report:', error);

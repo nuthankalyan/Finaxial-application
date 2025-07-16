@@ -10,7 +10,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import type { TableRow, TableColumn } from '@/app/types/tables';
 import type { SummaryTable } from '@/app/types/csv';
-import { generateSummaryTables, generateMultiFileSummaryTables, type ReportData } from '@/app/services/summaryTableService';
+import { generateSummaryTables, generateMultiFileSummaryTables, generateSummaryTablesEnhanced, generateMultiFileSummaryTablesEnhanced, type ReportData } from '@/app/services/summaryTableService';
 import { buildApiUrl } from '../../../../utils/apiConfig';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
@@ -283,54 +283,159 @@ Your analysis should be:
         setWorkspaceData(workspace);
         setReportName(`${workspace.name} - Financial Report`);
 
-        // Check if workspace has datasets with data
-        if (!workspace.datasets || workspace.datasets.length === 0) {
-          setError('No datasets found in this workspace. Please upload financial data first.');
+        // REPORT PERSISTENCE LOGIC:
+        // 1. First check if a report already exists for this report_id
+        // 2. If exists, use the saved report data (maintains consistency)
+        // 3. If not exists, generate new report using session data or current dataset versions
+        // 4. Save the new report with dataset version information for future consistency
+        
+        // First, try to fetch existing report data for this specific report_id
+        let existingReportData: EnhancedReportData | null = null;
+        let sessionData: any = null;
+        
+        try {
+          const token = localStorage.getItem('token');
+          const reportResponse = await fetch(buildApiUrl(`api/workspaces/${params.id}/report/${params.report_id}`), {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+          
+          if (reportResponse.ok) {
+            const { data: reportData } = await reportResponse.json();
+            if (reportData) {
+              // Check if this is already processed report data
+              if (reportData.reportData) {
+                existingReportData = reportData.reportData;
+                setReportData(existingReportData);
+                setIsLoading(false);
+                return; // Use existing report data, no need to regenerate
+              }
+              
+              // This is session data that needs to be processed
+              sessionData = reportData;
+            }
+          }
+        } catch (fetchError) {
+          console.log('No existing report found, will generate new one using workspace data');
+        }
+
+        let csvFiles: { content: string; fileName: string }[] = [];
+        let useSessionDataOnly = false;
+
+        // Use session data if available, otherwise fall back to workspace datasets
+        if (sessionData) {
+          console.log('[Report] Session data found:', {
+            hasUploadedFiles: !!sessionData.uploadedFiles,
+            isFromSavedInsight: !!sessionData.isFromSavedInsight,
+            uploadedFilesCount: sessionData.uploadedFiles ? sessionData.uploadedFiles.length : 0
+          });
+
+          if (sessionData.isFromSavedInsight && sessionData.savedInsightData) {
+            // This report is generated from a saved insight - we don't have the raw CSV data
+            // We'll need to create a simplified report based on the insight data
+            const savedInsight = sessionData.savedInsightData;
+            
+            // Create a simplified report data structure
+            const simplifiedReportData: EnhancedReportData = {
+              summary: savedInsight.summary,
+              insights: Array.isArray(savedInsight.insights) ? savedInsight.insights : [savedInsight.insights],
+              recommendations: Array.isArray(savedInsight.recommendations) ? savedInsight.recommendations : [savedInsight.recommendations],
+              tables: [], // No tables for saved insights
+              detailedAnalysis: {}
+            };
+            
+            setReportData(simplifiedReportData);
+            setIsLoading(false);
+            return;
+          } else if (sessionData.uploadedFiles && sessionData.uploadedFiles.length > 0) {
+            // Use the uploaded files from the current session
+            csvFiles = sessionData.uploadedFiles;
+            useSessionDataOnly = true;
+            console.log('[Report] Using session uploaded files:', csvFiles.length, 'files');
+            console.log('[Report] Session files details:', csvFiles.map(f => ({ 
+              fileName: f.fileName, 
+              contentLength: f.content.length,
+              contentPreview: f.content.substring(0, 100) + '...'
+            })));
+          } else {
+            console.warn('[Report] Session data exists but no uploadedFiles found:', sessionData);
+          }
+        }
+        
+        // Fall back to workspace datasets ONLY if no session data is available
+        if (!useSessionDataOnly && csvFiles.length === 0) {
+          console.log('[Report] No session data found, falling back to workspace datasets');
+          
+          // Check if workspace has datasets with data
+          if (!workspace.datasets || workspace.datasets.length === 0) {
+            setError('No datasets found in this workspace. Please upload financial data first.');
+            return;
+          }
+
+          // Get the latest version of each dataset (snapshot at report creation time)
+          const currentDatasets = workspace.datasets.map((dataset: any) => {
+            const latestVersion = dataset.versions[dataset.versions.length - 1];
+            return {
+              content: latestVersion.content,
+              fileName: latestVersion.fileName,
+              type: latestVersion.type,
+              datasetId: dataset.id,
+              versionId: latestVersion.id,
+              createdAt: latestVersion.createdAt
+            };
+          });
+
+          // Process content (keep Excel data as JSON, CSV as text)
+          csvFiles = currentDatasets.map((dataset: any) => {
+            return {
+              content: dataset.content, // Keep original content format
+              fileName: dataset.fileName,
+              type: dataset.type // Pass the type information
+            };
+          });
+        } else {
+          // Keep original content format for session files
+          csvFiles = csvFiles.map((dataset: any) => {
+            return {
+              content: dataset.content, // Keep original content (Excel as JSON, CSV as text)
+              fileName: dataset.fileName,
+              type: dataset.type // Preserve type information if available
+            };
+          });
+        }        
+        // Check if we have any data to process
+        if (csvFiles.length === 0) {
+          console.error('[Report] No data available to generate report');
+          
+          if (useSessionDataOnly) {
+            setError('No session data available to generate this report. Please upload files first and try generating the report again.');
+          } else {
+            setError('No data available to generate this report. The session data may have been lost or expired.');
+          }
+          setIsLoading(false);
           return;
         }
 
-        // Get the latest version of each dataset
-        const latestDatasets = workspace.datasets.map((dataset: any) => {
-          const latestVersion = dataset.versions[dataset.versions.length - 1];
-          return {
-            content: latestVersion.content,
-            fileName: latestVersion.fileName,
-            type: latestVersion.type
-          };
-        });
+        // Final validation: If we're supposed to use session data only, make sure we don't accidentally use workspace data
+        if (useSessionDataOnly && sessionData && sessionData.uploadedFiles) {
+          console.log('[Report] FINAL CHECK: Using ONLY session data, ignoring any workspace datasets');
+        } else if (!useSessionDataOnly) {
+          console.log('[Report] FINAL CHECK: No session data available, using workspace datasets as fallback');
+        }
 
-        // Process CSV content (for Excel files, extract primary sheet)
-        const csvFiles = latestDatasets.map((dataset: any) => {
-          let content = dataset.content;
-          
-          // If it's Excel data (stored as JSON), extract CSV content
-          if (dataset.type === 'excel') {
-            try {
-              const excelData = JSON.parse(content);
-              // Convert the primary sheet to CSV format
-              const primarySheetData = excelData.sheets[excelData.primarySheet];
-              const headers = primarySheetData.headers;
-              const rows = primarySheetData.rows;
-              
-              content = [headers.join(','), ...rows.map((row: any[]) => row.join(','))].join('\n');
-            } catch (e) {
-              console.warn('Failed to parse Excel data, using raw content');
-            }
-          }
-          
-          return {
-            content,
-            fileName: dataset.fileName
-          };
-        });
+        console.log('[Report] Processing data with', csvFiles.length, 'files:', 
+          csvFiles.map(f => ({ fileName: f.fileName, contentLength: f.content.length })));
 
-        // Generate summary tables using Gemini AI
+        // Generate summary tables using enhanced Gemini AI functions
         let reportData: ReportData;
         
         if (csvFiles.length === 1) {
-          reportData = await generateSummaryTables(csvFiles[0].content, csvFiles[0].fileName);
+          // Use enhanced function that detects file type (CSV vs Excel with multiple sheets)
+          reportData = await generateSummaryTablesEnhanced(csvFiles[0].content, csvFiles[0].fileName);
         } else {
-          reportData = await generateMultiFileSummaryTables(csvFiles);
+          // Use enhanced multi-file function that handles mixed CSV and Excel files
+          reportData = await generateMultiFileSummaryTablesEnhanced(csvFiles);
         }
         
         // Generate detailed analysis for each table
@@ -362,7 +467,7 @@ Your analysis should be:
           setActiveTab('overview');
         }
 
-        // Optional: Save the generated report data to the server for future access
+        // Save the generated report data to the server for future access
         try {
           const token = localStorage.getItem('token');
           await fetch(buildApiUrl(`api/workspaces/${params.id}/report/${params.report_id}`), {
@@ -373,9 +478,18 @@ Your analysis should be:
             },
             body: JSON.stringify({
               data: {
-                reportData,
+                reportData: enhancedReportData,
                 generatedAt: new Date().toISOString(),
-                workspaceName: workspace.name
+                workspaceName: workspace.name,
+                sessionInfo: sessionData ? {
+                  usedSessionData: true,
+                  sessionDataType: sessionData.isFromSavedInsight ? 'savedInsight' : 'uploadedFiles',
+                  fileCount: sessionData.uploadedFiles ? sessionData.uploadedFiles.length : 1
+                } : {
+                  usedSessionData: false,
+                  sessionDataType: 'workspaceDatasets',
+                  fileCount: csvFiles.length
+                }
               }
             })
           });

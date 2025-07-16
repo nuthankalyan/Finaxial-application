@@ -897,50 +897,98 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           let currentY = 30;
           const chartWidth = 180;
           const chartHeight = 100;
+          
+          // Use a heavier font weight for chart title
           doc.setFontSize(14);
+          doc.setFont("helvetica", "bold"); // Set font to bold
           doc.setTextColor(33, 37, 41);
           doc.text(chart.title, 15, currentY);
+          doc.setFont("helvetica", "normal"); // Reset font weight
           currentY += 8;
+          
           try {
-            const tempCanvas = document.createElement('canvas');
-            tempCanvas.width = chartWidth * 5;
-            tempCanvas.height = chartHeight * 5;
-            tempCanvas.style.width = `${chartWidth}px`;
-            tempCanvas.style.height = `${chartHeight}px`;
-            document.body.appendChild(tempCanvas);
-            const chartInstance = new ChartJS(tempCanvas, {
-              type: chart.type as keyof ChartTypeRegistry,
-              data: chart.data,
-              options: {
-                ...chart.options,
-                responsive: false,
-                animation: false,
-                plugins: {
-                  legend: {
-                    display: true,
-                    position: 'bottom'
-                  },
-                  title: {
-                    display: false
-                  }
-                }
+        const tempCanvas = document.createElement('canvas');
+        tempCanvas.width = chartWidth * 5;
+        tempCanvas.height = chartHeight * 5;
+        tempCanvas.style.width = `${chartWidth}px`;
+        tempCanvas.style.height = `${chartHeight}px`;
+        document.body.appendChild(tempCanvas);
+        const chartInstance = new ChartJS(tempCanvas, {
+          type: chart.type as keyof ChartTypeRegistry,
+          data: chart.data,
+          options: {
+            ...chart.options,
+            responsive: false,
+            animation: false,
+            plugins: {
+          legend: {
+            display: true,
+            position: 'bottom',
+            labels: {
+              font: {
+            weight: 'bold', // Make legend labels bold
+            size: 11 // Slightly increase font size
               }
-            });
-            chartInstance.render();
-            const imageData = tempCanvas.toDataURL('image/png', 1.0);
-            doc.addImage(imageData, 'PNG', 15, currentY, chartWidth, chartHeight);
-            chartInstance.destroy();
-            document.body.removeChild(tempCanvas);
-            currentY += chartHeight + 10;
-            doc.setFontSize(10);
-            doc.setTextColor(75, 85, 99);
-            const descriptionLines = doc.splitTextToSize(chart.description, 170);
-            doc.text(descriptionLines, 15, currentY);
+            }
+          },
+          title: {
+            display: false
+          }
+            },
+            scales: {
+          ...(chart.options?.scales || {}),
+          x: {
+            ...(chart.options?.scales?.x || {}),
+            ticks: {
+              ...(chart.options?.scales?.x?.ticks || {}),
+              font: {
+            weight: 'bold', // Make x-axis labels bold
+            size: 10
+              }
+            },
+            title: {
+              ...(chart.options?.scales?.x?.title || {}),
+              font: {
+            weight: 'bold', // Make x-axis title bold
+            size: 11
+              }
+            }
+          },
+          y: {
+            ...(chart.options?.scales?.y || {}),
+            ticks: {
+              ...(chart.options?.scales?.y?.ticks || {}),
+              font: {
+            weight: 'bold', // Make y-axis labels bold
+            size: 10
+              }
+            },
+            title: {
+              ...(chart.options?.scales?.y?.title || {}),
+              font: {
+            weight: 'bold', // Make y-axis title bold
+            size: 11
+              }
+            }
+          }
+            }
+          }
+        });
+        chartInstance.render();
+        const imageData = tempCanvas.toDataURL('image/png', 1.0);
+        doc.addImage(imageData, 'PNG', 15, currentY, chartWidth, chartHeight);
+        chartInstance.destroy();
+        document.body.removeChild(tempCanvas);
+        currentY += chartHeight + 10;
+        doc.setFontSize(10);
+        doc.setTextColor(75, 85, 99);
+        const descriptionLines = doc.splitTextToSize(chart.description, 170);
+        doc.text(descriptionLines, 15, currentY);
           } catch (chartError) {
-            console.error('Error rendering chart in PDF:', chartError);
-            doc.setFontSize(10);
-            doc.setTextColor(220, 53, 69);
-            doc.text(`Could not render chart: ${chart.title}`, 15, currentY);
+        console.error('Error rendering chart in PDF:', chartError);
+        doc.setFontSize(10);
+        doc.setTextColor(220, 53, 69);
+        doc.text(`Could not render chart: ${chart.title}`, 15, currentY);
           }
         });
       }
@@ -1612,11 +1660,59 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     {!isViewingHistory && insights && (
                       <motion.button
                         className={styles.reportButton}
-                        onClick={() => {
+                        onClick={async () => {
                           // Generate a unique report ID based on the file name and current timestamp
                           const reportId = fileName ? 
                             `${fileName.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}-${Date.now().toString(36)}` : 
                             `report-${Date.now().toString(36)}`;
+                          
+                          // Save the current session's uploaded files data to be used by the report
+                          try {
+                            const token = localStorage.getItem('token');
+                            
+                            console.log('[Workspace] Saving session data for report:', {
+                              reportId,
+                              uploadedFilesCount: uploadedFiles.length,
+                              uploadedFiles: uploadedFiles.map(f => ({ fileName: f.fileName, contentLength: f.content.length }))
+                            });
+                            
+                            // Ensure we have valid data before saving
+                            if (uploadedFiles.length === 0) {
+                              console.warn('[Workspace] No uploaded files to save for report');
+                            }
+                            
+                            const currentSessionData = {
+                              reportId,
+                              uploadedFiles: uploadedFiles.map(file => ({
+                                content: file.content,
+                                fileName: file.fileName
+                              })),
+                              generatedAt: new Date().toISOString(),
+                              workspaceName: workspace?.name || 'Workspace'
+                            };
+                            
+                            // Store the session data for this specific report
+                            const response = await fetch(buildApiUrl(`api/workspaces/${params.id}/report/${reportId}`), {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${token}`,
+                              },
+                              body: JSON.stringify({
+                                data: currentSessionData
+                              })
+                            });
+                            
+                            if (!response.ok) {
+                              throw new Error(`Server error: ${response.status} ${response.statusText}`);
+                            }
+                            
+                            console.log('[Workspace] Session data saved successfully');
+                          } catch (error) {
+                            console.error('Failed to save current session data for report:', error);
+                            // Continue with navigation even if save fails
+                          }
+                          
                           router.push(`/workspace/${params.id}/report/${reportId}`);
                         }}
                         disabled={saving || exporting || sending}
@@ -1720,11 +1816,47 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                 <div className={styles.modalHeaderButtons}>
                   <button 
                     className={styles.reportButton}
-                    onClick={() => {
+                    onClick={async () => {
                       // Generate a unique report ID based on the file name and current timestamp
                       const reportId = selectedInsight.fileName ? 
                         `${selectedInsight.fileName.replace(/\s+/g, '-').replace(/\.[^/.]+$/, '')}-${Date.now().toString(36)}` : 
                         `report-${Date.now().toString(36)}`;
+                      
+                      // Save the selected insight's data to be used by the report
+                      try {
+                        const token = localStorage.getItem('token');
+                        const insightSessionData = {
+                          reportId,
+                          savedInsightData: {
+                            fileName: selectedInsight.fileName,
+                            summary: selectedInsight.summary,
+                            insights: selectedInsight.insights,
+                            recommendations: selectedInsight.recommendations,
+                            charts: selectedInsight.charts,
+                            assistantChat: selectedInsight.assistantChat,
+                            insightCards: selectedInsight.insightCards
+                          },
+                          generatedAt: new Date().toISOString(),
+                          workspaceName: workspace?.name || 'Workspace',
+                          isFromSavedInsight: true
+                        };
+                        
+                        // Store the insight data for this specific report
+                        await fetch(buildApiUrl(`api/workspaces/${params.id}/report/${reportId}`), {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`,
+                          },
+                          body: JSON.stringify({
+                            data: insightSessionData
+                          })
+                        });
+                      } catch (error) {
+                        console.warn('Failed to save insight data for report:', error);
+                        // Continue with navigation even if save fails
+                      }
+                      
                       router.push(`/workspace/${params.id}/report/${reportId}`);
                     }}
                   >

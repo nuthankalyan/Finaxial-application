@@ -12,7 +12,435 @@ export interface ReportData {
 }
 
 /**
+ * Detects if content is Excel data (JSON format) and extracts sheet information
+ */
+interface ExcelSheetData {
+  headers: string[];
+  rows: string[][];
+}
+
+interface ExcelData {
+  sheets: { [sheetName: string]: ExcelSheetData };
+  primarySheet: string;
+}
+
+const isExcelData = (content: string): boolean => {
+  try {
+    const parsed = JSON.parse(content);
+    return parsed && typeof parsed === 'object' && parsed.sheets && parsed.primarySheet;
+  } catch {
+    return false;
+  }
+};
+
+const parseExcelData = (content: string): ExcelData | null => {
+  try {
+    const parsed = JSON.parse(content);
+    if (parsed && typeof parsed === 'object' && parsed.sheets && parsed.primarySheet) {
+      return parsed as ExcelData;
+    }
+  } catch (error) {
+    console.error('Error parsing Excel data:', error);
+  }
+  return null;
+};
+
+const convertSheetToCSV = (sheetData: ExcelSheetData): string => {
+  const csvLines = [
+    sheetData.headers.join(','),
+    ...sheetData.rows.map(row => row.join(','))
+  ];
+  return csvLines.join('\n');
+};
+
+/**
+ * Generates summary tables from Excel data with multiple sheets
+ * Processes all available sheets in the Excel file
+ */
+export const generateExcelSummaryTables = async (excelContent: string, fileName?: string): Promise<ReportData> => {
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('Gemini API key is not configured');
+    }
+
+    const excelData = parseExcelData(excelContent);
+    if (!excelData) {
+      throw new Error('Invalid Excel data format');
+    }
+
+    const sheetNames = Object.keys(excelData.sheets);
+    const allSheets = Object.entries(excelData.sheets);
+
+    console.log('[SummaryTableService] Processing Excel file with multiple sheets:', {
+      fileName,
+      sheetCount: sheetNames.length,
+      sheetNames,
+      primarySheet: excelData.primarySheet
+    });
+
+    // Validate that we have meaningful data across sheets
+    allSheets.forEach(([sheetName, sheetData]) => {
+      if (!sheetData.headers || sheetData.headers.length === 0) {
+        throw new Error(`No headers found in sheet "${sheetName}"`);
+      }
+      if (!sheetData.rows || sheetData.rows.length === 0) {
+        throw new Error(`No data rows found in sheet "${sheetName}"`);
+      }
+    });
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    // Prepare content for all sheets
+    const sheetsContent = allSheets.map(([sheetName, sheetData]) => {
+      const csvContent = convertSheetToCSV(sheetData);
+      return `SHEET: ${sheetName}${sheetName === excelData.primarySheet ? ' (PRIMARY)' : ''}
+COLUMNS: ${sheetData.headers.join(', ')}
+ROWS: ${sheetData.rows.length}
+DATA:
+${csvContent}
+
+`;
+    }).join('');
+
+    const prompt = `
+You are a financial analyst. Analyze the following Excel file with multiple sheets and generate comprehensive financial summary tables that utilize data from all available sheets.
+
+IMPORTANT: This Excel file contains ${sheetNames.length} sheets. Each sheet has been filtered to include only the visible columns. Generate analysis that leverages the relationship between different sheets and provides comprehensive financial insights.
+
+IMPORTANT: Generate tables ONLY based on the sheets provided in this current analysis. Do not reference any historical data.
+
+EXCEL FILE: ${fileName || 'Excel Workbook'}
+PRIMARY SHEET: ${excelData.primarySheet}
+AVAILABLE SHEETS: ${sheetNames.join(', ')}
+
+${sheetsContent}
+
+Please generate a structured financial report that analyzes and consolidates data from all sheets with the following components:
+
+1. EXECUTIVE_SUMMARY: A comprehensive overview of the financial data across all sheets, highlighting key relationships and the overall financial picture.
+
+2. SUMMARY_TABLES: Generate 5-10 financial summary tables that:
+   - Consolidate data from multiple sheets where applicable
+   - Show relationships between different financial aspects (e.g., P&L vs Balance Sheet)
+   - Provide sheet-specific analysis where relevant
+   - Create cross-sheet financial ratios and metrics
+
+Each table should follow this exact JSON structure:
+{
+  "id": "unique-table-id",
+  "title": "Table Title",
+  "description": "Brief description including which sheets are used",
+  "columns": [
+    {
+      "header": "Column Name",
+      "accessor": "column_key",
+      "isNumeric": true/false,
+      "isCurrency": true/false
+    }
+  ],
+  "data": [
+    {
+      "column_key": value,
+      "isTotal": true/false,
+      "isSubTotal": true/false,
+      "isHeader": true/false
+    }
+  ]
+}
+
+Focus on creating tables that:
+- Utilize data from multiple sheets (cross-sheet analysis)
+- Show consolidated financial statements
+- Provide comprehensive financial ratios
+- Highlight sheet-specific insights
+- Create summary views across all financial data
+
+3. KEY_INSIGHTS: List 5-8 important insights derived from analyzing all sheets together.
+
+4. RECOMMENDATIONS: List 5-8 actionable recommendations based on the multi-sheet analysis.
+
+FORMATTING REQUIREMENTS:
+- Use only valid JSON for the SUMMARY_TABLES section
+- For currency values, use numbers (not formatted strings)
+- Mark totals with "isTotal": true, subtotals with "isSubTotal": true
+- Mark section headers with "isHeader": true
+- Include sheet references in descriptions where relevant
+- Ensure comprehensive analysis utilizing all available sheets
+
+Format your response exactly as follows:
+
+EXECUTIVE_SUMMARY:
+(Your executive summary here)
+
+SUMMARY_TABLES:
+[
+  {
+    "id": "table1",
+    "title": "Table 1 Title",
+    "description": "Description with sheet references",
+    "columns": [...],
+    "data": [...]
+  },
+  {
+    "id": "table2",
+    "title": "Table 2 Title", 
+    "description": "Description with sheet references",
+    "columns": [...],
+    "data": [...]
+  }
+]
+
+KEY_INSIGHTS:
+- Insight 1
+- Insight 2
+- Insight 3
+
+RECOMMENDATIONS:
+- Recommendation 1
+- Recommendation 2
+- Recommendation 3
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Parse the response (same parsing logic as before)
+    const summaryMatch = text.match(/EXECUTIVE_SUMMARY:([\s\S]*?)(?=SUMMARY_TABLES:|$)/i);
+    const tablesMatch = text.match(/SUMMARY_TABLES:([\s\S]*?)(?=KEY_INSIGHTS:|$)/i);
+    const insightsMatch = text.match(/KEY_INSIGHTS:([\s\S]*?)(?=RECOMMENDATIONS:|$)/i);
+    const recommendationsMatch = text.match(/RECOMMENDATIONS:([\s\S]*?)(?=$)/i);
+
+    const summary = summaryMatch ? summaryMatch[1].trim() : 'Multi-sheet financial analysis summary not available.';
+
+    // Parse tables JSON
+    let tables: SummaryTable[] = [];
+    if (tablesMatch && tablesMatch[1]) {
+      try {
+        const tablesJson = tablesMatch[1].trim();
+        const jsonMatch = tablesJson.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        if (jsonMatch) {
+          const sanitizedJson = sanitizeJsonString(jsonMatch[0]);
+          tables = JSON.parse(sanitizedJson);
+          tables = tables.map(table => sanitizeTable(table));
+          
+          console.log('[SummaryTableService] Generated multi-sheet tables:', {
+            tableCount: tables.length,
+            tables: tables.map(table => ({
+              id: table.id,
+              title: table.title,
+              columnCount: table.columns.length
+            }))
+          });
+        }
+      } catch (error) {
+        console.error('Error parsing multi-sheet tables JSON:', error);
+        tables = getFallbackTables();
+      }
+    }
+
+    // Parse insights
+    let insights: string[] = [];
+    if (insightsMatch && insightsMatch[1]) {
+      insights = insightsMatch[1]
+        .split(/\n\s*[-•*]\s*/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+    }
+
+    // Parse recommendations
+    let recommendations: string[] = [];
+    if (recommendationsMatch && recommendationsMatch[1]) {
+      recommendations = recommendationsMatch[1]
+        .split(/\n\s*[-•*]\s*/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+    }
+
+    return {
+      summary,
+      tables: tables.length > 0 ? tables : getFallbackTables(),
+      insights: insights.length > 0 ? insights : ['Multi-sheet analysis provides comprehensive financial insights.'],
+      recommendations: recommendations.length > 0 ? recommendations : ['Leverage multi-sheet data for strategic planning.']
+    };
+
+  } catch (error: any) {
+    console.error('Error generating Excel summary tables:', error);
+    throw new Error(`Failed to generate multi-sheet financial summary: ${error.message}`);
+  }
+};
+
+/**
+ * Enhanced function that detects file type and processes accordingly
+ * Handles both CSV and multi-sheet Excel data
+ */
+export const generateSummaryTablesEnhanced = async (content: string, fileName?: string): Promise<ReportData> => {
+  try {
+    // Detect if this is Excel data (JSON format with sheets)
+    if (isExcelData(content)) {
+      console.log('[SummaryTableService] Detected Excel data, processing all sheets');
+      return await generateExcelSummaryTables(content, fileName);
+    } else {
+      console.log('[SummaryTableService] Detected CSV data, processing as single file');
+      return await generateSummaryTables(content, fileName);
+    }
+  } catch (error: any) {
+    console.error('Error in enhanced summary table generation:', error);
+    throw new Error(`Failed to generate summary tables: ${error.message}`);
+  }
+};
+
+/**
+ * Enhanced multi-file function that handles mixed CSV and Excel files
+ */
+export const generateMultiFileSummaryTablesEnhanced = async (files: { content: string; fileName: string }[]): Promise<ReportData> => {
+  try {
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    
+    if (!apiKey) {
+      throw new Error('Gemini API key is not configured');
+    }
+
+    console.log('[SummaryTableService] Processing mixed file types:', {
+      fileCount: files.length,
+      files: files.map(file => ({
+        fileName: file.fileName,
+        type: isExcelData(file.content) ? 'Excel (multi-sheet)' : 'CSV',
+        contentLength: file.content.length
+      }))
+    });
+
+    // Process each file and prepare content with sheet information
+    const processedFiles = files.map((file, index) => {
+      if (isExcelData(file.content)) {
+        const excelData = parseExcelData(file.content);
+        if (excelData) {
+          const sheetNames = Object.keys(excelData.sheets);
+          const sheetsContent = Object.entries(excelData.sheets).map(([sheetName, sheetData]) => {
+            const csvContent = convertSheetToCSV(sheetData);
+            return `SHEET: ${sheetName}${sheetName === excelData.primarySheet ? ' (PRIMARY)' : ''}
+COLUMNS: ${sheetData.headers.join(', ')}
+DATA:
+${csvContent}`;
+          }).join('\n\n');
+          
+          return `FILE ${index + 1}: ${file.fileName} (Excel - ${sheetNames.length} sheets)
+AVAILABLE SHEETS: ${sheetNames.join(', ')}
+PRIMARY SHEET: ${excelData.primarySheet}
+
+${sheetsContent}
+
+`;
+        }
+      } else {
+        // CSV file
+        const lines = file.content.trim().split('\n');
+        const headers = lines.length > 0 ? lines[0].split(',').map(h => h.trim()) : [];
+        
+        return `FILE ${index + 1}: ${file.fileName} (CSV)
+COLUMNS AVAILABLE: ${headers.join(', ')}
+DATA:
+${file.content}
+
+`;
+      }
+      return '';
+    }).join('');
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    const prompt = `
+You are a financial analyst. Analyze the following mixed collection of CSV and Excel files and generate comprehensive financial summary tables that consolidate and compare data across all files and sheets.
+
+IMPORTANT: Some files are Excel workbooks with multiple sheets, others are CSV files. Generate analysis that leverages relationships between different files and sheets to provide comprehensive financial insights.
+
+IMPORTANT: Generate tables ONLY based on the files provided in this current analysis. Do not reference any historical data.
+
+${processedFiles}
+
+Please generate a structured financial report that combines insights from all files and sheets with the following components:
+
+1. EXECUTIVE_SUMMARY: A comprehensive overview of the combined financial data, highlighting relationships between files/sheets and overall financial picture.
+
+2. SUMMARY_TABLES: Generate 6-12 financial summary tables that:
+   - Consolidate data across multiple files and sheets
+   - Show cross-file relationships and comparisons
+   - Provide file/sheet-specific analysis where relevant
+   - Create comprehensive financial metrics across all data sources
+
+Each table should follow the exact JSON structure specified earlier.
+
+3. KEY_INSIGHTS: List 6-10 important insights derived from analyzing all files and sheets together.
+
+4. RECOMMENDATIONS: List 6-10 actionable recommendations based on the comprehensive multi-file analysis.
+
+Format your response in the same structure as previous examples.
+`;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    // Parse response using same logic as other functions
+    const summaryMatch = text.match(/EXECUTIVE_SUMMARY:([\s\S]*?)(?=SUMMARY_TABLES:|$)/i);
+    const tablesMatch = text.match(/SUMMARY_TABLES:([\s\S]*?)(?=KEY_INSIGHTS:|$)/i);
+    const insightsMatch = text.match(/KEY_INSIGHTS:([\s\S]*?)(?=RECOMMENDATIONS:|$)/i);
+    const recommendationsMatch = text.match(/RECOMMENDATIONS:([\s\S]*?)(?=$)/i);
+
+    const summary = summaryMatch ? summaryMatch[1].trim() : 'Multi-file financial analysis summary not available.';
+
+    let tables: SummaryTable[] = [];
+    if (tablesMatch && tablesMatch[1]) {
+      try {
+        const tablesJson = tablesMatch[1].trim();
+        const jsonMatch = tablesJson.match(/\[\s*\{[\s\S]*\}\s*\]/);
+        if (jsonMatch) {
+          const sanitizedJson = sanitizeJsonString(jsonMatch[0]);
+          tables = JSON.parse(sanitizedJson);
+          tables = tables.map(table => sanitizeTable(table));
+        }
+      } catch (error) {
+        console.error('Error parsing multi-file tables JSON:', error);
+        tables = getFallbackTables();
+      }
+    }
+
+    let insights: string[] = [];
+    if (insightsMatch && insightsMatch[1]) {
+      insights = insightsMatch[1]
+        .split(/\n\s*[-•*]\s*/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+    }
+
+    let recommendations: string[] = [];
+    if (recommendationsMatch && recommendationsMatch[1]) {
+      recommendations = recommendationsMatch[1]
+        .split(/\n\s*[-•*]\s*/)
+        .map(item => item.trim())
+        .filter(item => item.length > 0);
+    }
+
+    return {
+      summary,
+      tables: tables.length > 0 ? tables : getFallbackTables(),
+      insights: insights.length > 0 ? insights : ['Multi-file analysis provides comprehensive financial insights.'],
+      recommendations: recommendations.length > 0 ? recommendations : ['Leverage multi-file data for strategic planning.']
+    };
+
+  } catch (error: any) {
+    console.error('Error generating multi-file summary tables:', error);
+    throw new Error(`Failed to generate multi-file financial summary: ${error.message}`);
+  }
+};
+
+/**
  * Generates financial summary tables from CSV data using Gemini AI
+ * Only processes the specific CSV content provided in this call
  */
 export const generateSummaryTables = async (csvContent: string, fileName?: string): Promise<ReportData> => {
   try {
@@ -29,6 +457,8 @@ export const generateSummaryTables = async (csvContent: string, fileName?: strin
       firstLine: csvContent.split('\n')[0], // Show headers
       lineCount: csvContent.split('\n').length
     });
+
+    console.log('[SummaryTableService] IMPORTANT: Only processing current file data, not workspace history');
 
     // Validate that we have meaningful data
     const lines = csvContent.trim().split('\n');
@@ -52,6 +482,8 @@ export const generateSummaryTables = async (csvContent: string, fileName?: strin
 You are a financial analyst. Analyze the following CSV data and generate comprehensive financial summary tables suitable for a professional financial report.
 
 IMPORTANT: This CSV data has already been filtered to include only the columns that the user wants to analyze. 
+
+IMPORTANT: Generate tables ONLY based on the file provided in this current analysis. Do not reference or attempt to analyze any historical data.
 
 COLUMN USAGE INSTRUCTIONS:
 - You may use the exact column names from the source data: ${headers.join(', ')}
@@ -242,6 +674,7 @@ RECOMMENDATIONS:
 
 /**
  * Generates summary tables from multiple CSV files
+ * Only processes the files provided in the current upload operation
  */
 export const generateMultiFileSummaryTables = async (files: { content: string; fileName: string }[]): Promise<ReportData> => {
   try {
@@ -252,7 +685,7 @@ export const generateMultiFileSummaryTables = async (files: { content: string; f
     }
 
     // Log the files being processed to ensure only visible columns are included
-    console.log('[SummaryTableService] Processing multiple files:', {
+    console.log('[SummaryTableService] Processing multiple files from current upload:', {
       fileCount: files.length,
       files: files.map(file => {
         const lines = file.content.trim().split('\n');
@@ -266,6 +699,8 @@ export const generateMultiFileSummaryTables = async (files: { content: string; f
       })
     });
 
+    console.log('[SummaryTableService] IMPORTANT: Only processing files from current session, not workspace history');
+
     // Validate all files have meaningful data
     files.forEach((file, index) => {
       const lines = file.content.trim().split('\n');
@@ -278,6 +713,9 @@ export const generateMultiFileSummaryTables = async (files: { content: string; f
         throw new Error(`No visible columns found in file ${index + 1} (${file.fileName}): Please ensure at least one column is visible before generating reports`);
       }
     });
+
+    // Important: We're only using files from the current upload operation
+    // Any historical data or previously uploaded files are not included
 
     const genAI = new GoogleGenerativeAI(apiKey);
     const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
@@ -299,6 +737,8 @@ ${file.content}
 You are a financial analyst. Analyze the following multiple CSV files and generate comprehensive financial summary tables that consolidate and compare data across all files.
 
 IMPORTANT: Each CSV file has already been filtered to include only the columns that the user wants to analyze for that specific file. Do not include any columns that are not present in the provided data. Only use the visible columns from each file as specified in the "COLUMNS AVAILABLE" section for each file.
+
+IMPORTANT: Generate tables ONLY based on the files provided in this current analysis. Do not reference or attempt to analyze any historical data or previously uploaded files.
 
 ${filesContent}
 
