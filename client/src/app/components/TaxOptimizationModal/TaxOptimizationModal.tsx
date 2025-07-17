@@ -13,7 +13,7 @@ interface TaxOptimizationModalProps {
 
 export default function TaxOptimizationModal({
   isOpen,
-  result,
+  result, 
   fileName,
   onClose,
   onExportReport
@@ -34,28 +34,44 @@ export default function TaxOptimizationModal({
   const getPriorityIcon = (priority: string) => {
     switch (priority) {
       case 'high':
-        return '🔴';
+        return (
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="#e53935">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        );
       case 'medium':
-        return '🟡';
+        return (
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="#ffb300">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        );
       case 'low':
-        return '🔵';
+        return (
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="#2196f3">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        );
       default:
-        return '⚪';
+        return (
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="#9e9e9e">
+            <circle cx="12" cy="12" r="10" />
+          </svg>
+        );
     }
   };
 
   const getCategoryIcon = (category: string) => {
     switch (category) {
       case 'deduction':
-        return '💰';
+        return '';
       case 'deferral':
-        return '⏰';
+        return '';
       case 'strategy':
-        return '📊';
+        return '';
       case 'compliance':
-        return '📋';
+        return '';
       default:
-        return '💡';
+        return '';
     }
   };
 
@@ -147,7 +163,7 @@ export default function TaxOptimizationModal({
               </svg>
             </div>
             <div>
-              <h2>Tax Optimization Suggestions</h2>
+              <h2 style={{ color: '#2563eb' }}>Tax Optimization Suggestions</h2>
               {fileName && <p className={styles.fileName}>Analysis for: {fileName}</p>}
             </div>
           </div>
@@ -240,7 +256,7 @@ export default function TaxOptimizationModal({
                 <h3>Optimization Categories</h3>
                 <div className={styles.categoriesGrid}>
                   <div className={styles.categoryCard}>
-                    <div className={styles.categoryIcon}>💰</div>
+                    <div className={styles.categoryIcon}></div>
                     <div className={styles.categoryInfo}>
                       <div className={styles.categoryTitle}>Tax Deductions</div>
                       <div className={styles.categoryCount}>
@@ -253,7 +269,7 @@ export default function TaxOptimizationModal({
                   </div>
                   
                   <div className={styles.categoryCard}>
-                    <div className={styles.categoryIcon}>⏰</div>
+                    <div className={styles.categoryIcon}></div>
                     <div className={styles.categoryInfo}>
                       <div className={styles.categoryTitle}>Tax Deferrals</div>
                       <div className={styles.categoryCount}>
@@ -266,7 +282,7 @@ export default function TaxOptimizationModal({
                   </div>
                   
                   <div className={styles.categoryCard}>
-                    <div className={styles.categoryIcon}>📊</div>
+                    <div className={styles.categoryIcon}></div>
                     <div className={styles.categoryInfo}>
                       <div className={styles.categoryTitle}>Strategic Planning</div>
                       <div className={styles.categoryCount}>
@@ -279,7 +295,7 @@ export default function TaxOptimizationModal({
                   </div>
                   
                   <div className={styles.categoryCard}>
-                    <div className={styles.categoryIcon}>📋</div>
+                    <div className={styles.categoryIcon}></div>
                     <div className={styles.categoryInfo}>
                       <div className={styles.categoryTitle}>Compliance</div>
                       <div className={styles.categoryCount}>

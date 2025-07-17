@@ -200,17 +200,18 @@
   color: #334155;
   font-weight: 500;
   font-size: 0.97rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #ffffff !important;
+
   letter-spacing: 0;
 }
 
 .previewTable td {
   padding: 0.875rem 1.5rem;
   color: #475569;
-  border-bottom: 1px solid #374151;
+  border-bottom: 1px solid #ffffff;
   white-space: nowrap;
   min-width: 150px;
-  max-width: 300px;
+  max-width: 300px; 
   overflow: hidden;
   text-overflow: ellipsis;
   font-size: 0.97rem;
@@ -273,7 +274,7 @@
   border-radius: 6px;
   font-weight: 500;
   font-size: 0.875rem;
-  border: 1px solid #e5e7eb;
+  border: none;
   background-color: white;
   color: #4b5563;
   cursor: pointer;
@@ -345,14 +346,14 @@
   display: flex;
   overflow-x: auto;
   padding: 0.5rem 1rem 0;
-  background-color: #f8fafc;
+  background-color: #ffffff;
   border-bottom: 1px solid #e5e7eb;
   gap: 0.25rem;
   flex-wrap: nowrap;
   border-radius: 10px 10px 0 0;
   margin-bottom: 0.5rem;
   padding: 0.75rem 1.25rem 0.25rem;
-  background: #f1f5f9;
+  background: #ffffff;
   gap: 0.5rem;
 }
 
@@ -385,9 +386,9 @@
   border-radius: 8px;
   padding: 0.7rem 1.5rem;
   font-size: 1rem;
-  font-weight: 600;
-  background: transparent;
-  color: #2563eb;
+  font-weight: 400;
+  background: rgb(245, 253, 255);
+  color: #6c768d;
   transition: background 0.2s, color 0.2s;
 }
 
@@ -427,14 +428,14 @@
   display: flex;
   overflow-x: auto;
   background-color: #f8fafc;
-  border-bottom: 1px solid #e2e8f0;
+  
   padding: 0 1rem;
   min-height: 48px;
   align-items: center;
   border-radius: 10px 10px 0 0;
-  margin-bottom: 0.5rem;
+  margin-bottom: 1rem;
   padding: 0.75rem 1.25rem 0.25rem;
-  background: #f1f5f9;
+  background: #ffffff;
   gap: 0.5rem;
 }
 
@@ -462,10 +463,10 @@
 .sheetTab {
   padding: 0.75rem 1.25rem;
   font-size: 0.875rem;
-  font-weight: 500;
-  color: #64748b;
-  background-color: white;
-  border: 1px solid #e2e8f0;
+  font-weight: 400;
+  background: rgb(245, 253, 255);
+  color: #6c768d;
+  border: none;
   border-radius: 6px 6px 0 0;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -476,9 +477,9 @@
   border-radius: 8px;
   padding: 0.7rem 1.5rem;
   font-size: 1rem;
-  font-weight: 600;
+  font-weight: 450;
   background: transparent;
-  color: #2563eb;
+  
   transition: background 0.2s, color 0.2s;
 }
 
@@ -492,13 +493,12 @@
 
 .activeSheetTab {
   color: #0f172a;
-  font-weight: 600;
-  background-color: white;
-  border-color: #3b82f6;
+  font-weight: 450;
+  
   border-bottom-color: white;
   z-index: 1;
-  background: #2563eb;
-  color: #fff !important;
+  background: rgb(245, 253, 255);
+  color: #6c768d !important;
 }
 
 .activeSheetTab::after {
@@ -516,7 +516,7 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 1.25rem;
-  border: 1px solid #e2e8f0;
+  border: none;
   border-radius: 8px;
   background-color: white;
   color: #475569;
@@ -580,9 +580,9 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 2rem;
-  background-color: #f0f9ff;
+  background-color: #fff;
   border-bottom: 1px solid #e0f2fe;
-  color: #0369a1;
+  color: rgb(156, 156, 156);
   font-size: 0.875rem;
 }
 
@@ -1120,7 +1120,7 @@
   border-radius: 6px;
   font-weight: 500;
   font-size: 0.875rem;
-  border: 1px solid #e5e7eb;
+  border: none;
   background-color: white;
   color: #4b5563;
   cursor: pointer;

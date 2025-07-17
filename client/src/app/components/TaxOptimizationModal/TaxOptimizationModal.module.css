@@ -31,8 +31,8 @@
   justify-content: space-between;
   align-items: flex-start;
   padding: 1.5rem 2rem;
-  border-bottom: 1px solid #e5e7eb;
-  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  /* border-bottom: 1px solid #e5e7eb; */
+  background: none;
 }
 
 .headerTitle {
@@ -44,7 +44,7 @@
 .iconContainer {
   width: 48px;
   height: 48px;
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  background: linear-gradient(135deg, #2563eb 0%, #2563eb 100%);
   border-radius: 12px;
   display: flex;
   align-items: center;
@@ -77,19 +77,21 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.75rem 1rem;
-  background: #10b981;
-  color: white;
+  background: white;
+  color: rgb(138, 137, 137);
   border: none;
   border-radius: 8px;
   font-size: 0.875rem;
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.1);
 }
 
 .exportButton:hover:not(:disabled) {
-  background: #059669;
+  background: linear-gradient(90deg, #2563eb 0%, #1e40af 100%);
   transform: translateY(-1px);
+  color: white;
 }
 
 .exportButton:disabled {
@@ -137,7 +139,7 @@
   justify-content: space-around;
   padding: 1.5rem 2rem;
   background: #f8fafc;
-  border-bottom: 1px solid #e5e7eb;
+ 
 }
 
 .summaryItem {
@@ -147,7 +149,7 @@
 .summaryValue {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #059669;
+  color: #2563eb;
   margin-bottom: 0.25rem;
 }
 
@@ -160,7 +162,7 @@
 /* Tab Navigation */
 .tabNavigation {
   display: flex;
-  border-bottom: 1px solid #e5e7eb;
+  
   background: white;
   padding: 0 2rem;
 }
@@ -184,9 +186,10 @@
 }
 
 .activeTab {
-  color: #059669;
-  border-bottom-color: #059669;
-  background: #f0fdf4;
+  color: #2563eb;
+  border-bottom-color: #2563eb;
+  background: rgb(235, 250, 255);
+  
 }
 
 /* Tab Content */
@@ -207,7 +210,7 @@
   background: #f8fafc;
   padding: 1.5rem;
   border-radius: 12px;
-  border-left: 4px solid #10b981;
+  border-left: none;
 }
 
 .executiveSummary h3 {
@@ -263,7 +266,7 @@
 
 .categoryCount {
   font-size: 0.875rem;
-  color: #10b981;
+  color: #2563eb;
   font-weight: 500;
   margin-bottom: 0.5rem;
 }
@@ -313,12 +316,12 @@
 }
 
 .filter:hover {
-  border-color: #10b981;
+  border-color: #2563eb;
 }
 
 .filter:focus {
   outline: none;
-  border-color: #10b981;
+  border-color: #2563eb;
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
@@ -341,17 +344,6 @@
   box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.1);
 }
 
-.priorityHigh {
-  border-left: 4px solid #ef4444;
-}
-
-.priorityMedium {
-  border-left: 4px solid #f59e0b;
-}
-
-.priorityLow {
-  border-left: 4px solid #3b82f6;
-}
 
 .suggestionHeader {
   display: flex;
@@ -395,7 +387,7 @@
 .savingsAmount {
   font-size: 1rem;
   font-weight: 700;
-  color: #059669;
+  color: #2563eb;
   text-align: right;
 }
 
@@ -498,7 +490,7 @@
   justify-content: center;
   width: 32px;
   height: 32px;
-  background: #10b981;
+  background: #2563eb;
   color: white;
   border-radius: 50%;
   font-weight: 600;
@@ -529,9 +521,9 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 1rem;
-  background: #f0fdf4;
+  background: none;
   border-radius: 8px;
-  border: 1px solid #bbf7d0;
+  border: none;
 }
 
 .stepIcon {
@@ -540,7 +532,7 @@
   justify-content: center;
   width: 24px;
   height: 24px;
-  background: #10b981;
+  background: #2563eb;
   color: white;
   border-radius: 50%;
   flex-shrink: 0;
@@ -548,7 +540,7 @@
 
 .stepText {
   line-height: 1.5;
-  color: #065f46;
+  color: rgb(209, 209, 209);
   font-weight: 500;
 }
 
@@ -718,11 +710,11 @@
   color: #9ca3af !important;
 }
 .dark .exportButton, :global(.dark) .exportButton {
-  background: #059669 !important;
+  background: #2563eb !important;
   color: #fff !important;
 }
 .dark .exportButton:hover:not(:disabled), :global(.dark) .exportButton:hover:not(:disabled) {
-  background: #10b981 !important;
+  background: #2563eb !important;
 }
 .dark .closeButton, :global(.dark) .closeButton {
   background: #23293a !important;
@@ -737,7 +729,7 @@
   border-bottom: 1px solid #374151 !important;
 }
 .dark .summaryValue, :global(.dark) .summaryValue {
-  color: #10b981 !important;
+  color: #2563eb !important;
 }
 .dark .summaryLabel, :global(.dark) .summaryLabel {
   color: #9ca3af !important;
@@ -754,9 +746,9 @@
   color: #fff !important;
 }
 .dark .activeTab, :global(.dark) .activeTab {
-  color: #10b981 !important;
+  color: #2563eb !important;
   background: #23293a !important;
-  border-bottom-color: #10b981 !important;
+  border-bottom-color: #2563eb !important;
 }
 .dark .tabContent, :global(.dark) .tabContent {
   background: #181c24 !important;
@@ -767,7 +759,7 @@
   color: #f9fafb !important;
 }
 .dark .executiveSummary h3, :global(.dark) .executiveSummary h3 {
-  color: #10b981 !important;
+  color: #2563eb !important;
 }
 .dark .categoriesGrid, :global(.dark) .categoriesGrid {
   background: none !important;
@@ -781,7 +773,7 @@
   color: #fff !important;
 }
 .dark .categoryCount, :global(.dark) .categoryCount {
-  color: #10b981 !important;
+  color: #2563eb !important;
 }
 .dark .categoryDescription, :global(.dark) .categoryDescription {
   color: #9ca3af !important;
@@ -804,7 +796,7 @@
   color: #fbbf24 !important;
 }
 .dark .priorityLow, :global(.dark) .priorityLow {
-  color: #10b981 !important;
+  color: #2563eb !important;
 }
 .dark .strategicCard, :global(.dark) .strategicCard {
   background: #23293a !important;
@@ -815,7 +807,7 @@
   color: #f9fafb !important;
 }
 .dark .strategicNumber, :global(.dark) .strategicNumber {
-  background: #059669 !important;
+  background: #2563eb !important;
   color: #fff !important;
 }
 .dark .complianceCard, :global(.dark) .complianceCard {

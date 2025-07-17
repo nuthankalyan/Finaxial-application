@@ -803,10 +803,10 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
               <span className={styles.fileIcon}>
                 {files.some((file) => file.type === 'excel') &&
                 files.some((file) => file.type === 'csv')
-                  ? '📊📄'
+                  ? ''
                   : files.some((file) => file.type === 'excel')
-                  ? '📊'
-                  : '📄'}
+                  ? ''
+                  : ''}
               </span>
               Data Preview ({files.length} {files.length === 1 ? 'file' : 'files'})
             </h2>
@@ -858,7 +858,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                   disabled={isLoading}
                 >
                   <span className={styles.fileTypeIcon}>
-                    {file.type === 'excel' ? '📊' : '📄'}
+                    {file.type === 'excel' ? '' : ''}
                   </span>
                   {file.file.name}
                 </button>

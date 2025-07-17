@@ -12,7 +12,7 @@ import VisualizationHistory from '../../components/VisualizationHistory';
 import { analyzeCsvWithGemini, generateChartData, analyzeMultipleCsvFiles, generateMultipleFilesChartData, FinancialInsights, ChartData, FileInfo } from '../../services/geminiService';
 import { taxOptimizationService, TaxOptimizationResult } from '../../services/taxOptimizationService';
 import TaxOptimizationModal from '../../components/TaxOptimizationModal/TaxOptimizationModal';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, color } from 'framer-motion';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { sendPdfReportByEmail } from '../../services/emailService';
@@ -1568,7 +1568,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         {/* Tax Optimization Button */}
                         <div className={styles.taxOptimizationSection}>
                           <h4>AI-Powered Tax Optimization</h4>
-                          <p>Get personalized tax optimization suggestions based on your financial data.</p>
+                          <p style={{ color: '#3b82f6' }}>Get personalized tax optimization suggestions based on your financial data.</p>
                           <button
                             className={styles.taxOptimizationButton}
                             onClick={generateTaxOptimizationSuggestions}
