@@ -160,45 +160,78 @@
 
 .tableSection {
   background-color: white;
-  border-radius: 0.75rem;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1), 0 1px 2px rgba(0, 0, 0, 0.06);
-  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  padding: 1.75rem;
   overflow: hidden;
+  border-left: 5px solid #667eea;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.tableSection:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
 .tableHeader {
   font-size: 1.25rem;
   font-weight: 600;
   margin-bottom: 1rem;
-  color: #111827;
+  color: #2d3748;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 1.1rem;
+}
+
+.tableHeader::before {
+  content: '📊';
+  font-size: 1.25rem;
 }
 
 .tableDescription {
-  font-size: 0.9375rem;
-  color: #6b7280;
+  font-size: 0.95rem;
+  color: #4a5568;
   margin-bottom: 1.5rem;
-  line-height: 1.5;
+  line-height: 1.6;
+  padding: 1rem;
+  background: #f7fafc;
+  border-radius: 8px;
+  border-left: 4px solid #667eea;
 }
 
 .table {
   width: 100%;
   border-collapse: collapse;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .table th {
-  background-color: #f9fafb;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
   text-align: left;
-  padding: 0.75rem 1rem;
+  padding: 1rem 1.25rem;
   font-weight: 600;
-  color: #4b5563;
   font-size: 0.875rem;
-  border-bottom: 1px solid #e5e7eb;
+  border: none;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .table td {
-  padding: 1rem;
+  padding: 1rem 1.25rem;
   border-bottom: 1px solid #e5e7eb;
   font-size: 0.9375rem;
+  transition: background-color 0.2s ease;
+}
+
+.table tr:hover td {
+  background-color: #f8fafc;
 }
 
 .table tr:last-child td {
@@ -273,9 +306,18 @@
 .recommendationsCard {
   background: white;
   border-radius: 12px;
-  padding: 1.5rem;
-  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  padding: 1.75rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-left: 5px solid #667eea;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.summaryCard:hover,
+.insightsCard:hover,
+.recommendationsCard:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
 }
 
 .summaryCard h3,
@@ -283,16 +325,38 @@
 .recommendationsCard h3 {
   font-size: 1.25rem;
   font-weight: 600;
-  color: #111827;
+  color: #2d3748;
   margin-bottom: 1rem;
   padding-bottom: 0.5rem;
   border-bottom: 2px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 1.1rem;
+}
+
+.summaryCard h3::before {
+  content: '📋';
+  font-size: 1.25rem;
+}
+
+.insightsCard h3::before {
+  content: '💡';
+  font-size: 1.25rem;
+}
+
+.recommendationsCard h3::before {
+  content: '🎯';
+  font-size: 1.25rem;
 }
 
 .summaryContent {
-  color: #374151;
-  line-height: 1.6;
-  font-size: 0.95rem;
+  color: #4a5568;
+  line-height: 1.7;
+  font-size: 1rem;
+  text-align: justify;
 }
 
 .insightsList,
@@ -304,31 +368,88 @@
 
 .insightsList li,
 .recommendationsList li {
-  padding: 0.75rem 0;
-  border-bottom: 1px solid #f3f4f6;
-  color: #374151;
-  line-height: 1.5;
+  background: #f7fafc;
+  padding: 1rem 1.25rem 1rem 2rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  color: #4a5568;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  border-left: 4px solid #667eea;
+  transition: all 0.2s ease;
   position: relative;
-  padding-left: 1.5rem;
 }
 
-.insightsList li:before {
-  content: "💡";
-  position: absolute;
-  left: 0;
-  top: 0.75rem;
-}
-
-.recommendationsList li:before {
-  content: "🎯";
-  position: absolute;
-  left: 0;
-  top: 0.75rem;
+.insightsList li:hover,
+.recommendationsList li:hover {
+  background: #edf2f7;
+  transform: translateX(4px);
 }
 
 .insightsList li:last-child,
 .recommendationsList li:last-child {
-  border-bottom: none;
+  margin-bottom: 0;
+}
+
+.insightsList li::before {
+  content: '💡';
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+}
+
+.recommendationsList li::before {
+  content: '🎯';
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+}
+
+.insightsList li,
+.recommendationsList li {
+  background: #f7fafc;
+  padding: 1rem 1.25rem 1rem 2rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  color: #4a5568;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  border-left: 4px solid #667eea;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.insightsList li:hover,
+.recommendationsList li:hover {
+  background: #edf2f7;
+  transform: translateX(4px);
+}
+
+.insightsList li:last-child,
+.recommendationsList li:last-child {
+  margin-bottom: 0;
+}
+
+.insightsList li::before {
+  content: '💡';
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
+}
+
+.recommendationsList li::before {
+  content: '🎯';
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 1rem;
 }
 
 /* Tables overview section */
@@ -426,6 +547,247 @@
   }
 }
 
+/* Comprehensive Financial Analysis Styles */
+.detailedAnalysis {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  padding: 2.5rem;
+  margin: 2rem 0;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
+}
+
+.detailedAnalysis::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.95);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  z-index: 1;
+}
+
+.detailedAnalysis > * {
+  position: relative;
+  z-index: 2;
+}
+
+.analysisTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: #1a202c;
+  margin-bottom: 2rem;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  position: relative;
+  padding-bottom: 1rem;
+}
+
+.analysisTitle::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 4px;
+  background: linear-gradient(90deg, #667eea, #764ba2);
+  border-radius: 2px;
+}
+
+.analysisGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .analysisGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .analysisGrid > :last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+}
+
+.analysisSection {
+  background: white;
+  border-radius: 12px;
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  border-left: 5px solid #667eea;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.analysisSection:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.analysisSection:last-child {
+  margin-bottom: 0;
+}
+
+.analysisSubtitle {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #2d3748;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 1rem;
+}
+
+.analysisSubtitle::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  background: #667eea;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.analysisText {
+  color: #4a5568;
+  line-height: 1.7;
+  font-size: 1rem;
+  text-align: justify;
+  font-weight: 400;
+  margin: 0;
+}
+
+.analysisList {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.analysisListItem {
+  background: #f7fafc;
+  padding: 1rem 1.25rem;
+  margin-bottom: 0.75rem;
+  border-radius: 8px;
+  color: #4a5568;
+  line-height: 1.6;
+  font-size: 0.95rem;
+  border-left: 4px solid #667eea;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.analysisListItem:hover {
+  background: #edf2f7;
+  transform: translateX(4px);
+}
+
+.analysisListItem:last-child {
+  margin-bottom: 0;
+}
+
+.analysisListItem::before {
+  content: '▸';
+  color: #667eea;
+  font-weight: bold;
+  position: absolute;
+  left: 0.5rem;
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.analysisListItem {
+  padding-left: 2rem;
+}
+
+/* Risk Factors specific styling */
+.riskTitle::before {
+  background: #e53e3e !important;
+}
+
+.analysisSection:has(.riskTitle) {
+  border-left-color: #e53e3e;
+}
+
+.analysisSection:has(.riskTitle) .analysisListItem {
+  border-left-color: #e53e3e;
+}
+
+.analysisSection:has(.riskTitle) .analysisListItem::before {
+  color: #e53e3e;
+  content: '⚠';
+}
+
+.riskItem {
+  background: #fed7d7;
+}
+
+.riskItem:hover {
+  background: #fbb6ce;
+}
+
+/* Opportunities specific styling */
+.opportunityTitle::before {
+  background: #38a169 !important;
+}
+
+.analysisSection:has(.opportunityTitle) {
+  border-left-color: #38a169;
+}
+
+.analysisSection:has(.opportunityTitle) .analysisListItem {
+  border-left-color: #38a169;
+}
+
+.analysisSection:has(.opportunityTitle) .analysisListItem::before {
+  color: #38a169;
+  content: '⭐';
+}
+
+.opportunityItem {
+  background: #c6f6d5;
+}
+
+.opportunityItem:hover {
+  background: #9ae6b4;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .detailedAnalysis {
+    padding: 1.5rem;
+    margin: 1rem 0;
+  }
+  
+  .analysisTitle {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  
+  .analysisSection {
+    padding: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  
+  .analysisSubtitle {
+    font-size: 0.9rem;
+  }
+  
+  .analysisText,
+  .analysisListItem {
+    font-size: 0.9rem;
+  }
+}
+
 :global(.dark) .reportContainer {
   background-color: #111827 !important;
   color: #f9fafb !important;
@@ -474,24 +836,38 @@
   background: none !important;
 }
 :global(.dark) .tableSection {
-  background-color: #23293a !important;
+  background-color: #2d3748 !important;
   color: #f9fafb !important;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.18);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+  border-left-color: #667eea !important;
 }
+
+:global(.dark) .tableSection:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
+}
+
 :global(.dark) .tableHeader {
-  color: #fff !important;
+  color: #e2e8f0 !important;
 }
+
 :global(.dark) .tableDescription {
-  color: #9ca3af !important;
+  color: #cbd5e0 !important;
+  background: #1a202c !important;
+  border-left-color: #667eea !important;
 }
+
 :global(.dark) .table th {
-  background-color: #181c24 !important;
-  color: #f9fafb !important;
-  border-bottom: 1px solid #374151 !important;
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%) !important;
+  color: #e2e8f0 !important;
 }
+
 :global(.dark) .table td {
-  color: #f9fafb !important;
-  border-bottom: 1px solid #374151 !important;
+  color: #cbd5e0 !important;
+  border-bottom: 1px solid #4a5568 !important;
+}
+
+:global(.dark) .table tr:hover td {
+  background-color: #1a202c !important;
 }
 :global(.dark) .loadingContainer {
   background-color: #181c24 !important;
@@ -501,24 +877,39 @@
 :global(.dark) .summaryCard,
 :global(.dark) .insightsCard,
 :global(.dark) .recommendationsCard {
-  background: #23293a !important;
+  background: #2d3748 !important;
   color: #f9fafb !important;
-  border: 1px solid #374151 !important;
-  box-shadow: 0 1px 3px 0 rgba(0,0,0,0.18);
+  border-left-color: #667eea !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
 }
+
+:global(.dark) .summaryCard:hover,
+:global(.dark) .insightsCard:hover,
+:global(.dark) .recommendationsCard:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
+}
+
 :global(.dark) .summaryCard h3,
 :global(.dark) .insightsCard h3,
 :global(.dark) .recommendationsCard h3 {
-  color: #fff !important;
-  border-bottom: 2px solid #374151 !important;
+  color: #e2e8f0 !important;
+  border-bottom: 2px solid #4a5568 !important;
 }
+
 :global(.dark) .summaryContent {
-  color: #f9fafb !important;
+  color: #cbd5e0 !important;
 }
+
 :global(.dark) .insightsList li,
 :global(.dark) .recommendationsList li {
-  color: #f9fafb !important;
-  border-bottom: 1px solid #374151 !important;
+  background: #1a202c !important;
+  color: #cbd5e0 !important;
+  border-left-color: #667eea !important;
+}
+
+:global(.dark) .insightsList li:hover,
+:global(.dark) .recommendationsList li:hover {
+  background: #2d3748 !important;
 }
 :global(.dark) .tablesOverview {
   background: #23293a !important;
@@ -542,4 +933,60 @@
 }
 :global(.dark) .tableStats {
   color: #9ca3af !important;
+}
+
+/* Dark mode for Comprehensive Financial Analysis */
+:global(.dark) .detailedAnalysis {
+  background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+}
+
+:global(.dark) .detailedAnalysis::before {
+  background: rgba(26, 32, 44, 0.95);
+}
+
+:global(.dark) .analysisTitle {
+  color: #f7fafc !important;
+}
+
+:global(.dark) .analysisSection {
+  background: #2d3748 !important;
+  border-left-color: #667eea !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
+}
+
+:global(.dark) .analysisSection:hover {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3) !important;
+}
+
+:global(.dark) .analysisSubtitle {
+  color: #e2e8f0 !important;
+}
+
+:global(.dark) .analysisText {
+  color: #cbd5e0 !important;
+}
+
+:global(.dark) .analysisListItem {
+  background: #1a202c !important;
+  color: #cbd5e0 !important;
+}
+
+:global(.dark) .analysisListItem:hover {
+  background: #2d3748 !important;
+}
+
+:global(.dark) .riskItem {
+  background: #2d1b1b !important;
+}
+
+:global(.dark) .riskItem:hover {
+  background: #3d2626 !important;
+}
+
+:global(.dark) .opportunityItem {
+  background: #1b2d1b !important;
+}
+
+:global(.dark) .opportunityItem:hover {
+  background: #263d26 !important;
 }

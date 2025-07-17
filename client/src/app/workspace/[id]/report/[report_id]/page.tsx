@@ -70,6 +70,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
   const [reportName, setReportName] = useState<string>('Financial Report');
   const [reportDate, setReportDate] = useState<Date>(new Date());
   const [workspaceData, setWorkspaceData] = useState<WorkspaceData | null>(null);
+  const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
 
   // Function to generate detailed analysis for a table
   const generateDetailedTableAnalysis = async (
@@ -129,46 +130,47 @@ Please provide a detailed financial analysis with the following sections:
 
 8. FORECAST INSIGHTS: Provide forward-looking insights and projections based on the current data trends.
 
-Format your response as follows:
+CRITICAL FORMATTING REQUIREMENTS:
+- Write in PLAIN TEXT only - no markdown, no formatting symbols
+- NEVER use asterisks (*) or any special characters for emphasis
+- NEVER use double asterisks (**) for bold text
+- Use only regular sentences and paragraphs
+- For lists, use simple numbered points or write as sentences
+- Write professionally without any formatting markup
+
+Format your response exactly as follows (use plain text only):
 
 BUSINESS CONTEXT:
-(Your business context analysis here)
+Write your business context analysis here in plain sentences without any formatting symbols.
 
 KEY TRENDS:
-- Trend 1
-- Trend 2
-- Trend 3
+Write trend 1 as a complete sentence.
+Write trend 2 as a complete sentence.
+Write trend 3 as a complete sentence.
 
 FINANCIAL IMPLICATIONS:
-(Your financial implications analysis here)
+Write your financial implications analysis here in plain sentences without any formatting symbols.
 
 RISK FACTORS:
-- Risk 1
-- Risk 2
-- Risk 3
+Write risk 1 as a complete sentence.
+Write risk 2 as a complete sentence.
 
 OPPORTUNITIES:
-- Opportunity 1
-- Opportunity 2
-- Opportunity 3
+Write opportunity 1 as a complete sentence.
+Write opportunity 2 as a complete sentence.
 
 RECOMMENDATIONS:
-- Recommendation 1
-- Recommendation 2
-- Recommendation 3
+Write recommendation 1 as a complete sentence.
+Write recommendation 2 as a complete sentence.
+Write recommendation 3 as a complete sentence.
 
 INDUSTRY BENCHMARK:
-(Your industry benchmark analysis here)
+Write your industry benchmark analysis here in plain sentences without any formatting symbols.
 
 FORECAST INSIGHTS:
-(Your forecast insights here)
+Write your forecast insights here in plain sentences without any formatting symbols.
 
-Your analysis should be:
-- Professional and comprehensive
-- Data-driven with specific insights
-- Forward-looking and strategic
-- Suitable for executive decision-making
-- Clear and well-structured
+Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Write as if you are writing a formal business document.
 `;
 
       const result = await model.generateContent(prompt);
@@ -185,48 +187,64 @@ Your analysis should be:
       const industryBenchmarkMatch = text.match(/INDUSTRY BENCHMARK:([\s\S]*?)(?=FORECAST INSIGHTS:|$)/i);
       const forecastInsightsMatch = text.match(/FORECAST INSIGHTS:([\s\S]*?)(?=$)/i);
 
-      const businessContext = businessContextMatch ? businessContextMatch[1].trim() : 
+      // Helper function to clean text content
+      const cleanText = (text: string): string => {
+        return text
+          .replace(/\*+/g, '') // Remove all asterisks
+          .replace(/#+\s*/g, '') // Remove markdown headers
+          .replace(/\*\*/g, '') // Remove bold markdown
+          .replace(/\*/g, '') // Remove italic markdown
+          .replace(/\s+/g, ' ') // Normalize whitespace
+          .replace(/^\s*[-•]\s*/, '') // Remove leading bullet points
+          .trim();
+      };
+
+      const businessContext = businessContextMatch ? 
+        cleanText(businessContextMatch[1]) : 
         'This table provides important financial metrics for business analysis.';
       
       const keyTrends = keyTrendsMatch ? 
         keyTrendsMatch[1]
-          .split(/\n\s*[-•*]\s*/)
-          .map(item => item.trim())
-          .filter(item => item.length > 0)
+          .split(/\n/)
+          .map(item => cleanText(item))
+          .filter(item => item.length > 0 && !item.toLowerCase().includes('trend') && !item.toLowerCase().includes('write'))
           .slice(0, 5) : 
         ['Data analysis reveals important patterns and trends.'];
       
-      const financialImplications = financialImplicationsMatch ? financialImplicationsMatch[1].trim() : 
+      const financialImplications = financialImplicationsMatch ? 
+        cleanText(financialImplicationsMatch[1]) : 
         'The data indicates important financial implications for business strategy.';
       
       const riskFactors = riskFactorsMatch ? 
         riskFactorsMatch[1]
-          .split(/\n\s*[-•*]\s*/)
-          .map(item => item.trim())
-          .filter(item => item.length > 0)
+          .split(/\n/)
+          .map(item => cleanText(item))
+          .filter(item => item.length > 0 && !item.toLowerCase().includes('risk') && !item.toLowerCase().includes('write'))
           .slice(0, 4) : 
         ['Consider potential risks in financial planning.'];
       
       const opportunities = opportunitiesMatch ? 
         opportunitiesMatch[1]
-          .split(/\n\s*[-•*]\s*/)
-          .map(item => item.trim())
-          .filter(item => item.length > 0)
+          .split(/\n/)
+          .map(item => cleanText(item))
+          .filter(item => item.length > 0 && !item.toLowerCase().includes('opportunity') && !item.toLowerCase().includes('write'))
           .slice(0, 4) : 
         ['Identify growth opportunities in the data.'];
       
       const recommendations = recommendationsMatch ? 
         recommendationsMatch[1]
-          .split(/\n\s*[-•*]\s*/)
-          .map(item => item.trim())
-          .filter(item => item.length > 0)
+          .split(/\n/)
+          .map(item => cleanText(item))
+          .filter(item => item.length > 0 && !item.toLowerCase().includes('recommendation') && !item.toLowerCase().includes('write'))
           .slice(0, 5) : 
         ['Develop strategic recommendations based on analysis.'];
       
-      const industryBenchmark = industryBenchmarkMatch ? industryBenchmarkMatch[1].trim() : 
+      const industryBenchmark = industryBenchmarkMatch ? 
+        cleanText(industryBenchmarkMatch[1]) : 
         'Compare performance against industry standards and benchmarks.';
       
-      const forecastInsights = forecastInsightsMatch ? forecastInsightsMatch[1].trim() : 
+      const forecastInsights = forecastInsightsMatch ? 
+        cleanText(forecastInsightsMatch[1]) : 
         'Project future trends and performance based on current data.';
 
       return {
@@ -591,216 +609,551 @@ Your analysis should be:
     if (row.isHeader) return styles.total;
     return '';
   };
-  // Function to export the report as PDF
-  const exportToPdf = () => {
-    if (!reportData) return;
-    
-    const doc = new jsPDF();
-    
-    // Add title
-    doc.setFontSize(20);
-    doc.text(reportName, 20, 20);
-    
-    // Add date
-    doc.setFontSize(12);
-    doc.text(`Generated on: ${reportDate.toLocaleDateString()}`, 20, 30);
-    
-    let yPos = 40;
-    
-    // Add executive summary if available
-    if (reportData.summary) {
-      doc.setFontSize(16);
-      doc.text('Executive Summary', 20, yPos);
-      yPos += 10;
-      
-      doc.setFontSize(10);
-      const summaryLines = doc.splitTextToSize(reportData.summary, 170);
-      doc.text(summaryLines, 20, yPos);
-      yPos += summaryLines.length * 5 + 10;
+  // Function to export the report as PDF with professional structure
+  const exportToPdf = async () => {
+    if (!reportData || !workspaceData) {
+      toast.error('Report data not available for export');
+      return;
     }
     
-    // Add each table with detailed analysis
-    reportData.tables.forEach(table => {
-      // Check if we need to add a new page
-      if (yPos > 230) {
+    setIsExportingPdf(true);
+    
+    try {
+      toast.info('Generating professional PDF report...');
+      
+      const doc = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a4'
+      });
+    
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
+    const margin = 20;
+    const contentWidth = pageWidth - (2 * margin);
+    const footerY = pageHeight - 15;
+    
+    // Set document properties
+    doc.setProperties({
+      title: `${reportName} - Financial Report`,
+      subject: 'Comprehensive Financial Analysis Report',
+      author: 'Finaxial',
+      creator: 'Finaxial Application',
+      keywords: 'financial, analysis, report'
+    });
+    
+    // PAGE 1: TITLE PAGE
+    // Add Finaxial logo and title page
+    doc.setFontSize(24);
+    doc.setTextColor(102, 126, 234); // Brand blue color
+    doc.setFont('helvetica', 'bold');
+    
+    // Add actual Finaxial logo
+    try {
+      // Create an image element to load the logo
+      const logoImg = new Image();
+      logoImg.crossOrigin = 'anonymous';
+      
+      // Use a promise to handle logo loading
+      await new Promise((resolve, reject) => {
+        logoImg.onload = () => {
+          try {
+            // Add logo to PDF (centered, with appropriate size)
+            const logoWidth = 40;
+            const logoHeight = 20;
+            const logoX = (pageWidth - logoWidth) / 2;
+            const logoY = 40;
+            
+            doc.addImage(logoImg, 'PNG', logoX, logoY, logoWidth, logoHeight);
+            resolve(true);
+          } catch (error) {
+            console.error('Error adding logo to PDF:', error);
+            // Fallback to text logo if image fails
+            doc.setFillColor(102, 126, 234);
+            doc.circle(pageWidth / 2, 60, 15, 'F');
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(20);
+            doc.text('F', pageWidth / 2, 65, { align: 'center' });
+            resolve(true);
+          }
+        };
+        
+        logoImg.onerror = () => {
+          console.error('Failed to load logo image');
+          // Fallback to text logo
+          doc.setFillColor(102, 126, 234);
+          doc.circle(pageWidth / 2, 60, 15, 'F');
+          doc.setTextColor(255, 255, 255);
+          doc.setFontSize(20);
+          doc.text('F', pageWidth / 2, 65, { align: 'center' });
+          resolve(true);
+        };
+        
+        // Load the logo from public folder
+        logoImg.src = '/finaxial-logooo.png';
+      });
+    } catch (error) {
+      console.error('Error loading logo:', error);
+      // Fallback to simple circle logo
+      doc.setFillColor(102, 126, 234);
+      doc.circle(pageWidth / 2, 60, 15, 'F');
+      doc.setTextColor(255, 255, 255);
+      doc.setFontSize(20);
+      doc.text('F', pageWidth / 2, 65, { align: 'center' });
+    }
+    
+    // Company name
+    doc.setTextColor(102, 126, 234);
+    doc.setFontSize(32);
+    doc.setFont('helvetica', 'bold');
+    doc.text('FINAXIAL', pageWidth / 2, 95, { align: 'center' });
+    
+    // Report title
+    doc.setTextColor(45, 55, 72);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'normal');
+    doc.text('FINANCIAL ANALYSIS REPORT', pageWidth / 2, 120, { align: 'center' });
+    
+    // Workspace name
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(workspaceData.name || 'Financial Workspace', pageWidth / 2, 140, { align: 'center' });
+    
+    // Generated date
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(107, 114, 128);
+    doc.text(`Generated on: ${reportDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    })}`, pageWidth / 2, 160, { align: 'center' });
+    
+    // Add decorative line
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(102, 126, 234);
+    doc.line(margin, 180, pageWidth - margin, 180);
+    
+    // Add professional note
+    doc.setFontSize(10);
+    doc.setTextColor(75, 85, 99);
+    const note = 'This report contains confidential financial analysis and should be treated as proprietary information.';
+    const noteLines = doc.splitTextToSize(note, contentWidth - 40);
+    doc.text(noteLines, pageWidth / 2, 210, { align: 'center' });
+    
+    // PAGE 2: TABLE OF CONTENTS
+    doc.addPage();
+    
+    // TOC Title
+    doc.setFontSize(24);
+    doc.setTextColor(45, 55, 72);
+    doc.setFont('helvetica', 'bold');
+    doc.text('TABLE OF CONTENTS', margin, 40);
+    
+    // Add underline
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(102, 126, 234);
+    doc.line(margin, 45, pageWidth - margin, 45);
+    
+    let tocY = 65;
+    let currentPage = 3; // Starting from page 3
+    
+    // TOC entries
+    const tocEntries = [
+      { title: 'Executive Summary', page: currentPage },
+      { title: 'Financial Tables Analysis', page: currentPage + 1 },
+    ];
+    
+    // Add table entries to TOC
+    reportData.tables.forEach((table, index) => {
+      tocEntries.push({
+        title: `${index + 1}. ${table.title}`,
+        page: currentPage + 1 + index
+      });
+    });
+    
+    // Add comprehensive analysis to TOC
+    tocEntries.push({
+      title: 'Comprehensive Financial Analysis',
+      page: currentPage + 1 + reportData.tables.length
+    });
+    
+    // Render TOC entries
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(45, 55, 72);
+    
+    tocEntries.forEach((entry, index) => {
+      const yPos = tocY + (index * 8);
+      
+      // Entry title
+      doc.text(entry.title, margin, yPos);
+      
+      // Dotted line
+      const titleWidth = doc.getTextWidth(entry.title);
+      const pageNumWidth = doc.getTextWidth(entry.page.toString());
+      const dotsWidth = contentWidth - titleWidth - pageNumWidth - 10;
+      const dotCount = Math.floor(dotsWidth / 3);
+      const dots = '.'.repeat(dotCount);
+      
+      doc.setTextColor(156, 163, 175);
+      doc.text(dots, margin + titleWidth + 5, yPos);
+      
+      // Page number
+      doc.setTextColor(45, 55, 72);
+      doc.text(entry.page.toString(), pageWidth - margin, yPos, { align: 'right' });
+    });
+    
+    // PAGE 3: EXECUTIVE SUMMARY
+    doc.addPage();
+    
+    doc.setFontSize(20);
+    doc.setTextColor(45, 55, 72);
+    doc.setFont('helvetica', 'bold');
+    doc.text('EXECUTIVE SUMMARY', margin, 40);
+    
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(102, 126, 234);
+    doc.line(margin, 45, pageWidth - margin, 45);
+    
+    if (reportData.summary) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(75, 85, 99);
+      const summaryLines = doc.splitTextToSize(reportData.summary, contentWidth);
+      doc.text(summaryLines, margin, 60);
+    }
+    
+    // Add insights section
+    let insightY = 135; // Declare variable outside the if block
+    if (reportData.insights && reportData.insights.length > 0) {
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(45, 55, 72);
+      doc.text('Key Insights', margin, 120);
+      
+      insightY = 135;
+      reportData.insights.forEach((insight, index) => {
+        // Check if we need a new page
+        if (insightY > pageHeight - 60) {
+          doc.addPage();
+          insightY = 40;
+        }
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(75, 85, 99);
+        
+        // Properly wrap text within margins
+        const bulletPoint = `• ${insight}`;
+        const wrappedLines = doc.splitTextToSize(bulletPoint, contentWidth - 10);
+        doc.text(wrappedLines, margin + 5, insightY);
+        insightY += wrappedLines.length * 5 + 3; // Add spacing between insights
+      });
+    }
+    
+    // Add recommendations section
+    if (reportData.recommendations && reportData.recommendations.length > 0) {
+      // Check if we need a new page for recommendations
+      if (insightY > pageHeight - 80) {
         doc.addPage();
-        yPos = 20;
+        insightY = 40;
       }
       
-      // Add section title
-      doc.setFontSize(16);
-      doc.text(table.title, 20, yPos);
-      yPos += 10;
+      doc.setFontSize(14);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(45, 55, 72);
+      doc.text('Strategic Recommendations', margin, insightY + 15);
       
-      // Add description
-      doc.setFontSize(10);
-      doc.text(table.description, 20, yPos);
-      yPos += 15;
+      let recY = insightY + 30;
+      reportData.recommendations.forEach((rec, index) => {
+        // Check if we need a new page
+        if (recY > pageHeight - 60) {
+          doc.addPage();
+          recY = 40;
+        }
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(75, 85, 99);
+        
+        // Properly wrap text within margins
+        const bulletPoint = `• ${rec}`;
+        const wrappedLines = doc.splitTextToSize(bulletPoint, contentWidth - 10);
+        doc.text(wrappedLines, margin + 5, recY);
+        recY += wrappedLines.length * 5 + 3; // Add spacing between recommendations
+      });
+    }
+    
+    // PAGES 4+: FINANCIAL TABLES WITH DETAILED ANALYSIS
+    reportData.tables.forEach((table, tableIndex) => {
+      doc.addPage(); // Each table starts on a new page
       
-      // Prepare table data
-      const headers = table.columns.map(col => col.header);
-      const data = table.data.map(row => 
+      // Table title
+      doc.setFontSize(18);
+      doc.setTextColor(45, 55, 72);
+      doc.setFont('helvetica', 'bold');
+      doc.text(table.title, margin, 40);
+      
+      // Table description
+      if (table.description) {
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(107, 114, 128);
+        const descLines = doc.splitTextToSize(table.description, contentWidth);
+        doc.text(descLines, margin, 50);
+      }
+      
+      // Prepare table data for autoTable
+      const tableData = table.data.map(row => 
         table.columns.map(col => {
           const value = row[col.accessor];
-          if (col.isNumeric && col.isCurrency && typeof value === 'number') {
-            return formatCurrency(value);
-          } else if (col.isNumeric && typeof value === 'number') {
-            return formatNumber(value);
+          if (col.isCurrency && typeof value === 'number') {
+            return new Intl.NumberFormat('en-US', {
+              style: 'currency',
+              currency: 'USD'
+            }).format(value);
           }
-          return value || '';
+          if (col.isNumeric && typeof value === 'number') {
+            return new Intl.NumberFormat('en-US').format(value);
+          }
+          return value?.toString() || '';
         })
       );
       
-      // Add table
-      autoTable(doc, {
-        head: [headers],
-        body: data,
-        startY: yPos,
-        styles: { fontSize: 9 },
-        headStyles: { fillColor: [37, 99, 235] },
-        didDrawPage: () => {},
-      });
+      const tableHeaders = table.columns.map(col => col.header);
       
-      // Update position for next content
-      yPos = (doc as any).lastAutoTable.finalY + 20;
+      // Generate table using autoTable
+      autoTable(doc, {
+        head: [tableHeaders],
+        body: tableData,
+        startY: 70,
+        margin: { left: margin, right: margin },
+        styles: {
+          fontSize: 9,
+          cellPadding: 4,
+        },
+        headStyles: {
+          fillColor: [102, 126, 234],
+          textColor: [255, 255, 255],
+          fontStyle: 'bold',
+        },
+        alternateRowStyles: {
+          fillColor: [248, 250, 252],
+        },
+        tableLineColor: [229, 231, 235],
+        tableLineWidth: 0.1,
+      });
       
       // Add detailed analysis if available
       const detailedAnalysis = reportData.detailedAnalysis?.[table.id];
       if (detailedAnalysis) {
+        const finalY = (doc as any).lastAutoTable?.finalY || 120;
+        let analysisY = finalY + 20;
+        
         // Check if we need a new page for analysis
-        if (yPos > 200) {
+        if (analysisY > pageHeight - 80) {
           doc.addPage();
-          yPos = 20;
+          analysisY = 40;
         }
+        
+        // Analysis title
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(45, 55, 72);
+        doc.text('Detailed Analysis', margin, analysisY);
+        
+        analysisY += 15;
         
         // Business Context
         doc.setFontSize(12);
-        doc.setTextColor(33, 37, 41);
         doc.setFont('helvetica', 'bold');
-        doc.text('Business Context:', 20, yPos);
-        yPos += 8;
-        doc.setFontSize(9);
-        doc.setTextColor(75, 85, 99);
-        doc.setFont('helvetica', 'normal');
-        const contextLines = doc.splitTextToSize(detailedAnalysis.businessContext, 170);
-        doc.text(contextLines, 20, yPos);
-        yPos += contextLines.length * 4 + 10;
+        doc.setTextColor(102, 126, 234);
+        doc.text('Business Context', margin, analysisY);
         
-        // Key Trends
-        if (detailedAnalysis.keyTrends && detailedAnalysis.keyTrends.length > 0) {
-          doc.setFontSize(11);
-          doc.setTextColor(33, 37, 41);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Key Trends:', 20, yPos);
-          yPos += 8;
-          doc.setFontSize(9);
-          doc.setTextColor(75, 85, 99);
-          doc.setFont('helvetica', 'normal');
-          detailedAnalysis.keyTrends.forEach(trend => {
-            const trendLines = doc.splitTextToSize(`• ${trend}`, 160);
-            doc.text(trendLines, 25, yPos);
-            yPos += trendLines.length * 4 + 2;
-          });
-          yPos += 5;
-        }
+        analysisY += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(75, 85, 99);
+        const contextLines = doc.splitTextToSize(detailedAnalysis.businessContext, contentWidth);
+        doc.text(contextLines, margin, analysisY);
+        analysisY += contextLines.length * 4 + 8;
         
         // Financial Implications
-        doc.setFontSize(11);
-        doc.setTextColor(33, 37, 41);
+        if (analysisY > pageHeight - 50) {
+          doc.addPage();
+          analysisY = 40;
+        }
+        
+        doc.setFontSize(12);
         doc.setFont('helvetica', 'bold');
-        doc.text('Financial Implications:', 20, yPos);
-        yPos += 8;
-        doc.setFontSize(9);
-        doc.setTextColor(75, 85, 99);
+        doc.setTextColor(102, 126, 234);
+        doc.text('Financial Implications', margin, analysisY);
+        
+        analysisY += 8;
+        doc.setFontSize(10);
         doc.setFont('helvetica', 'normal');
-        const implicationsLines = doc.splitTextToSize(detailedAnalysis.financialImplications, 170);
-        doc.text(implicationsLines, 20, yPos);
-        yPos += implicationsLines.length * 4 + 10;
+        doc.setTextColor(75, 85, 99);
+        const implLines = doc.splitTextToSize(detailedAnalysis.financialImplications, contentWidth);
+        doc.text(implLines, margin, analysisY);
+        analysisY += implLines.length * 4 + 8;
+        
+        // Industry Benchmark
+        if (analysisY > pageHeight - 50) {
+          doc.addPage();
+          analysisY = 40;
+        }
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(102, 126, 234);
+        doc.text('Industry Benchmark', margin, analysisY);
+        
+        analysisY += 8;
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(75, 85, 99);
+        const benchLines = doc.splitTextToSize(detailedAnalysis.industryBenchmark, contentWidth);
+        doc.text(benchLines, margin, analysisY);
+        analysisY += benchLines.length * 4 + 8;
         
         // Risk Factors
         if (detailedAnalysis.riskFactors && detailedAnalysis.riskFactors.length > 0) {
-          doc.setFontSize(11);
+          if (analysisY > pageHeight - 50) {
+            doc.addPage();
+            analysisY = 40;
+          }
+          
+          doc.setFontSize(12);
+          doc.setFont('helvetica', 'bold');
           doc.setTextColor(220, 53, 69);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Risk Factors:', 20, yPos);
-          yPos += 8;
-          doc.setFontSize(9);
-          doc.setTextColor(75, 85, 99);
-          doc.setFont('helvetica', 'normal');
-          detailedAnalysis.riskFactors.forEach(risk => {
-            const riskLines = doc.splitTextToSize(`• ${risk}`, 160);
-            doc.text(riskLines, 25, yPos);
-            yPos += riskLines.length * 4 + 2;
+          doc.text('Risk Factors', margin, analysisY);
+          
+          analysisY += 8;
+          detailedAnalysis.riskFactors.forEach((risk, index) => {
+            // Check if we need a new page before adding risk factor
+            if (analysisY > pageHeight - 40) {
+              doc.addPage();
+              analysisY = 40;
+            }
+            
+            doc.setFontSize(10);
+            doc.setFont('helvetica', 'normal');
+            doc.setTextColor(75, 85, 99);
+            
+            // Properly wrap risk factor text within margins
+            const bulletPoint = `• ${risk}`;
+            const wrappedRiskLines = doc.splitTextToSize(bulletPoint, contentWidth - 10);
+            doc.text(wrappedRiskLines, margin + 5, analysisY);
+            analysisY += wrappedRiskLines.length * 5 + 2; // Add proper spacing
           });
-          yPos += 5;
         }
-        
-        // Opportunities
-        if (detailedAnalysis.opportunities && detailedAnalysis.opportunities.length > 0) {
-          doc.setFontSize(11);
-          doc.setTextColor(40, 167, 69);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Opportunities:', 20, yPos);
-          yPos += 8;
-          doc.setFontSize(9);
-          doc.setTextColor(75, 85, 99);
-          doc.setFont('helvetica', 'normal');
-          detailedAnalysis.opportunities.forEach(opportunity => {
-            const opportunityLines = doc.splitTextToSize(`• ${opportunity}`, 160);
-            doc.text(opportunityLines, 25, yPos);
-            yPos += opportunityLines.length * 4 + 2;
-          });
-          yPos += 5;
-        }
-        
-        // Recommendations
-        if (detailedAnalysis.recommendations && detailedAnalysis.recommendations.length > 0) {
-          doc.setFontSize(11);
-          doc.setTextColor(33, 37, 41);
-          doc.setFont('helvetica', 'bold');
-          doc.text('Strategic Recommendations:', 20, yPos);
-          yPos += 8;
-          doc.setFontSize(9);
-          doc.setTextColor(75, 85, 99);
-          doc.setFont('helvetica', 'normal');
-          detailedAnalysis.recommendations.forEach(recommendation => {
-            const recommendationLines = doc.splitTextToSize(`• ${recommendation}`, 160);
-            doc.text(recommendationLines, 25, yPos);
-            yPos += recommendationLines.length * 4 + 2;
-          });
-          yPos += 5;
-        }
-        
-        // Industry Benchmark
-        doc.setFontSize(11);
-        doc.setTextColor(33, 37, 41);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Industry Benchmark:', 20, yPos);
-        yPos += 8;
-        doc.setFontSize(9);
-        doc.setTextColor(75, 85, 99);
-        doc.setFont('helvetica', 'normal');
-        const benchmarkLines = doc.splitTextToSize(detailedAnalysis.industryBenchmark, 170);
-        doc.text(benchmarkLines, 20, yPos);
-        yPos += benchmarkLines.length * 4 + 10;
-        
-        // Forecast Insights
-        doc.setFontSize(11);
-        doc.setTextColor(33, 37, 41);
-        doc.setFont('helvetica', 'bold');
-        doc.text('Forecast Insights:', 20, yPos);
-        yPos += 8;
-        doc.setFontSize(9);
-        doc.setTextColor(75, 85, 99);
-        doc.setFont('helvetica', 'normal');
-        const forecastLines = doc.splitTextToSize(detailedAnalysis.forecastInsights, 170);
-        doc.text(forecastLines, 20, yPos);
-        yPos += forecastLines.length * 4 + 10;
       }
     });
     
+    // FINAL PAGE: COMPREHENSIVE FINANCIAL ANALYSIS SUMMARY
+    doc.addPage();
+    
+    doc.setFontSize(20);
+    doc.setTextColor(45, 55, 72);
+    doc.setFont('helvetica', 'bold');
+    doc.text('COMPREHENSIVE FINANCIAL ANALYSIS', margin, 40);
+    
+    doc.setLineWidth(0.5);
+    doc.setDrawColor(102, 126, 234);
+    doc.line(margin, 45, pageWidth - margin, 45);
+    
+    let summaryY = 65;
+    
+    // Overall business context summary
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text('Overall Assessment', margin, summaryY);
+    
+    summaryY += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    
+    const overallSummary = `This comprehensive financial analysis encompasses ${reportData.tables.length} key financial areas, ` +
+      `providing detailed insights into business performance, financial health, and strategic positioning. ` +
+      `The analysis considers industry benchmarks, identifies key risk factors, and provides actionable recommendations ` +
+      `for enhanced financial performance and strategic decision-making.`;
+    
+    const summaryLines = doc.splitTextToSize(overallSummary, contentWidth);
+    doc.text(summaryLines, margin, summaryY);
+    summaryY += summaryLines.length * 4 + 15;
+    
+    // Key findings
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text('Key Findings', margin, summaryY);
+    
+    summaryY += 10;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    
+    const keyFindings = [
+      `Analyzed ${reportData.tables.length} comprehensive financial datasets`,
+      'Identified strategic opportunities for performance improvement',
+      'Assessed financial health against industry benchmarks',
+      'Highlighted critical risk factors requiring attention',
+      'Provided actionable recommendations for strategic implementation'
+    ];
+    
+    keyFindings.forEach(finding => {
+      // Check if we need a new page
+      if (summaryY > pageHeight - 40) {
+        doc.addPage();
+        summaryY = 40;
+      }
+      
+      // Properly wrap finding text within margins
+      const bulletPoint = `• ${finding}`;
+      const wrappedFindingLines = doc.splitTextToSize(bulletPoint, contentWidth - 10);
+      doc.text(wrappedFindingLines, margin + 5, summaryY);
+      summaryY += wrappedFindingLines.length * 5 + 2; // Add proper spacing
+    });
+    
+    // Add footer with page numbers to all pages
+    const totalPages = doc.getNumberOfPages();
+    for (let i = 1; i <= totalPages; i++) {
+      doc.setPage(i);
+      
+      // Footer line
+      doc.setLineWidth(0.3);
+      doc.setDrawColor(229, 231, 235);
+      doc.line(margin, footerY - 5, pageWidth - margin, footerY - 5);
+      
+      // Footer text
+      doc.setFontSize(8);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(156, 163, 175);
+      
+      if (i === 1) {
+        // Title page - no page number
+        doc.text('Finaxial Financial Analysis Report', pageWidth / 2, footerY, { align: 'center' });
+      } else {
+        doc.text('Finaxial Financial Analysis Report', margin, footerY);
+        doc.text(`Page ${i} of ${totalPages}`, pageWidth - margin, footerY, { align: 'right' });
+      }
+    }
+    
     // Save the PDF
-    doc.save(`${reportName.replace(/\s+/g, '_')}.pdf`);
+    doc.save(`${workspaceData.name || 'Financial'}-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+    
+    toast.success('Professional PDF report generated successfully!');
+    
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      toast.error('Failed to generate PDF report. Please try again.');
+    } finally {
+      setIsExportingPdf(false);
+    }
   };
 
   return (
@@ -999,78 +1352,50 @@ Your analysis should be:
                         {/* Detailed Analysis Section */}
                         {detailedAnalysis && (
                           <div className={styles.detailedAnalysis}>
-                            <h4 className={styles.analysisTitle}>Comprehensive Financial Analysis</h4>
+                            <h4 className={styles.analysisTitle}>
+                              📊 Comprehensive Financial Analysis
+                            </h4>
                             
-                            {/* Business Context */}
-                            <div className={styles.analysisSection}>
-                              <h5 className={styles.analysisSubtitle}>Business Context</h5>
-                              <p className={styles.analysisText}>{detailedAnalysis.businessContext}</p>
-                            </div>
-                            
-                            {/* Key Trends */}
-                            {detailedAnalysis.keyTrends && detailedAnalysis.keyTrends.length > 0 && (
+                            <div className={styles.analysisGrid}>
+                              {/* Business Context */}
                               <div className={styles.analysisSection}>
-                                <h5 className={styles.analysisSubtitle}>Key Trends</h5>
-                                <ul className={styles.analysisList}>
-                                  {detailedAnalysis.keyTrends.map((trend, index) => (
-                                    <li key={index} className={styles.analysisListItem}>{trend}</li>
-                                  ))}
-                                </ul>
+                                <h5 className={styles.analysisSubtitle}>
+                                  Business Context
+                                </h5>
+                                <p className={styles.analysisText}>{detailedAnalysis.businessContext}</p>
                               </div>
-                            )}
-                            
-                            {/* Financial Implications */}
-                            <div className={styles.analysisSection}>
-                              <h5 className={styles.analysisSubtitle}>Financial Implications</h5>
-                              <p className={styles.analysisText}>{detailedAnalysis.financialImplications}</p>
-                            </div>
-                            
-                            {/* Risk Factors */}
-                            {detailedAnalysis.riskFactors && detailedAnalysis.riskFactors.length > 0 && (
+                              
+                              {/* Financial Implications */}
                               <div className={styles.analysisSection}>
-                                <h5 className={`${styles.analysisSubtitle} ${styles.riskTitle}`}>Risk Factors</h5>
-                                <ul className={styles.analysisList}>
-                                  {detailedAnalysis.riskFactors.map((risk, index) => (
-                                    <li key={index} className={`${styles.analysisListItem} ${styles.riskItem}`}>{risk}</li>
-                                  ))}
-                                </ul>
+                                <h5 className={styles.analysisSubtitle}>
+                                  Financial Implications
+                                </h5>
+                                <p className={styles.analysisText}>{detailedAnalysis.financialImplications}</p>
                               </div>
-                            )}
-                            
-                            {/* Opportunities */}
-                            {detailedAnalysis.opportunities && detailedAnalysis.opportunities.length > 0 && (
+                              
+                              {/* Industry Benchmark */}
                               <div className={styles.analysisSection}>
-                                <h5 className={`${styles.analysisSubtitle} ${styles.opportunityTitle}`}>Opportunities</h5>
-                                <ul className={styles.analysisList}>
-                                  {detailedAnalysis.opportunities.map((opportunity, index) => (
-                                    <li key={index} className={`${styles.analysisListItem} ${styles.opportunityItem}`}>{opportunity}</li>
-                                  ))}
-                                </ul>
+                                <h5 className={styles.analysisSubtitle}>
+                                  Industry Benchmark
+                                </h5>
+                                <p className={styles.analysisText}>{detailedAnalysis.industryBenchmark}</p>
                               </div>
-                            )}
-                            
-                            {/* Recommendations */}
-                            {detailedAnalysis.recommendations && detailedAnalysis.recommendations.length > 0 && (
-                              <div className={styles.analysisSection}>
-                                <h5 className={styles.analysisSubtitle}>Strategic Recommendations</h5>
-                                <ul className={styles.analysisList}>
-                                  {detailedAnalysis.recommendations.map((recommendation, index) => (
-                                    <li key={index} className={styles.analysisListItem}>{recommendation}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            )}
-                            
-                            {/* Industry Benchmark */}
-                            <div className={styles.analysisSection}>
-                              <h5 className={styles.analysisSubtitle}>Industry Benchmark</h5>
-                              <p className={styles.analysisText}>{detailedAnalysis.industryBenchmark}</p>
-                            </div>
-                            
-                            {/* Forecast Insights */}
-                            <div className={styles.analysisSection}>
-                              <h5 className={styles.analysisSubtitle}>Forecast Insights</h5>
-                              <p className={styles.analysisText}>{detailedAnalysis.forecastInsights}</p>
+                              
+                              {/* Risk Factors */}
+                              {detailedAnalysis.riskFactors && detailedAnalysis.riskFactors.length > 0 && (
+                                <div className={styles.analysisSection}>
+                                  <h5 className={`${styles.analysisSubtitle} ${styles.riskTitle}`}>
+                                    Risk Factors
+                                  </h5>
+                                  <ul className={styles.analysisList}>
+                                    {detailedAnalysis.riskFactors.map((risk, index) => (
+                                      <li key={index} className={`${styles.analysisListItem} ${styles.riskItem}`}>
+                                        {risk}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              )}
                             </div>
                           </div>
                         )}
