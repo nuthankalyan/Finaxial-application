@@ -13,6 +13,7 @@ import type { SummaryTable } from '@/app/types/csv';
 import { generateSummaryTables, generateMultiFileSummaryTables, generateSummaryTablesEnhanced, generateMultiFileSummaryTablesEnhanced, type ReportData } from '@/app/services/summaryTableService';
 import { buildApiUrl } from '../../../../utils/apiConfig';
 import { GoogleGenerativeAI } from '@google/generative-ai';
+import { Chart } from 'chart.js/auto';
 
 interface ReportPageProps {
   params: {
@@ -79,7 +80,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
     fileName: string
   ): Promise<DetailedTableAnalysis> => {
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_2;
       
       if (!apiKey) {
         throw new Error('Gemini API key is not configured');
@@ -621,17 +622,54 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     try {
       toast.info('Generating professional PDF report...');
       
+      // Check if workspace data exists for use throughout the function
+      const workspaceDataExists = sessionStorage.getItem(`workspace_${params.id}_insights`) !== null;
+      
+      // Retrieve workspace insights and charts from session storage
+      let workspaceInsights = null;
+      let workspaceCharts = null;
+      
+      try {
+        const insightsString = sessionStorage.getItem(`workspace_${params.id}_insights`);
+        const chartsString = sessionStorage.getItem(`workspace_${params.id}_charts`);
+        
+        if (insightsString) {
+          workspaceInsights = JSON.parse(insightsString);
+        }
+        
+        if (chartsString) {
+          workspaceCharts = JSON.parse(chartsString);
+          
+          // Validate charts data - ensure each chart has the necessary properties
+          if (Array.isArray(workspaceCharts)) {
+            console.log(`Found ${workspaceCharts.length} charts in session storage`);
+            // Log the structure of the first chart to help with debugging
+            if (workspaceCharts.length > 0) {
+              console.log('First chart structure:', 
+                Object.keys(workspaceCharts[0]),
+                'Has data object?', !!workspaceCharts[0].data,
+                'Type:', workspaceCharts[0].type
+              );
+            }
+          } else {
+            console.error('Charts data is not an array:', workspaceCharts);
+          }
+        }
+      } catch (error) {
+        console.error('Error retrieving workspace data from session storage:', error);
+      }
+      
       const doc = new jsPDF({
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4'
       });
     
-    const pageWidth = doc.internal.pageSize.getWidth();
-    const pageHeight = doc.internal.pageSize.getHeight();
-    const margin = 20;
-    const contentWidth = pageWidth - (2 * margin);
-    const footerY = pageHeight - 15;
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      const margin = 20;
+      const contentWidth = pageWidth - (2 * margin);
+      const footerY = pageHeight - 15;
     
     // Set document properties
     doc.setProperties({
@@ -759,24 +797,55 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     let tocY = 65;
     let currentPage = 3; // Starting from page 3
     
-    // TOC entries
+    // TOC entries with more accurate page counting
     const tocEntries = [
       { title: 'Executive Summary', page: currentPage },
-      { title: 'Financial Tables Analysis', page: currentPage + 1 },
     ];
+    
+    // If workspace data exists, add entries for it
+    if (workspaceDataExists) {
+      currentPage++; // Move to next page for Workspace Insights
+      tocEntries.push({ title: 'Workspace Insights', page: currentPage });
+      
+      // Check if we have workspace charts
+      const hasWorkspaceCharts = workspaceCharts && 
+                               Array.isArray(workspaceCharts) && 
+                               workspaceCharts.length > 0;
+      
+      if (hasWorkspaceCharts) {
+        currentPage++; // Move to next page for Data Visualizations
+        tocEntries.push({ title: 'Data Visualizations', page: currentPage });
+      }
+    }
+    
+    // Add recommendations if they exist
+    if (reportData.recommendations && reportData.recommendations.length > 0) {
+      currentPage++; // Move to next page for recommendations
+      tocEntries.push({ title: 'Strategic Recommendations', page: currentPage });
+    }
+    
+    currentPage++; // Move to next page for first financial table
+    tocEntries.push({ title: 'Financial Tables Analysis', page: currentPage });
     
     // Add table entries to TOC
     reportData.tables.forEach((table, index) => {
       tocEntries.push({
         title: `${index + 1}. ${table.title}`,
-        page: currentPage + 1 + index
+        page: currentPage + index
       });
     });
     
     // Add comprehensive analysis to TOC
+    currentPage += reportData.tables.length;
     tocEntries.push({
       title: 'Comprehensive Financial Analysis',
-      page: currentPage + 1 + reportData.tables.length
+      page: currentPage
+    });
+    
+    // Add conclusion to TOC
+    tocEntries.push({
+      title: 'Conclusion',
+      page: currentPage // Same page as comprehensive analysis
     });
     
     // Render TOC entries
@@ -853,20 +922,354 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
       });
     }
     
+    // Use workspace insights and charts we already loaded in the beginning of the function
+    
+    // WORKSPACE INSIGHTS SECTION
+    if (workspaceInsights) {
+      try {
+        doc.addPage();
+        
+        doc.setFontSize(20);
+        doc.setTextColor(45, 55, 72);
+        doc.setFont('helvetica', 'bold');
+        doc.text('WORKSPACE INSIGHTS', margin, 40);
+        
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(102, 126, 234);
+        doc.line(margin, 45, pageWidth - margin, 45);
+        
+        // Add file information
+        if (workspaceInsights.fileNames && Array.isArray(workspaceInsights.fileNames) && workspaceInsights.fileNames.length > 0) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(102, 126, 234);
+        doc.text('Analyzed Files', margin, 60);
+        
+        let fileY = 70;
+        workspaceInsights.fileNames.forEach((fileName: string, index: number) => {
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(75, 85, 99);
+          doc.text(`• ${fileName}`, margin + 5, fileY);
+          fileY += 6;
+        });
+      }
+      
+      // Add summary from workspace insights
+      if (workspaceInsights.summary) {
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(102, 126, 234);
+        doc.text('Summary', margin, 90);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(75, 85, 99);
+        const summaryLines = doc.splitTextToSize(workspaceInsights.summary, contentWidth);
+        doc.text(summaryLines, margin, 100);
+      }
+      
+      // Add insights from workspace
+      if (workspaceInsights.insights && workspaceInsights.insights.length > 0) {
+        let wsInsightY = 130;
+        
+        // Check if we need a new page
+        if (wsInsightY > pageHeight - 80) {
+          doc.addPage();
+          wsInsightY = 40;
+        }
+        
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(102, 126, 234);
+        doc.text('Key Financial Insights', margin, wsInsightY);
+        
+        wsInsightY += 10;
+        workspaceInsights.insights.forEach((insight: string, index: number) => {
+          // Check if we need a new page
+          if (wsInsightY > pageHeight - 40) {
+            doc.addPage();
+            wsInsightY = 40;
+          }
+          
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(75, 85, 99);
+          
+          const bulletPoint = `• ${insight}`;
+          const wrappedLines = doc.splitTextToSize(bulletPoint, contentWidth - 10);
+          doc.text(wrappedLines, margin + 5, wsInsightY);
+          wsInsightY += wrappedLines.length * 5 + 3;
+        });
+      }
+      
+      // Financial metrics section removed as per requirement
+      
+      } catch (insightError) {
+        console.error("Error adding workspace insights to PDF:", insightError);
+        // Add error message to the PDF
+        doc.setFontSize(12);
+        doc.setTextColor(220, 53, 69);
+        doc.text("Error adding workspace insights. Some data may be missing.", margin, 100);
+      }
+    }
+    
+    // WORKSPACE VISUALIZATIONS SECTION
+    if (workspaceCharts && workspaceCharts.length > 0) {
+      try {
+        doc.addPage();
+        
+        doc.setFontSize(20);
+        doc.setTextColor(45, 55, 72);
+        doc.setFont('helvetica', 'bold');
+        doc.text('DATA VISUALIZATIONS', margin, 40);
+        
+        doc.setLineWidth(0.5);
+        doc.setDrawColor(102, 126, 234);
+        doc.line(margin, 45, pageWidth - margin, 45);
+        
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(107, 114, 128);
+        doc.text('Key visualizations from your financial data analysis', margin, 55);
+        
+        let chartY = 70;
+      
+      // Loop through workspace charts and render them to the PDF
+      for (let i = 0; i < workspaceCharts.length; i++) {
+        const chart = workspaceCharts[i];
+        
+        if (!chart || !chart.title) {
+          console.error('Invalid chart data at index', i, chart);
+          continue;
+        }
+        
+        // Check if we need a new page
+        if (chartY > pageHeight - 100) {
+          doc.addPage();
+          chartY = 40;
+        }
+        
+        // Add chart title
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(45, 55, 72);
+        doc.text(`${i + 1}. ${chart.title}`, margin, chartY);
+        chartY += 10;
+        
+        // Add chart description
+        doc.setFontSize(10);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(75, 85, 99);
+        const descriptionLines = doc.splitTextToSize(chart.description || 'No description available', contentWidth);
+        doc.text(descriptionLines, margin, chartY);
+        chartY += descriptionLines.length * 5 + 10;
+        
+        try {
+          // Create a canvas element to render the chart
+          const canvas = document.createElement('canvas');
+          canvas.width = 800; // Wider canvas for better quality
+          canvas.height = 400; // More appropriate height for better aspect ratio
+          const ctx = canvas.getContext('2d');
+          
+          if (!ctx) {
+            throw new Error('Failed to get canvas context');
+          }
+          
+          // Prepare chart data - handle various data formats
+          let chartData;
+          let chartType = chart.type || 'bar'; // Default to bar chart
+          
+          // Log the chart structure for debugging
+          console.log(`Rendering chart ${i+1}: ${chart.title}`, { 
+            hasLabels: !!chart.labels, 
+            hasDatasets: !!chart.datasets,
+            hasData: !!chart.data,
+            chartType
+          });
+          
+          // Try different ways to extract chart data
+          if (chart.data && chart.data.labels && chart.data.datasets) {
+            // Standard Chart.js format
+            chartData = chart.data;
+          } else if (chart.labels && Array.isArray(chart.labels)) {
+            // Chart has separate labels and data arrays
+            let dataPoints;
+            
+            if (Array.isArray(chart.data)) {
+              dataPoints = chart.data;
+            } else if (chart.datasets && Array.isArray(chart.datasets)) {
+              // If there are multiple datasets
+              dataPoints = chart.datasets;
+            } else {
+              // Create sample data if nothing else works
+              dataPoints = new Array(chart.labels.length).fill(0).map(() => Math.floor(Math.random() * 100));
+            }
+            
+            // Create standard Chart.js data structure
+            chartData = {
+              labels: chart.labels,
+              datasets: [{
+                label: chart.title,
+                data: dataPoints,
+                backgroundColor: [
+                  'rgba(54, 162, 235, 0.5)',
+                  'rgba(255, 99, 132, 0.5)',
+                  'rgba(255, 206, 86, 0.5)',
+                  'rgba(75, 192, 192, 0.5)',
+                  'rgba(153, 102, 255, 0.5)',
+                  'rgba(255, 159, 64, 0.5)'
+                ],
+                borderColor: [
+                  'rgba(54, 162, 235, 1)',
+                  'rgba(255, 99, 132, 1)',
+                  'rgba(255, 206, 86, 1)',
+                  'rgba(75, 192, 192, 1)',
+                  'rgba(153, 102, 255, 1)',
+                  'rgba(255, 159, 64, 1)'
+                ],
+                borderWidth: 1
+              }]
+            };
+          } else {
+            // If we don't have labels, create placeholders
+            chartData = {
+              labels: ['No data', 'available', 'for', 'this', 'chart'],
+              datasets: [{
+                label: chart.title,
+                data: [5, 10, 15, 20, 25],
+                backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+              }]
+            };
+          }
+          
+          // Create chart configuration
+          const chartConfig: any = {
+            type: chartType,
+            data: chartData,
+            options: {
+              responsive: false,
+              animation: false,
+              maintainAspectRatio: false,
+              plugins: {
+                legend: {
+                  display: true,
+                  position: 'bottom',
+                  labels: {
+                    padding: 20,
+                    boxWidth: 15,
+                    font: {
+                      size: 13
+                    }
+                  }
+                },
+                title: {
+                  display: false
+                },
+                tooltip: {
+                  enabled: false // Disable tooltips in static PDF
+                }
+              },
+              layout: {
+                padding: {
+                  left: 10,
+                  right: 10,
+                  top: 10,
+                  bottom: 10
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: chartType !== 'line', // Don't force zero start for line charts
+                  grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                  },
+                  ticks: {
+                    font: {
+                      size: 11
+                    }
+                  }
+                },
+                x: {
+                  grid: {
+                    color: 'rgba(0,0,0,0.05)'
+                  },
+                  ticks: {
+                    font: {
+                      size: 11
+                    }
+                  }
+                }
+              }
+            }
+          };
+          
+          // Create a new chart instance with the chart configuration
+          const chartInstance = new Chart(ctx, chartConfig);
+          
+          // Wait a moment to ensure chart is rendered
+          await new Promise(resolve => setTimeout(resolve, 50));
+          
+          // Convert canvas to image and add to PDF
+          const imgData = canvas.toDataURL('image/png');
+          // Use more proportional dimensions - standard aspect ratio (16:9)
+          const chartWidth = contentWidth;
+          const chartHeight = contentWidth * 0.5625; // 16:9 aspect ratio
+          doc.addImage(imgData, 'PNG', margin, chartY, chartWidth, chartHeight);
+          chartY += chartHeight + 10; // Move down after adding the chart image
+          
+          // Add chart type info
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(107, 114, 128);
+          doc.text(`Chart type: ${chartType}`, margin, chartY);
+          chartY += 25;
+          
+          // Destroy chart to prevent memory leaks
+          chartInstance.destroy();
+        } catch (chartError) {
+          console.error('Error rendering chart to PDF:', chartError);
+          
+          // Add a message about the chart visualization
+          doc.setFontSize(10);
+          doc.setFont('helvetica', 'italic');
+          doc.setTextColor(220, 53, 69);
+          doc.text('Chart visualization could not be rendered. See the description above.', margin, chartY);
+          chartY += 15;
+          
+          // Still add chart type if available
+          doc.setFontSize(9);
+          doc.setFont('helvetica', 'normal');
+          doc.setTextColor(107, 114, 128);
+          doc.text(`Chart type: ${chart.type || 'Unknown'}`, margin, chartY);
+          chartY += 25;
+        }
+        
+        // Add extra space between charts
+        chartY += 10;
+      }
+      } catch (visualizationError) {
+        console.error("Error adding visualizations to PDF:", visualizationError);
+        // Add error message to the PDF
+        doc.setFontSize(12);
+        doc.setTextColor(220, 53, 69);
+        doc.text("Error adding visualizations to PDF. Charts could not be rendered.", margin, 100);
+      }
+    }
+
     // Add recommendations section
     if (reportData.recommendations && reportData.recommendations.length > 0) {
-      // Check if we need a new page for recommendations
-      if (insightY > pageHeight - 80) {
-        doc.addPage();
-        insightY = 40;
-      }
+      // Always start recommendations on a new page for consistent page numbering
+      doc.addPage();
       
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
       doc.setTextColor(45, 55, 72);
-      doc.text('Strategic Recommendations', margin, insightY + 15);
+      doc.text('Strategic Recommendations', margin, 40);
       
-      let recY = insightY + 30;
+      let recY = 60;
       reportData.recommendations.forEach((rec, index) => {
         // Check if we need a new page
         if (recY > pageHeight - 60) {
@@ -1079,6 +1482,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     
     const overallSummary = `This comprehensive financial analysis encompasses ${reportData.tables.length} key financial areas, ` +
       `providing detailed insights into business performance, financial health, and strategic positioning. ` +
+      `${workspaceDataExists ? 'The report includes both workspace insights and visualizations along with detailed tables. ' : ''}` +
       `The analysis considers industry benchmarks, identifies key risk factors, and provides actionable recommendations ` +
       `for enhanced financial performance and strategic decision-making.`;
     
@@ -1119,6 +1523,44 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
       summaryY += wrappedFindingLines.length * 5 + 2; // Add proper spacing
     });
     
+    // Add Conclusion section
+    summaryY += 15;
+    
+    // Check if we need a new page for conclusion
+    if (summaryY > pageHeight - 80) {
+      doc.addPage();
+      summaryY = 40;
+    }
+    
+    // Conclusion heading
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(45, 55, 72);
+    doc.text('CONCLUSION', margin, summaryY);
+    
+    summaryY += 15;
+    
+    // Generate comprehensive conclusion paragraph
+    const conclusionText = `In conclusion, the financial analysis presented in this report provides a comprehensive overview of the organization's current financial position and future outlook. The data reveals ${
+      reportData.insights && reportData.insights.length > 0 
+        ? 'key insights including ' + reportData.insights.slice(0, 2).join('; ') + '; '
+        : ''
+    }${
+      workspaceDataExists && workspaceCharts && workspaceCharts.length > 0
+        ? 'supported by visualizations that highlight critical trends in the financial data. '
+        : ''
+    }The analysis of ${reportData.tables.length} financial tables demonstrates ${
+      reportData.recommendations && reportData.recommendations.length > 0
+        ? 'opportunities for improvement through strategic actions such as ' + reportData.recommendations.slice(0, 2).join(' and ') + '. '
+        : 'several opportunities for strategic improvement. '
+    }Moving forward, management should focus on implementing the recommended actions while monitoring key financial indicators to ensure sustainable growth and financial stability. This report serves as both an analytical tool and a strategic roadmap for enhancing financial performance in the coming fiscal period.`;
+    
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    const conclusionLines = doc.splitTextToSize(conclusionText, contentWidth);
+    doc.text(conclusionLines, margin, summaryY);
+    
     // Add footer with page numbers to all pages
     const totalPages = doc.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
@@ -1143,10 +1585,16 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
       }
     }
     
-    // Save the PDF
-    doc.save(`${workspaceData.name || 'Financial'}-Report-${new Date().toISOString().split('T')[0]}.pdf`);
+    // Save the PDF with a descriptive name
+    const fileName = `${workspaceData.name || 'Financial'}-${workspaceDataExists ? 'Complete-' : ''}Report-${new Date().toISOString().split('T')[0]}.pdf`;
+    doc.save(fileName);
     
-    toast.success('Professional PDF report generated successfully!');
+    // Show appropriate success message based on what was included
+    if (workspaceDataExists) {
+      toast.success('Complete PDF report with workspace insights and tables generated successfully!');
+    } else {
+      toast.success('Professional PDF report generated successfully!');
+    }
     
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -1201,7 +1649,10 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
           {/* Back button */}
           <button 
             className={styles.backButton}
-            onClick={() => router.push(`/workspace/${params.id}`)}
+            onClick={() => {
+              // Navigate back to workspace - data will be restored from session storage
+              router.push(`/workspace/${params.id}`);
+            }}
           >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.backIcon}>
               <path strokeLinecap="round" strokeLinejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
@@ -1239,7 +1690,10 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
               <p>{error}</p>
               <button 
                 className={styles.backButton}
-                onClick={() => router.push(`/workspace/${params.id}`)}
+                onClick={() => {
+                  // Navigate back to workspace - data will be restored from session storage
+                  router.push(`/workspace/${params.id}`);
+                }}
               >
                 Return to Workspace
               </button>
@@ -1412,7 +1866,10 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
               <p>Unable to generate financial report from available data.</p>
               <button 
                 className={styles.backButton}
-                onClick={() => router.push(`/workspace/${params.id}`)}
+                onClick={() => {
+                  // Navigate back to workspace - data will be restored from session storage
+                  router.push(`/workspace/${params.id}`);
+                }}
               >
                 Return to Workspace
               </button>

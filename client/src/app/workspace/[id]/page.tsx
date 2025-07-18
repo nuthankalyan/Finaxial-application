@@ -281,6 +281,49 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [showTaxOptimizationModal, setShowTaxOptimizationModal] = useState(false);
   const [generatingTaxOptimization, setGeneratingTaxOptimization] = useState(false);
   
+  // Effect to restore insights and other data from session storage when component mounts
+  useEffect(() => {
+    try {
+      // Only restore data if we don't already have insights loaded
+      if (!insights) {
+        // Restore insights
+        const savedInsightsData = sessionStorage.getItem(`workspace_${id}_insights`);
+        if (savedInsightsData) {
+          const parsedInsights = JSON.parse(savedInsightsData) as FinancialInsights;
+          setInsights(parsedInsights);
+        }
+        
+        // Restore charts
+        const savedChartsData = sessionStorage.getItem(`workspace_${id}_charts`);
+        if (savedChartsData) {
+          const parsedCharts = JSON.parse(savedChartsData) as ChartData[];
+          setCharts(parsedCharts);
+        }
+        
+        // Restore fileName
+        const savedFileName = sessionStorage.getItem(`workspace_${id}_fileName`);
+        if (savedFileName) {
+          setFileName(savedFileName);
+        }
+        
+        // Restore csvContent
+        const savedCsvContent = sessionStorage.getItem(`workspace_${id}_csvContent`);
+        if (savedCsvContent) {
+          setCsvContent(savedCsvContent);
+        }
+        
+        // Restore uploadedFiles
+        const savedUploadedFiles = sessionStorage.getItem(`workspace_${id}_uploadedFiles`);
+        if (savedUploadedFiles) {
+          const parsedFiles = JSON.parse(savedUploadedFiles) as FileInfo[];
+          setUploadedFiles(parsedFiles);
+        }
+      }
+    } catch (error) {
+      console.error('Error restoring data from session storage:', error);
+    }
+  }, [id, insights]);
+  
   // Simple helper function to format chat messages for display
   const formatChatMessage = (text: string): React.ReactNode => {
     // Check for code blocks
@@ -438,10 +481,19 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     if (filesContent.length === 1) {
       setFileName(filesContent[0].fileName);
       setCsvContent(filesContent[0].content);
+      
+      // Store in session storage
+      sessionStorage.setItem(`workspace_${id}_fileName`, filesContent[0].fileName);
+      sessionStorage.setItem(`workspace_${id}_csvContent`, filesContent[0].content);
     } else {
-      setFileName(`${filesContent.length} files selected`);
+      const multipleFilesLabel = `${filesContent.length} files selected`;
+      setFileName(multipleFilesLabel);
       // Store the first file's content for any functions that still require a single CSV
       setCsvContent(filesContent[0].content);
+      
+      // Store in session storage
+      sessionStorage.setItem(`workspace_${id}_fileName`, multipleFilesLabel);
+      sessionStorage.setItem(`workspace_${id}_csvContent`, filesContent[0].content);
     }
     
     // Check if at least the primary file has financial data
@@ -478,6 +530,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       
       // Store the files for access by other components
       setUploadedFiles(files);
+      
+      // Store uploaded files in session storage
+      sessionStorage.setItem(`workspace_${id}_uploadedFiles`, JSON.stringify(files));
 
       // Use multi-file analysis when multiple files are uploaded
       let results: FinancialInsights;
@@ -493,6 +548,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       }
       
       setInsights(results);
+      
+      // Store insights in session storage for persistence across navigation
+      sessionStorage.setItem(`workspace_${id}_insights`, JSON.stringify(results));
       
       // Generate chart data
       setGeneratingCharts(true);
@@ -521,6 +579,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         } else {
           // We got proper charts, use them
           setCharts(chartData);
+          
+          // Store charts in session storage for persistence across navigation
+          sessionStorage.setItem(`workspace_${id}_charts`, JSON.stringify(chartData));
         }
       } catch (chartError) {
         console.error('Error generating chart data:', chartError);
