@@ -273,10 +273,22 @@ export default function Dashboard() {
     insightsChange: 0
   });
   const [searchQuery, setSearchQuery] = useState('');
+  const [monthFilter, setMonthFilter] = useState('');
   
-  const filteredWorkspaces = workspaces.filter(workspace => 
-    workspace.name.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const filteredWorkspaces = workspaces.filter(workspace => {
+    // Filter by search query
+    const matchesSearch = workspace.name.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    // Filter by month if a month is selected
+    let matchesMonth = true;
+    if (monthFilter) {
+      const createdDate = new Date(workspace.createdAt);
+      const workspaceMonth = createdDate.getMonth() + 1; // JavaScript months are 0-11, so add 1
+      matchesMonth = workspaceMonth === parseInt(monthFilter);
+    }
+    
+    return matchesSearch && matchesMonth;
+  });
 
   useEffect(() => {
     // If not loading and no user, redirect to login
@@ -741,31 +753,109 @@ export default function Dashboard() {
         <div className={styles.dashboardSection}>
           <div className={styles.sectionHeader}>
             <h3>Your Workspaces</h3>
-            <div className={styles.searchContainer}>
-              <input
-                type="text"
-                placeholder="Search workspaces..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className={styles.searchInput}
-                aria-label="Search workspaces"
-              />
-              <svg 
-                className={styles.searchIcon} 
-                xmlns="http://www.w3.org/2000/svg" 
-                fill="none" 
-                viewBox="0 0 24 24" 
-                stroke="currentColor"
-              >
-                <path 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round" 
-                  strokeWidth={2} 
-                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+            <div className={styles.filterContainer}>
+              <div className={styles.searchContainer}>
+                <input
+                  type="text"
+                  placeholder="Search workspaces..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className={styles.searchInput}
+                  aria-label="Search workspaces"
                 />
-              </svg>
+                <svg 
+                  className={styles.searchIcon} 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" 
+                  />
+                </svg>
+              </div>
+              
+              <div className={styles.dateFilterContainer}>
+                <select
+                  className={styles.monthFilter}
+                  value={monthFilter}
+                  onChange={(e) => setMonthFilter(e.target.value)}
+                  aria-label="Filter by month"
+                >
+                  <option value="">All Months</option>
+                  <option value="1">January</option>
+                  <option value="2">February</option>
+                  <option value="3">March</option>
+                  <option value="4">April</option>
+                  <option value="5">May</option>
+                  <option value="6">June</option>
+                  <option value="7">July</option>
+                  <option value="8">August</option>
+                  <option value="9">September</option>
+                  <option value="10">October</option>
+                  <option value="11">November</option>
+                  <option value="12">December</option>
+                </select>
+                <svg 
+                  className={styles.calendarIcon} 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                >
+                  <path 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round" 
+                    strokeWidth={2} 
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                  />
+                </svg>
+              </div>
+              
+              {/* Clear filters button - only show when filters are active */}
+              {(searchQuery || monthFilter) && (
+                <button
+                  className={styles.clearFiltersButton}
+                  onClick={() => {
+                    setSearchQuery('');
+                    setMonthFilter('');
+                  }}
+                  title="Clear all filters"
+                >
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    fill="none" 
+                    viewBox="0 0 24 24" 
+                    stroke="currentColor" 
+                    className={styles.clearIcon}
+                  >
+                    <path 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round" 
+                      strokeWidth={2} 
+                      d="M6 18L18 6M6 6l12 12" 
+                    />
+                  </svg>
+                  Clear
+                </button>
+              )}
             </div>
           </div>
+          
+          {/* Show filter results count when filters are active */}
+          {(searchQuery || monthFilter) && !loading && !error && (
+            <div className={styles.filterResults}>
+              <span>
+                Found {filteredWorkspaces.length} {filteredWorkspaces.length === 1 ? 'workspace' : 'workspaces'}
+                {searchQuery && ` matching "${searchQuery}"`}
+                {monthFilter && ` created in ${new Date(2023, parseInt(monthFilter) - 1).toLocaleString('default', { month: 'long' })}`}
+              </span>
+            </div>
+          )}
           
           {loading ? (
             <p>Loading workspaces...</p>
@@ -773,17 +863,17 @@ export default function Dashboard() {
             <p className={styles.error}>{error}</p>
           ) : (
             <div>
-              {filteredWorkspaces.length === 0 && searchQuery === '' && (
+              {filteredWorkspaces.length === 0 && searchQuery === '' && monthFilter === '' && (
                 <div className={styles.emptyState}>
                   <h4>No sessions found</h4>
                   <p>Create your first session by clicking the card below</p>
                 </div>
               )}
               
-              {filteredWorkspaces.length === 0 && searchQuery !== '' && (
+              {filteredWorkspaces.length === 0 && (searchQuery !== '' || monthFilter !== '') && (
                 <div className={styles.emptyState}>
                   <h4>No matching workspaces found</h4>
-                  <p>Try different search terms</p>
+                  <p>Try different search terms or filters</p>
                 </div>
               )}
               

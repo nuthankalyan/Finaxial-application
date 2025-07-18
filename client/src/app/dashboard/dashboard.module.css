@@ -398,6 +398,118 @@
 
 .actionButton:hover {
   background: #e5e7eb;
+}
+
+/* Filter container for both search and date filters */
+.filterContainer {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  max-width: 100%;
+}
+
+.searchContainer {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.searchInput {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  outline: none;
+  transition: var(--transition);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+}
+
+.searchInput:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.searchIcon {
+  position: absolute;
+  left: 0.75rem;
+  height: 1rem;
+  width: 1rem;
+  color: var(--text-muted);
+}
+
+.dateFilterContainer {
+  position: relative;
+  min-width: 150px;
+}
+
+.monthFilter {
+  width: 100%;
+  padding: 0.75rem 0.75rem 0.75rem 2.5rem;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  outline: none;
+  transition: var(--transition);
+  color: var(--text-primary);
+  background-color: var(--bg-secondary);
+  appearance: none;
+  cursor: pointer;
+}
+
+.monthFilter:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
+}
+
+.calendarIcon {
+  position: absolute;
+  left: 0.75rem;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 1rem;
+  width: 1rem;
+  color: var(--text-muted);
+  pointer-events: none;
+}
+
+.clearFiltersButton {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.75rem;
+  color: var(--text-primary);
+  background-color: #f3f4f6;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: var(--transition);
+  white-space: nowrap;
+}
+
+.clearFiltersButton:hover {
+  background-color: #e5e7eb;
+}
+
+.clearIcon {
+  height: 0.75rem;
+  width: 0.75rem;
+}
+
+.filterResults {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  background-color: rgba(79, 70, 229, 0.05);
+  border-radius: var(--radius-md);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  
+}
+
+.actionButton:hover {
   transform: translateY(-2px);
   box-shadow: var(--shadow-md);
   opacity: 1;
@@ -441,6 +553,7 @@
   margin-bottom: 0.75rem;
   display: -webkit-box;
   -webkit-line-clamp: 1;
+  line-clamp: 1;
   -webkit-box-orient: vertical;
   overflow: hidden;
   letter-spacing: -0.025em;
@@ -453,6 +566,7 @@
   margin-bottom: 1rem;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
   line-height: 1.5;
