@@ -14,6 +14,8 @@ import { generateSummaryTables, generateMultiFileSummaryTables, generateSummaryT
 import { buildApiUrl } from '../../../../utils/apiConfig';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { Chart } from 'chart.js/auto';
+import EmailReportModal from '@/app/components/EmailReportModal';
+import { cleanText, cleanTextArray } from '../../../../utils/textCleaner';
 
 interface ReportPageProps {
   params: {
@@ -72,6 +74,8 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
   const [reportDate, setReportDate] = useState<Date>(new Date());
   const [workspaceData, setWorkspaceData] = useState<WorkspaceData | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState<boolean>(false);
+  const [isSendingEmail, setIsSendingEmail] = useState<boolean>(false);
 
   // Function to generate detailed analysis for a table
   const generateDetailedTableAnalysis = async (
@@ -611,16 +615,22 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     return '';
   };
   // Function to export the report as PDF with professional structure
-  const exportToPdf = async () => {
+  const exportToPdf = async (returnPdfData = false) => {
     if (!reportData || !workspaceData) {
-      toast.error('Report data not available for export');
-      return;
+      if (!returnPdfData) {
+        toast.error('Report data not available for export');
+      }
+      return null;
     }
     
-    setIsExportingPdf(true);
+    if (!returnPdfData) {
+      setIsExportingPdf(true);
+    }
     
     try {
-      toast.info('Generating professional PDF report...');
+      if (!returnPdfData) {
+        toast.info('Generating professional PDF report...');
+      }
       
       // Check if workspace data exists for use throughout the function
       const workspaceDataExists = sessionStorage.getItem(`workspace_${params.id}_insights`) !== null;
@@ -1585,22 +1595,86 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
       }
     }
     
-    // Save the PDF with a descriptive name
+    // Save the PDF with a descriptive name or return as base64
     const fileName = `${workspaceData.name || 'Financial'}-${workspaceDataExists ? 'Complete-' : ''}Report-${new Date().toISOString().split('T')[0]}.pdf`;
-    doc.save(fileName);
     
-    // Show appropriate success message based on what was included
-    if (workspaceDataExists) {
-      toast.success('Complete PDF report with workspace insights and tables generated successfully!');
+    if (returnPdfData) {
+      // Return PDF as base64 for email
+      const pdfBase64 = doc.output('datauristring').split(',')[1];
+      return pdfBase64;
     } else {
-      toast.success('Professional PDF report generated successfully!');
+      // Download the PDF
+      doc.save(fileName);
+      
+      // Show appropriate success message based on what was included
+      if (workspaceDataExists) {
+        toast.success('Complete PDF report with workspace insights and tables generated successfully!');
+      } else {
+        toast.success('Professional PDF report generated successfully!');
+      }
     }
     
     } catch (error) {
       console.error('Error generating PDF:', error);
-      toast.error('Failed to generate PDF report. Please try again.');
+      if (!returnPdfData) {
+        toast.error('Failed to generate PDF report. Please try again.');
+      }
+      return null;
     } finally {
-      setIsExportingPdf(false);
+      if (!returnPdfData) {
+        setIsExportingPdf(false);
+      }
+    }
+  };
+
+  // Function to handle email sending
+  const handleSendEmail = async (emailData: any) => {
+    setIsSendingEmail(true);
+    
+    try {
+      // Generate PDF as base64 using the same function as export
+      const pdfBase64 = await exportToPdf(true);
+      
+      if (!pdfBase64) {
+        throw new Error('Failed to generate PDF for email');
+      }
+
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const fileName = `${workspaceData?.name || 'Financial'}-Report-${new Date().toISOString().split('T')[0]}.pdf`;
+
+      const response = await fetch(buildApiUrl('api/email/send-professional-report'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          recipientEmail: emailData.recipientEmail,
+          recipientName: emailData.recipientName,
+          pdfData: pdfBase64,
+          fileName: fileName,
+          workspaceName: emailData.workspaceName,
+          customMessage: emailData.customMessage
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send email');
+      }
+
+      toast.success('Report email sent successfully!');
+      setIsEmailModalOpen(false);
+    } catch (error: any) {
+      console.error('Error sending email:', error);
+      throw new Error(error.message || 'Failed to send email');
+    } finally {
+      setIsSendingEmail(false);
     }
   };
 
@@ -1634,12 +1708,23 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
             {/* Export to PDF option */}
             <div 
               className={styles.tabItem}
-              onClick={exportToPdf}
+              onClick={() => exportToPdf(false)}
             >
               <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
               </svg>
               <span className={styles.tabTitle}>Export PDF</span>
+            </div>
+            
+            {/* Email Report option */}
+            <div 
+              className={styles.tabItem}
+              onClick={() => setIsEmailModalOpen(true)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 01-2.25 2.25h-15a2.25 2.25 0 01-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25m19.5 0v.243a2.25 2.25 0 01-1.07 1.916l-7.5 4.615a2.25 2.25 0 01-2.36 0L3.32 8.91a2.25 2.25 0 01-1.07-1.916V6.75" />
+              </svg>
+              <span className={styles.tabTitle}>Email Report</span>
             </div>
           </div>
         </div>
@@ -1706,7 +1791,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
                   <div className={styles.summaryCard}>
                     <h3>Executive Summary</h3>
                     <div className={styles.summaryContent}>
-                      {reportData.summary}
+                      {cleanText(reportData.summary)}
                     </div>
                   </div>
                   
@@ -1715,7 +1800,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
                     <div className={styles.insightsCard}>
                       <h3>Key Insights</h3>
                       <ul className={styles.insightsList}>
-                        {reportData.insights.map((insight, index) => (
+                        {cleanTextArray(reportData.insights).map((insight, index) => (
                           <li key={index}>{insight}</li>
                         ))}
                       </ul>
@@ -1727,7 +1812,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
                     <div className={styles.recommendationsCard}>
                       <h3>Recommendations</h3>
                       <ul className={styles.recommendationsList}>
-                        {reportData.recommendations.map((recommendation, index) => (
+                        {cleanTextArray(reportData.recommendations).map((recommendation, index) => (
                           <li key={index}>{recommendation}</li>
                         ))}
                       </ul>
@@ -1877,6 +1962,16 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
           )}
         </div>
       </div>
+      
+      {/* Email Report Modal */}
+      <EmailReportModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        onSendEmail={handleSendEmail}
+        workspaceName={workspaceData?.name}
+        fileName={`${workspaceData?.name || 'Financial'}-Report-${new Date().toISOString().split('T')[0]}.pdf`}
+        isLoading={isSendingEmail}
+      />
     </div>
   );
 };

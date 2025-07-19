@@ -6,6 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { FinancialInsights } from '../services/geminiService';
 import styles from './InsightsPanel.module.css';
 import InsightCards, { InsightCardData } from './InsightCards';
+import { cleanText, cleanTextArray } from '../utils/textCleaner';
 
 interface InsightsPanelProps {
   insights: FinancialInsights | null;
@@ -20,12 +21,12 @@ export default function InsightsPanel({ insights, fileName, savedInsightCards }:
     return null;
   }
 
-  // Format insights and recommendations for display
+  // Format insights and recommendations for display with asterisk removal
   const formatInsights = (data: string[] | string): string => {
     if (Array.isArray(data)) {
-      return data.map(item => `- ${item}`).join('\n\n');
+      return cleanTextArray(data).map(item => `- ${item}`).join('\n\n');
     }
-    return data;
+    return cleanText(data);
   };
 
   const tabVariants = {
@@ -159,7 +160,7 @@ export default function InsightsPanel({ insights, fileName, savedInsightCards }:
                 </svg>
               </div>
               <div className={styles.markdownContainer}>
-                <ReactMarkdown>{insights.summary}</ReactMarkdown>
+                <ReactMarkdown>{cleanText(insights.summary)}</ReactMarkdown>
               </div>
             </motion.div>
           )}

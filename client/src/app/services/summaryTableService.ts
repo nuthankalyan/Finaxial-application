@@ -3,6 +3,7 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import type { SummaryTable } from '../types/csv';
 import type { TableColumn, TableRow } from '../types/tables';
+import { cleanText, cleanTextArray, cleanSummaryTable } from '../utils/textCleaner';
 
 export interface ReportData {
   summary: string;
@@ -426,10 +427,10 @@ Format your response in the same structure as previous examples.
     }
 
     return {
-      summary,
-      tables: tables.length > 0 ? tables : getFallbackTables(),
-      insights: insights.length > 0 ? insights : ['Multi-file analysis provides comprehensive financial insights.'],
-      recommendations: recommendations.length > 0 ? recommendations : ['Leverage multi-file data for strategic planning.']
+      summary: cleanText(summary),
+      tables: (tables.length > 0 ? tables : getFallbackTables()).map(table => cleanSummaryTable(table)),
+      insights: cleanTextArray(insights.length > 0 ? insights : ['Multi-file analysis provides comprehensive financial insights.']),
+      recommendations: cleanTextArray(recommendations.length > 0 ? recommendations : ['Leverage multi-file data for strategic planning.'])
     };
 
   } catch (error: any) {
@@ -660,10 +661,10 @@ RECOMMENDATIONS:
     }
 
     return {
-      summary,
-      tables: tables.length > 0 ? tables : generateFallbackTablesFromData(csvContent, headers),
-      insights: insights.length > 0 ? insights : ['No specific insights available from the current data.'],
-      recommendations: recommendations.length > 0 ? recommendations : ['No specific recommendations available.']
+      summary: cleanText(summary),
+      tables: (tables.length > 0 ? tables : generateFallbackTablesFromData(csvContent, headers)).map(table => cleanSummaryTable(table)),
+      insights: cleanTextArray(insights.length > 0 ? insights : ['No specific insights available from the current data.']),
+      recommendations: cleanTextArray(recommendations.length > 0 ? recommendations : ['No specific recommendations available.'])
     };
 
   } catch (error: any) {
