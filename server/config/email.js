@@ -1,5 +1,5 @@
 const nodemailer = require('nodemailer');
-const { welcomeEmailTemplate, resetPasswordTemplate } = require('./emailTemplates');
+const { welcomeEmailTemplate, resetPasswordTemplate, reportEmailTemplate } = require('./emailTemplates');
 
 // Create a transporter with SMTP configuration
 const createTransporter = () => {
@@ -147,8 +147,69 @@ const sendPasswordResetEmail = async (userEmail, username, otp) => {
   }
 };
 
+// Function to send report email with professional template
+const sendReportEmail = async (recipientEmail, recipientName, pdfBuffer, fileName, workspaceName, customMessage) => {
+  try {
+    // Validate inputs
+    if (!recipientEmail || !pdfBuffer || !Buffer.isBuffer(pdfBuffer) || pdfBuffer.length === 0) {
+      throw new Error('Recipient email and valid PDF buffer are required');
+    }
+
+    const transporter = createTransporter();
+    
+    // Format the current date and time
+    const reportDate = new Date().toLocaleDateString('en-US', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+    
+    // Generate a unique attachment ID to avoid caching issues
+    const attachmentId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+    const finalFileName = fileName || `financial-report-${attachmentId}.pdf`;
+    
+    const mailOptions = {
+      from: {
+        name: 'FinAxial AI Reports',
+        address: process.env.EMAIL_USER || 'finaxialai@gmail.com'
+      },
+      to: recipientEmail,
+      subject: `${workspaceName || 'Financial'} Analysis Report - ${reportDate}`,
+      html: reportEmailTemplate(recipientName, workspaceName, reportDate, customMessage),
+      attachments: [
+        {
+          filename: finalFileName,
+          content: pdfBuffer,
+          contentType: 'application/pdf',
+          contentDisposition: 'attachment'
+        }
+      ]
+    };
+
+    console.log(`Sending professional report email to: ${recipientEmail}`);
+    console.log(`PDF attachment: ${finalFileName} (${pdfBuffer.length} bytes)`);
+    
+    const info = await transporter.sendMail(mailOptions);
+    console.log('Report email sent successfully. Message ID:', info.messageId);
+    
+    return { 
+      success: true, 
+      messageId: info.messageId,
+      response: info.response
+    };
+  } catch (error) {
+    console.error('Error sending report email:', error);
+    return { 
+      success: false, 
+      error: error.message || 'Failed to send report email'
+    };
+  }
+};
+
 module.exports = {
   sendEmailWithPdf,
   sendWelcomeEmail,
-  sendPasswordResetEmail
+  sendPasswordResetEmail,
+  sendReportEmail
 };

@@ -26,6 +26,7 @@ import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { DatasetVersion } from '../../types/datasetVersions';
 import ThemeToggle from '../../components/ThemeToggle';
+import { cleanText, cleanTextArray } from '../../utils/textCleaner';
 
 interface Workspace {
   _id: string;
@@ -1988,11 +1989,11 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         <h4>Key Insights</h4>
                         <ul>
                           {Array.isArray(selectedInsight.insights) 
-                            ? selectedInsight.insights.map((insight, index) => (
+                            ? cleanTextArray(selectedInsight.insights).map((insight, index) => (
                                 <li key={index}>{insight}</li>
                               ))
                             : typeof selectedInsight.insights === 'string'
-                              ? selectedInsight.insights.split('\n\n').map((insight, index) => (
+                              ? cleanText(selectedInsight.insights).split('\n\n').map((insight, index) => (
                                   <li key={index}>{insight}</li>
                                 ))
                               : <li>No insights available</li>
@@ -2004,11 +2005,11 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         <h4>Recommendations</h4>
                         <ul>
                           {Array.isArray(selectedInsight.recommendations) 
-                            ? selectedInsight.recommendations.map((recommendation, index) => (
+                            ? cleanTextArray(selectedInsight.recommendations).map((recommendation, index) => (
                                 <li key={index}>{recommendation}</li>
                               ))
                             : typeof selectedInsight.recommendations === 'string'
-                              ? selectedInsight.recommendations.split('\n\n').map((recommendation, index) => (
+                              ? cleanText(selectedInsight.recommendations).split('\n\n').map((recommendation, index) => (
                                   <li key={index}>{recommendation}</li>
                                 ))
                               : <li>No recommendations available</li>

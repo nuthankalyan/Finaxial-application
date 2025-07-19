@@ -2,6 +2,7 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { queryCache, createQueryCacheKey } from '../utils/cacheManager';
+import { cleanText, cleanTextArray, cleanInsightsObject } from '../utils/textCleaner';
 
 export interface FileInfo {
   content: string;
@@ -169,15 +170,17 @@ KEY METRICS:
       });
     }
 
-    return {
-      summary,
-      insights: insights.length > 0 ? insights : ['No insights available'],
-      recommendations: recommendations.length > 0 ? recommendations : ['No recommendations available'],
+    const resultData = {
+      summary: cleanText(summary),
+      insights: cleanTextArray(insights.length > 0 ? insights : ['No insights available']),
+      recommendations: cleanTextArray(recommendations.length > 0 ? recommendations : ['No recommendations available']),
       rawResponse: text,
       numericalInsights: {
         metrics: metrics.length > 0 ? metrics : generatePlaceholderMetrics()
       }
     };
+
+    return cleanInsightsObject(resultData);
   } catch (error: any) {
     console.error('Error analyzing CSV with Gemini:', error);
     throw new Error(`Failed to analyze data: ${error.message}`);
@@ -876,14 +879,16 @@ KEY METRICS:
       });
     }
 
-    return {
-      summary,
-      insights: insights.length > 0 ? insights : ['No insights available'],
-      recommendations: recommendations.length > 0 ? recommendations : ['No recommendations available'],
+    const multiFileResult = {
+      summary: cleanText(summary),
+      insights: cleanTextArray(insights.length > 0 ? insights : ['No insights available']),
+      recommendations: cleanTextArray(recommendations.length > 0 ? recommendations : ['No recommendations available']),
       rawResponse: text,
       fileNames: files.map(f => f.fileName),
       numericalInsights: metrics.length > 0 ? { metrics } : undefined
     };
+
+    return cleanInsightsObject(multiFileResult);
   } catch (error) {
     console.error('Error analyzing multiple CSV files with Gemini:', error);
     throw new Error(`Failed to analyze CSV files: ${error instanceof Error ? error.message : 'Unknown error'}`);
