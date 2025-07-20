@@ -93,8 +93,12 @@ const ChartRenderer = ({ chart }: { chart: ChartData }) => {
   }
 
   try {
-    // Ensure chart options exist
-    const options = chart.options || {};
+    // Ensure chart options exist with maintainAspectRatio set to false
+    const options = {
+      ...chart.options,
+      responsive: true,
+      maintainAspectRatio: false, // This ensures the chart respects our fixed height
+    };
     
     // For bar charts, add datalabels configuration if not present
     if (chart.type === 'bar' && options.plugins && !options.plugins.datalabels) {
@@ -260,7 +264,9 @@ export default function VisualizationPanel({ charts, fileName, isLoading }: Visu
             transition={{ duration: 0.3 }}
             className={styles.chart}
           >
-            {renderChart(charts[activeChart])}
+            <div className={styles.chartWrapper}>
+              {renderChart(charts[activeChart])}
+            </div>
             <div className={styles.chartDescription}>
               <p>{charts[activeChart].description}</p>
             </div>

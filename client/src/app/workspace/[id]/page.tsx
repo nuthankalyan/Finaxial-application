@@ -259,7 +259,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   // Add new state to track selected insight for details modal
   const [selectedInsight, setSelectedInsight] = useState<SavedInsight | null>(null);
   const [showInsightDetails, setShowInsightDetails] = useState(false);
-  const [detailsTab, setDetailsTab] = useState<'insights' | 'visualizations' | 'assistantChat'>('insights');
+  const [detailsTab, setDetailsTab] = useState<'insights' | 'visualizations' | 'assistantChat' | 'notes'>('insights');
 
   // Add new state for data validation popup
   const [showDataValidationError, setShowDataValidationError] = useState(false);
@@ -271,6 +271,9 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     sender: 'assistant',
     timestamp: new Date()
   }]);
+
+  // Add new state for notes
+  const [notes, setNotes] = useState<string>('');
 
   // Add new state for version history
   const [showVersionHistory, setShowVersionHistory] = useState(false);
@@ -319,6 +322,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           const parsedFiles = JSON.parse(savedUploadedFiles) as FileInfo[];
           setUploadedFiles(parsedFiles);
         }
+      }
+      
+      // Always restore notes from localStorage (regardless of insights state)
+      const savedNotes = localStorage.getItem(`notes_${id}`);
+      if (savedNotes) {
+        setNotes(savedNotes);
       }
     } catch (error) {
       console.error('Error restoring data from session storage:', error);
@@ -515,6 +524,10 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
     setCharts(null);
     setIsViewingHistory(false);
     
+    // Clear notes when new data is uploaded
+    setNotes('');
+    localStorage.removeItem(`notes_${id}`);
+    
     // Reset assistant messages when new files are uploaded
     setAssistantMessages([{
       id: '1',
@@ -661,9 +674,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           charts: charts,  // Save the chart data
           assistantChat: assistantChatHistory, // Add the assistant chat history
           insightCards: insightCards, // Save the insight cards
+          notes: notes, // Save the notes
           rawResponse: insights.rawResponse
         }),
       });
+      
+      console.log('Saving insights with notes:', notes); // Debug log
       
       if (!response.ok) {
         const errorData = await response.json();
@@ -683,24 +699,29 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
           : data.data.recommendations.split('\n\n').filter(Boolean),
         charts: data.data.charts || null,
         insightCards: data.data.insightCards || null, // Include insightCards in the saved insight
-        assistantChat: data.data.assistantChat || [] // Make sure assistantChat is included
+        assistantChat: data.data.assistantChat || [], // Make sure assistantChat is included
+        notes: data.data.notes || '' // Include notes in the saved insight
       };
       
       // Add the newly saved insight to the savedInsights state
       setSavedInsights(prevInsights => [savedInsight, ...prevInsights]);
+      
+      // Save notes to localStorage as well
+      localStorage.setItem(`notes_${id}`, notes);
       
       // Show success notification
       setNotification({
         show: true,
         type: 'success',
         title: 'Insights Saved',
-        message: 'Your financial analysis has been saved successfully.'
+        message: 'Your financial analysis and notes have been saved successfully.'
       });
       
       // Clear the current insights after saving
       setInsights(null);
       setFileName(null);
       setCharts(null);
+      setNotes(''); // Clear notes as well
       
       // Don't reset assistant messages here - keep the conversation going
       // This allows users to continue their conversation with the assistant after saving
@@ -745,6 +766,13 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       setSavedInsightCards(insight.insightCards);
     } else {
       setSavedInsightCards(null);
+    }
+    
+    // Restore notes if available
+    if (insight.notes) {
+      setNotes(insight.notes);
+    } else {
+      setNotes('');
     }
     
     setFileName(insight.fileName);
@@ -796,6 +824,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
 
   // Add a new function to open the insight details modal
   const openInsightDetails = (insight: SavedInsight) => {
+    console.log('Opening insight details with notes:', insight.notes); // Debug log
     setSelectedInsight(insight);
     setShowInsightDetails(true);
     // Default to insights tab, but switch to visualizations if there are no insights
@@ -805,6 +834,13 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       setSavedInsightCards(insight.insightCards);
     } else {
       setSavedInsightCards(null);
+    }
+    
+    // Restore notes if available
+    if (insight.notes) {
+      setNotes(insight.notes);
+    } else {
+      setNotes('');
     }
   };
 
@@ -1555,6 +1591,12 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                   >
                     Assistant
                   </button>
+                  <button 
+                    className={`${styles.tabButton} ${activeTab === 'notes' ? styles.activeTab : ''}`}
+                    onClick={() => setActiveTab('notes')}
+                  >
+                    Notes
+                  </button>
                 </div>
               </div>              
 
@@ -1693,6 +1735,57 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                           isEnabled={!!insights}
                           onMessagesChange={handleAssistantMessagesChange}
                           initialMessages={assistantMessages}
+                        />
+                      </div>
+                    </div>
+
+                    <div 
+                      className={styles.tabContentWrapper} 
+                      style={{ display: activeTab === 'notes' ? 'block' : 'none' }}
+                    >
+                      <div className={styles.notesContent}>
+                        <h3>Your Notes</h3>
+                        <p>Write notes about your data analysis. Use bullet points to organize your thoughts:</p>
+                        <textarea 
+                          className={styles.notesTextarea}
+                          value={notes}
+                          onChange={(e) => setNotes(e.target.value)}
+                          onFocus={(e) => {
+                            // If textarea is empty when focused, add initial bullet point
+                            if (notes.trim() === '') {
+                              setNotes('• ');
+                              setTimeout(() => {
+                                e.target.selectionStart = 2;
+                                e.target.selectionEnd = 2;
+                              }, 0);
+                            }
+                          }}
+                          onKeyPress={(e) => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const textarea = e.currentTarget;
+                              const cursorPosition = textarea.selectionStart;
+                              const textBeforeCursor = notes.substring(0, cursorPosition);
+                              const textAfterCursor = notes.substring(cursorPosition);
+                              
+                              // Add new line with bullet point
+                              const newText = textBeforeCursor + '\n• ' + textAfterCursor;
+                              setNotes(newText);
+                              
+                              // Set cursor position after the bullet point
+                              setTimeout(() => {
+                                textarea.selectionStart = cursorPosition + 3; // 3 characters: \n•(space)
+                                textarea.selectionEnd = cursorPosition + 3;
+                                textarea.focus();
+                              }, 0);
+                            }
+                          }}
+                          placeholder="• Key insight 1&#10;• Important observation&#10;• Action item&#10;&#10;Write your notes here..."
+                          style={{
+                            fontFamily: '"Times New Roman", Times, serif',
+                            fontSize: '14px',
+                            lineHeight: '1.6'
+                          }}
                         />
                       </div>
                     </div>
@@ -1962,6 +2055,17 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                     Chat History
                   </button>
                 )}
+                {selectedInsight.notes && (
+                  <button 
+                    className={`${styles.modalTab} ${detailsTab === 'notes' ? styles.activeModalTab : ''}`}
+                    onClick={() => {
+                      console.log('Notes tab clicked, current notes:', selectedInsight.notes); // Debug log
+                      setDetailsTab('notes');
+                    }}
+                  >
+                    Notes
+                  </button>
+                )}
               </div>
               
               <div className={styles.modalContent}>
@@ -2076,6 +2180,27 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                               ))
                             )}
                           </AnimatePresence>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                  
+                  {detailsTab === 'notes' && selectedInsight.notes && (
+                    <motion.div
+                      key="details-notes"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className={styles.notesContainer}
+                    >
+                      <div className={styles.savedNotes}>
+                        <h4>Saved Notes</h4>
+                        <div className={styles.notesDisplay}>
+                          {selectedInsight.notes.split('\n').map((line, index) => (
+                            <p key={index} style={{ fontFamily: '"Times New Roman", Times, serif', fontSize: '14px', lineHeight: '1.6' }}>
+                              {line}
+                            </p>
+                          ))}
                         </div>
                       </div>
                     </motion.div>

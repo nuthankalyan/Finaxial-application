@@ -99,6 +99,10 @@ const InsightSchema = new mongoose.Schema({
   assistantChat: {
     type: mongoose.Schema.Types.Mixed  // Store the chat history as Mixed type
   },
+  notes: {
+    type: String,  // Store user notes as string
+    default: ''
+  },
   rawResponse: {
     type: String
   },

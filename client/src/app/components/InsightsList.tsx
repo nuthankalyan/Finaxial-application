@@ -23,6 +23,7 @@ export interface SavedInsight {
     sender: string;
     timestamp: string;
   }>;
+  notes?: string;  // Add notes field
 }
 
 interface InsightsListProps {
