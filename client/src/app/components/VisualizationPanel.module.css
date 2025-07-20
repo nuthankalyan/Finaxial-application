@@ -75,15 +75,27 @@
 
 .chartContainer {
   position: relative;
-  height: 500px;
+  min-height: 400px;
   margin-bottom: 1rem;
 }
 
 .chart {
-  height: 100%;
   width: 100%;
   display: flex;
   flex-direction: column;
+}
+
+.chartWrapper {
+  height: 400px;
+  max-height: 400px;
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+}
+
+.chart > div:first-child {
+  height: 400px !important;
+  max-height: 400px !important;
 }
 
 .chartDescription {
@@ -92,6 +104,7 @@
   background-color: #f8fafc;
   border-radius: 8px;
   border-left: 4px solid #2563eb;
+  flex-shrink: 0;
 }
 
 .chartDescription p {
@@ -169,7 +182,17 @@
 /* Make charts responsive */
 @media (max-width: 768px) {
   .chartContainer {
-    height: 350px;
+    min-height: 300px;
+  }
+  
+  .chartWrapper {
+    height: 300px;
+    max-height: 300px;
+  }
+  
+  .chart > div:first-child {
+    height: 300px !important;
+    max-height: 300px !important;
   }
   
   .chartSelector {

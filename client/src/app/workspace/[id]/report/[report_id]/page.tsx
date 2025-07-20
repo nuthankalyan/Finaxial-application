@@ -1571,6 +1571,99 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     const conclusionLines = doc.splitTextToSize(conclusionText, contentWidth);
     doc.text(conclusionLines, margin, summaryY);
     
+    // Add space after conclusion
+    summaryY += conclusionLines.length * 4 + 15;
+    
+    // COMPLIANCE AND DATA SECURITY SECTION
+    // Check if we need a new page
+    if (summaryY > pageHeight - 100) {
+      doc.addPage();
+      summaryY = 40;
+    }
+    
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(102, 126, 234);
+    doc.text('Data Security & Regulatory Compliance', margin, summaryY);
+    
+    summaryY += 12;
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    
+    const complianceIntro = `This financial analysis report has been prepared in accordance with applicable data protection and financial regulations. Our data handling practices comply with the following key legislative frameworks:`;
+    const introLines = doc.splitTextToSize(complianceIntro, contentWidth);
+    doc.text(introLines, margin, summaryY);
+    summaryY += introLines.length * 4 + 8;
+    
+    // Add compliance laws
+    const complianceLaws = [
+      {
+        title: "Information Technology Act, 2000 & IT (Reasonable Security Practices) Rules, 2011",
+        description: "Ensures protection of financial data classified as sensitive personal data or information (SPDI), with strict liability for data breaches and unauthorized disclosure."
+      },
+      {
+        title: "Prevention of Money Laundering Act, 2002",
+        description: "Mandates secure retention of transaction records for 10 years and establishes confidentiality requirements for financial institutions handling customer data."
+      },
+      {
+        title: "Banking Regulation Act, 1949",
+        description: "Protects banking companies from unauthorized disclosure of confidential customer information and financial records."
+      },
+      {
+        title: "Credit Information Companies (Regulation) Act, 2005",
+        description: "Establishes comprehensive privacy principles for credit information protection, including data collection limitation, personal access rights, and disclosure purpose limitation."
+      },
+      {
+        title: "RBI Guidelines on Internet Banking, 2011",
+        description: "Prescribes minimum security baselines for data confidentiality, encryption standards, access controls, and breach notification requirements."
+      }
+    ];
+    
+    complianceLaws.forEach((law, index) => {
+      // Check if we need a new page
+      if (summaryY > pageHeight - 80) {
+        doc.addPage();
+        summaryY = 40;
+      }
+      
+      // Law title
+      doc.setFontSize(10);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(67, 56, 202);
+      const titleLines = doc.splitTextToSize(`${index + 1}. ${law.title}`, contentWidth - 10);
+      doc.text(titleLines, margin + 5, summaryY);
+      summaryY += titleLines.length * 4 + 3;
+      
+      // Law description
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(75, 85, 99);
+      const descLines = doc.splitTextToSize(law.description, contentWidth - 10);
+      doc.text(descLines, margin + 5, summaryY);
+      summaryY += descLines.length * 3.5 + 6;
+    });
+    
+    // Add compliance footer note
+    if (summaryY > pageHeight - 60) {
+      doc.addPage();
+      summaryY = 40;
+    }
+    
+    summaryY += 8;
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(34, 197, 94);
+    doc.text('Data Security Assurance', margin, summaryY);
+    
+    summaryY += 8;
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(75, 85, 99);
+    const securityNote = `All financial data processed in this report is handled in accordance with the above regulatory frameworks. Data encryption, access controls, and retention policies are maintained as per statutory requirements. No sensitive customer information is stored beyond the prescribed legal timeframes, and all data handling procedures follow industry best practices for financial data security.`;
+    const securityLines = doc.splitTextToSize(securityNote, contentWidth);
+    doc.text(securityLines, margin, summaryY);
+    
     // Add footer with page numbers to all pages
     const totalPages = doc.getNumberOfPages();
     for (let i = 1; i <= totalPages; i++) {
