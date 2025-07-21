@@ -244,6 +244,28 @@ function BusinessTermsButton() {
   );
 }
 
+// Helper function to generate dynamic year options
+function generateYearOptions() {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  
+  // Generate past 5 years including current year
+  for (let i = 0; i < 5; i++) {
+    const year = currentYear - i;
+    years.push({ value: year.toString(), label: year.toString() });
+  }
+  
+  const startYear5 = currentYear - 4;
+  const startYear3 = currentYear - 2;
+  
+  return [
+    { value: '', label: 'All Years' },
+    { value: 'last5', label: `Last 5 Years (${startYear5}-${currentYear})` },
+    { value: 'last3', label: `Last 3 Years (${startYear3}-${currentYear})` },
+    ...years
+  ];
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const { user, loading: authLoading, error: authError, logout } = useAuth();
@@ -294,13 +316,14 @@ export default function Dashboard() {
     if (yearFilter) {
       const createdDate = new Date(workspace.createdAt);
       const workspaceYear = createdDate.getFullYear();
+      const currentYear = new Date().getFullYear();
       
       if (yearFilter === 'last5') {
-        // Last 5 years (2021-2025)
-        matchesYear = workspaceYear >= 2021 && workspaceYear <= 2025;
+        // Last 5 years (dynamic based on current year)
+        matchesYear = workspaceYear >= (currentYear - 4) && workspaceYear <= currentYear;
       } else if (yearFilter === 'last3') {
-        // Last 3 years (2023-2025)
-        matchesYear = workspaceYear >= 2023 && workspaceYear <= 2025;
+        // Last 3 years (dynamic based on current year)
+        matchesYear = workspaceYear >= (currentYear - 2) && workspaceYear <= currentYear;
       } else {
         // Specific year
         matchesYear = workspaceYear === parseInt(yearFilter);
@@ -840,16 +863,7 @@ export default function Dashboard() {
               
               <div className={styles.dateFilterContainer}>
                 <CustomDropdown
-                  options={[
-                    { value: '', label: 'All Years' },
-                    { value: 'last5', label: 'Last 5 Years (2021-2025)' },
-                    { value: 'last3', label: 'Last 3 Years (2023-2025)' },
-                    { value: '2025', label: '2025' },
-                    { value: '2024', label: '2024' },
-                    { value: '2023', label: '2023' },
-                    { value: '2022', label: '2022' },
-                    { value: '2021', label: '2021' }
-                  ]}
+                  options={generateYearOptions()}
                   value={yearFilter}
                   onChange={setYearFilter}
                   placeholder="All Years"
@@ -911,8 +925,9 @@ export default function Dashboard() {
                 {searchQuery && ` matching "${searchQuery}"`}
                 {monthFilter && ` created in ${new Date(2023, parseInt(monthFilter) - 1).toLocaleString('default', { month: 'long' })}`}
                 {yearFilter && (() => {
-                  if (yearFilter === 'last5') return ' from last 5 years (2021-2025)';
-                  if (yearFilter === 'last3') return ' from last 3 years (2023-2025)';
+                  const currentYear = new Date().getFullYear();
+                  if (yearFilter === 'last5') return ` from last 5 years (${currentYear - 4}-${currentYear})`;
+                  if (yearFilter === 'last3') return ` from last 3 years (${currentYear - 2}-${currentYear})`;
                   return ` created in ${yearFilter}`;
                 })()}
               </span>
