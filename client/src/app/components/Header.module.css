@@ -74,6 +74,22 @@
   justify-content: center;
 }
 
+.navContainer {
+  display: none;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 1.5rem;
+  visibility: visible;
+}
+
+/* Media query to show the navigation on larger screens */
+@media (min-width: 900px) {
+  .navContainer {
+    display: flex;
+  }
+}
+
 .navLinks {
   display: flex;
 }
@@ -84,14 +100,14 @@
 
 .navLink {
   position: relative;
-  color: var(--gray-700);
+  color: #111827;
   font-weight: 500;
   transition: color 0.3s ease;
   padding: 0.5rem 0;
 }
 
 .navLink:hover {
-  color: var(--primary-700);
+  color: #4E71FF;
 }
 
 .navLink::after {
@@ -101,7 +117,7 @@
   left: 0;
   width: 0;
   height: 2px;
-  background-color: var(--primary-600);
+  background-color: #4E71FF;
   transition: width 0.3s ease;
 }
 
@@ -122,6 +138,7 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
+  gap: 0.5rem;
 }
 
 .authButtons {
@@ -242,6 +259,21 @@
   border-bottom: 1px solid var(--gray-100);
 }
 
+.mobileFeaturesHeading {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin: 0.75rem 0;
+  padding: 0 0.5rem;
+  font-size: 1rem;
+}
+
+.mobileFeaturesList {
+  margin-left: 1rem;
+  margin-bottom: 1rem;
+  padding-left: 0.5rem;
+  border-left: 2px solid var(--border-color);
+}
+
 :global(.dark) .mobileNavItem {
   border-bottom: 1px solid var(--gray-800);
 }
@@ -324,4 +356,9 @@
 
 :global(.dark) .mobileThemeToggle {
   color: var(--gray-300);
+}
+
+.headerFeatures {
+  display: flex;
+  align-items: center;
 } 

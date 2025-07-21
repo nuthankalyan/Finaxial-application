@@ -329,6 +329,8 @@
   align-items: center;
   text-align: center;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  text-decoration: none;
+  cursor: pointer;
 }
 
 /* Dark theme for feature cards */
@@ -413,6 +415,24 @@
 /* Dark theme for feature descriptions */
 :global(.dark) .featureDescription {
   color: #9ca3af;
+}
+
+.featureLink {
+  display: inline-block;
+  margin-top: 1.5rem;
+  color: var(--primary-color);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: transform 0.2s ease;
+}
+
+.featureCard:hover .featureLink {
+  transform: translateX(5px);
+}
+
+/* Dark theme for feature link */
+:global(.dark) .featureLink {
+  color: var(--primary-300);
 }
 
 /* Analytics Section */

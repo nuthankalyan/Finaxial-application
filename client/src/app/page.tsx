@@ -95,7 +95,7 @@ export default function Home() {
           </h2>
           
           <div className={styles.featureGrid}>
-            <div className={styles.featureCard}>
+            <Link href="/features/anomaly-detection" className={styles.featureCard}>
               <div className={styles.featureIcon}>
                 <Image
                   src="/ai-finance-assistant.svg"
@@ -110,9 +110,10 @@ export default function Home() {
                 Detect potential fraud, errors, or unusual transactions before they impact your business, with real-time 
                 alerts and comprehensive audit trails.
               </p>
-            </div>
+              <span className={styles.featureLink}>Learn more →</span>
+            </Link>
 
-            <div className={styles.featureCard}>
+            <Link href="/features/compliance-automation" className={styles.featureCard}>
               <div className={styles.featureIcon}>
                 <Image
                   src="/file.svg"
@@ -127,9 +128,10 @@ export default function Home() {
                 Automatically validate your financial data against the latest regulatory requirements, reducing 
                 risk and ensuring all reports meet industry standards.
               </p>
-            </div>
+              <span className={styles.featureLink}>Learn more →</span>
+            </Link>
 
-            <div className={styles.featureCard}>
+            <Link href="/features/data-transformation" className={styles.featureCard}>
               <div className={styles.featureIcon}>
                 <Image
                   src="/window.svg"
@@ -144,9 +146,10 @@ export default function Home() {
                 Our powerful ETL tools handle complex financial data structures, making integration with your 
                 existing systems effortless while maintaining data integrity.
               </p>
-            </div>
+              <span className={styles.featureLink}>Learn more →</span>
+            </Link>
 
-            <div className={styles.featureCard}>
+            <Link href="/features/tax-optimization" className={styles.featureCard}>
               <div className={styles.featureIcon}>
                 <Image
                   src="/analytics-trends.svg"
@@ -161,9 +164,10 @@ export default function Home() {
                 investment strategies, and business operations to recommend actionable tax efficiency improvements, potentially 
                 saving your business significant amounts.
               </p>
-            </div>
+              <span className={styles.featureLink}>Learn more →</span>
+            </Link>
 
-            <div className={styles.featureCard}>
+            <Link href="/features/financial-reporting" className={styles.featureCard}>
               <div className={styles.featureIcon}>
                 <Image
                   src="/pdf-export.svg"
@@ -178,7 +182,8 @@ export default function Home() {
                 or create custom reports with interactive visualizations that bring your financial data to life and make complex 
                 information easy to understand.
               </p>
-            </div>
+              <span className={styles.featureLink}>Learn more →</span>
+            </Link>
 
             <div className={styles.featureCard}>
               <div className={styles.featureIcon}>

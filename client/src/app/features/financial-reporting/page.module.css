@@ -1,0 +1,506 @@
+.page {
+  --primary: #4E71FF;
+  --primary-dark: #3B5FE5;
+  --primary-light: #EEF2FF;
+  --text-primary: #111827;
+  --text-secondary: #4b5563;
+  --background: #ffffff;
+  --border-color: #E5E7EB;
+  
+  min-height: 100vh;
+  background-color: var(--background);
+}
+
+/* Dark theme styles for the entire page */
+:global(.dark) .page {
+  --text-primary: #f9fafb;
+  --text-secondary: #9ca3af;
+  --background: #111827;
+  --border-color: #374151;
+  background-color: var(--background);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+/* Hero Section */
+.heroSection {
+  padding: 6rem 0 4rem;
+  background: linear-gradient(to bottom, rgba(79, 70, 229, 0.1) 0%, rgba(79, 70, 229, 0) 100%);
+}
+
+.heroContent {
+  display: flex;
+  flex-direction: column;
+  max-width: 600px;
+}
+
+.featureLabel {
+  font-size: 0.875rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--primary);
+  margin-bottom: 1rem;
+}
+
+.heroTitle {
+  font-size: 3rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.heroDescription {
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.heroCTA {
+  display: flex;
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.heroImage {
+  margin-top: 2rem;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+
+.primaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  background-color: var(--primary);
+  color: white;
+  font-weight: 500;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.primaryButton:hover {
+  background-color: var(--primary-dark);
+}
+
+.secondaryButton, .outlineButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem 1.5rem;
+  background-color: transparent;
+  color: var(--primary);
+  border: 1px solid var(--primary);
+  font-weight: 500;
+  border-radius: 0.375rem;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.secondaryButton:hover, .outlineButton:hover {
+  background-color: var(--primary-light);
+}
+
+/* Features Section */
+.featuresSection {
+  padding: 5rem 0;
+}
+
+.sectionTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 2rem;
+}
+
+@media (min-width: 640px) {
+  .featuresGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .featuresGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+  
+  .heroSection .container {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+  
+  .heroImage {
+    margin-top: 0;
+  }
+}
+
+.featureCard {
+  background-color: var(--background);
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+.featureIcon {
+  margin-bottom: 1rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--primary-light);
+  border-radius: 0.5rem;
+}
+
+.featureTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.75rem;
+}
+
+.featureDescription {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Benefits Section */
+.benefitsSection {
+  padding: 5rem 0;
+  background-color: var(--primary-light);
+}
+
+:global(.dark) .benefitsSection {
+  background-color: rgba(79, 70, 229, 0.1);
+}
+
+.benefitsGrid {
+  display: grid;
+  grid-template-columns: repeat(1, 1fr);
+  gap: 1.5rem;
+}
+
+@media (min-width: 640px) {
+  .benefitsGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .benefitsGrid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.benefitCard {
+  background-color: var(--background);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.benefitTitle {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 0.75rem;
+}
+
+.benefitDescription {
+  font-size: 0.875rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Case Study Section */
+.caseStudySection {
+  padding: 5rem 0;
+}
+
+.caseStudyContent {
+  max-width: 800px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.caseStudyTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.testimonial {
+  font-size: 1.25rem;
+  line-height: 1.6;
+  color: var(--text-primary);
+  font-style: italic;
+  margin-bottom: 1.5rem;
+  position: relative;
+  padding: 0 1.5rem;
+}
+
+.testimonial::before,
+.testimonial::after {
+  content: '"';
+  font-size: 2rem;
+  color: var(--primary);
+  position: absolute;
+}
+
+.testimonial::before {
+  left: 0;
+  top: -10px;
+}
+
+.testimonial::after {
+  content: '"';
+  right: 0;
+  bottom: -10px;
+}
+
+.testimonialAuthor {
+  margin-bottom: 3rem;
+}
+
+.authorName {
+  display: block;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.authorTitle {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+}
+
+.caseStudyResults {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.resultItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.resultValue {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+.resultLabel {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  text-align: center;
+}
+
+/* CTA Section */
+.ctaSection {
+  padding: 5rem 0;
+  background: linear-gradient(to right, var(--primary), #6366f1);
+  text-align: center;
+  color: white;
+}
+
+.ctaTitle {
+  font-size: 2.25rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+}
+
+.ctaDescription {
+  font-size: 1.125rem;
+  max-width: 600px;
+  margin: 0 auto 2rem;
+  opacity: 0.9;
+}
+
+.ctaButtons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.outlineButton {
+  background-color: transparent;
+  color: white;
+  border-color: white;
+}
+
+.outlineButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+/* FAQ Section */
+.faqSection {
+  padding: 5rem 0;
+}
+
+.faqList {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.faqItem {
+  border-bottom: 1px solid var(--border-color);
+  padding: 1.5rem 0;
+}
+
+.faqQuestion {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1rem;
+  position: relative;
+  cursor: pointer;
+}
+
+.faqAnswer {
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* SEO Section */
+.seoSection {
+  padding: 4rem 0;
+  background-color: var(--background);
+  border-top: 1px solid var(--border-color);
+}
+
+.seoTitle {
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 1.5rem;
+}
+
+.seoContent {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.seoContent p {
+  margin-bottom: 1rem;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}
+
+/* Reports Showcase */
+.reportsShowcase {
+  padding: 5rem 0;
+  background-color: #f9fafb;
+}
+
+:global(.dark) .reportsShowcase {
+  background-color: #1f2937;
+}
+
+.showcaseTitle {
+  font-size: 2rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.reportTypesContainer {
+  position: relative;
+  max-width: 100%;
+  overflow: hidden;
+  padding: 1rem 0;
+}
+
+.reportTypes {
+  display: flex;
+  gap: 2rem;
+  padding: 1rem 0;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  scrollbar-width: none; /* Firefox */
+  -ms-overflow-style: none; /* IE and Edge */
+}
+
+.reportTypes::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Opera */
+}
+
+.reportType {
+  min-width: 280px;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  background-color: var(--background);
+  transition: transform 0.2s;
+}
+
+.reportType:hover {
+  transform: scale(1.02);
+}
+
+.reportImage {
+  width: 100%;
+  height: 160px;
+  position: relative;
+}
+
+.reportContent {
+  padding: 1.25rem;
+}
+
+.reportName {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.reportDescription {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+}
+
+.viewReportButton {
+  display: inline-flex;
+  align-items: center;
+  font-size: 0.875rem;
+  color: var(--primary);
+  font-weight: 500;
+}
+
+.viewReportButton svg {
+  margin-left: 0.25rem;
+}

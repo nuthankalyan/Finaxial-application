@@ -5,6 +5,7 @@ import Link from 'next/link';
 import styles from './Header.module.css';
 import { useAuth } from '../context/AuthContext';
 import ThemeToggle from './ThemeToggle';
+import FeaturesMenu from './FeaturesMenu';
 
 export default function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -55,9 +56,15 @@ export default function Header() {
           </div>
           
           {/* Nav Links - Center */}
-         
+          <nav className={styles.navContainer}>
+            {/* Empty but maintained for layout structure */}
+          </nav>
+          
           {/* Auth Buttons - Right Side */}
           <div className={styles.authContainer}>
+            <div className={styles.headerFeatures}>
+              <FeaturesMenu />
+            </div>
             {user ? (
               <div className={styles.authButtons}>
                 <Link href="/dashboard" className={`${styles.loginButton} ${styles.fadeInDelay100}`}>Dashboard</Link>
@@ -99,8 +106,23 @@ export default function Header() {
         {isMenuOpen && (
           <div className={styles.mobileMenu}>
             <nav className={styles.mobileNavList}>
-              <div className={styles.mobileNavItem}>
-                <a href="#features" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Features</a>
+              <div className={styles.mobileFeaturesHeading}>Features</div>
+              <div className={styles.mobileFeaturesList}>
+                <div className={styles.mobileNavItem}>
+                  <Link href="/features/anomaly-detection" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Anomaly Detection</Link>
+                </div>
+                <div className={styles.mobileNavItem}>
+                  <Link href="/features/compliance-automation" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Compliance Automation</Link>
+                </div>
+                <div className={styles.mobileNavItem}>
+                  <Link href="/features/tax-optimization" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Tax Optimization</Link>
+                </div>
+                <div className={styles.mobileNavItem}>
+                  <Link href="/features/financial-reporting" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Financial Reporting</Link>
+                </div>
+                <div className={styles.mobileNavItem}>
+                  <Link href="/features/data-transformation" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Data Transformation</Link>
+                </div>
               </div>
               <div className={styles.mobileNavItem}>
                 <a href="#testimonials" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Testimonials</a>
