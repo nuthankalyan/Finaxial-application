@@ -7,7 +7,7 @@ export const metadata = {
   metadataBase: new URL('https://finaxial.tech'),
   title: 'Finaxial - AI-Powered Financial Analysis & Reporting Platform',
   description: 'Streamline financial workflows with Finaxial AI analytics, anomaly detection, tax optimization, and automated compliance checks. Transform financial data into strategic insights.',
-  keywords: 'financial analysis, anomaly detection, financial compliance, tax optimization, financial reporting, AI finance, automated reports, financial insights, data transformation, financial dashboard',
+  keywords: 'financial anomaly detection software, AI financial analytics platform, financial compliance automation, tax optimization software, financial reporting automation, financial data transformation tools, automated financial insights, business financial analysis platform, detect financial anomalies, automate financial compliance checks, AI-powered tax optimization, generate automated financial reports, financial pattern detection, fraud prevention, financial workflow automation, financial dashboard software, financial data visualization',
   openGraph: {
     title: 'Finaxial - Transform Financial Data into Strategic Insights',
     description: 'AI-powered financial analytics with anomaly detection, compliance checks, and tax optimization to maximize financial performance.',
@@ -26,8 +26,8 @@ export const metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Finaxial - AI-Powered Financial Analytics',
-    description: 'Transform your financial workflows with AI-powered insights, anomaly detection and compliance automation.',
+    title: 'Finaxial - AI-Powered Financial Analytics & Anomaly Detection',
+    description: 'Transform your financial workflows with AI-powered anomaly detection, automated compliance checks, and tax optimization tools. Save time and reduce risks with intelligent financial analysis.',
     images: ['https://finaxial.tech/twitter-image.jpg'],
   },
   robots: {
@@ -78,6 +78,9 @@ export default function RootLayout({
                 "priceCurrency": "USD"
               },
               "description": "AI-powered financial analytics with anomaly detection, compliance checks, and tax optimization",
+              "featureList": "Financial anomaly detection, Automated compliance checks, Tax optimization analysis, Interactive financial dashboards, Automated report generation, Financial data transformation, Email report scheduling, Real-time fraud detection",
+              "keywords": "financial anomaly detection software, AI financial analytics platform, compliance automation, tax optimization",
+              "applicationSubCategory": "Financial Analysis Software",
               "aggregateRating": {
                 "@type": "AggregateRating",
                 "ratingValue": "4.8",
@@ -100,6 +103,25 @@ export default function RootLayout({
                 "https://www.linkedin.com/company/finaxial",
                 "https://www.facebook.com/finaxial"
               ]
+            })
+          }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "WebApplication",
+              "name": "Financial Anomaly Detection System",
+              "applicationCategory": "BusinessApplication",
+              "operatingSystem": "Web",
+              "description": "AI-powered system that detects unusual patterns and potential fraud in financial data using machine learning algorithms",
+              "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+              },
+              "featureList": "Pattern recognition, Fraud detection, Real-time alerts, Risk assessment scoring, Historical analysis"
             })
           }}
         />
