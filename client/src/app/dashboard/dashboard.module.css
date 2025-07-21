@@ -419,12 +419,13 @@
   width: 100%;
   padding: 0.75rem 0.75rem 0.75rem 2.5rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: 1rem;
   font-size: 0.875rem;
   outline: none;
   transition: var(--transition);
   color: var(--text-primary);
   background-color: var(--bg-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .searchInput:focus {
@@ -449,7 +450,7 @@
   width: 100%;
   padding: 0.75rem 0.75rem 0.75rem 2.5rem;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: 1rem;
   font-size: 0.875rem;
   outline: none;
   transition: var(--transition);
@@ -457,6 +458,7 @@
   background-color: var(--bg-secondary);
   appearance: none;
   cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .monthFilter:focus {
@@ -484,10 +486,11 @@
   color: var(--text-primary);
   background-color: #f3f4f6;
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: 1rem;
   cursor: pointer;
   transition: var(--transition);
   white-space: nowrap;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .clearFiltersButton:hover {
@@ -503,10 +506,10 @@
   margin: 1rem 0;
   padding: 0.5rem 1rem;
   background-color: rgba(79, 70, 229, 0.05);
-  border-radius: var(--radius-md);
+  border-radius: 1rem;
   font-size: 0.875rem;
   color: var(--text-secondary);
-  
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.02);
 }
 
 .actionButton:hover {
@@ -1353,4 +1356,50 @@
 :global(.dark) .closeButton:hover {
   color: #8DD8FF;
   background-color: #232946;
+}
+
+/* Dark mode styles for filters */
+:global(.dark) .monthFilter {
+  background-color: #232946;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
+:global(.dark) .monthFilter:focus {
+  border-color: #4E71FF;
+  box-shadow: 0 0 0 2px rgba(78, 113, 255, 0.1);
+}
+
+:global(.dark) .calendarIcon {
+  color: #9ca3af;
+}
+
+:global(.dark) .searchIcon {
+  color: #9ca3af;
+}
+
+:global(.dark) .clearFiltersButton {
+  background-color: #232946;
+  color: #f9fafb;
+  border: 1px solid #374151;
+}
+
+:global(.dark) .clearFiltersButton:hover {
+  background-color: #374151;
+}
+
+:global(.dark) .filterResults {
+  background-color: rgba(78, 113, 255, 0.1);
+  color: #9ca3af;
+}
+
+/* Dark mode styles for empty state */
+:global(.dark) .emptyState {
+  background-color: #232946;
+  color: #9ca3af;
+  border: 2px dashed #374151;
+}
+
+:global(.dark) .emptyState h4 {
+  color: #f9fafb;
 }
