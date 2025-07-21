@@ -17,10 +17,12 @@ export default function Home() {
   };
 
   return (
-    <main className={styles.page}>
+    <main className={styles.page} itemScope itemType="https://schema.org/WebPage">
       <ClientWrapper>
         <Header />
-      </ClientWrapper>      <section className={styles.heroSection}>        <div className={styles.sparklesWrapper}>
+      </ClientWrapper>
+      {/* Hidden heading for screen readers and SEO */}
+      <h1 className="sr-only">Finaxial - AI-Powered Financial Analytics and Reporting Platform</h1>      <section className={styles.heroSection} aria-labelledby="hero-heading">        <div className={styles.sparklesWrapper}>
           <SparklesCore
             id="tsparticlesfull"
             background="transparent" 
@@ -31,14 +33,14 @@ export default function Home() {
             speed={2}
             className={styles.sparklesContainer}
           />
-          <div className={styles.tag}>AUTOMATED FINANCIAL REPORTS SOFTWARE</div>
+          <div className={styles.tag} role="doc-subtitle">INTELLIGENT FINANCIAL MANAGEMENT PLATFORM</div>
           <div className={styles.heroWrapper}>
             <div className={styles.heroText}>
-              <h1 className={styles.heroTitle}>
-                Digitize & automate financial reports
-              </h1>
+              <h2 id="hero-heading" className={styles.heroTitle}>
+                Transform Financial Data into Strategic Insights
+              </h2>
               <p className={styles.heroSubtitle}>
-                Shorten the time for your finance team to collect data, generate bespoke reports and manage everchanging regulations & policies
+                Automate financial reporting with AI-powered anomaly detection, compliance checks, and tax optimization to save time, reduce risk, and maximize financial performance
               </p>
               <div className={styles.heroButtons}>              
                 <Link href="/login" className={styles.primaryButton}>
@@ -86,13 +88,98 @@ export default function Home() {
       </section>
 
       {/* Features Section */}
-      <section className={styles.featuresSection}>
+      <section className={styles.featuresSection} aria-labelledby="features-heading">
         <div className={styles.sectionContainer}>
-          <h1 className={styles.mainTitle}>
+          <h2 id="features-heading" className={styles.mainTitle}>
             Powerful features to streamline your financial workflows
-          </h1>
+          </h2>
           
           <div className={styles.featureGrid}>
+            <div className={styles.featureCard}>
+              <div className={styles.featureIcon}>
+                <Image
+                  src="/ai-finance-assistant.svg"
+                  alt="AI-powered anomaly detection icon showing financial data pattern analysis"
+                  width={48}
+                  height={48}
+                />
+              </div>
+              <h3 className={styles.featureTitle}>Intelligent Anomaly Detection</h3>
+              <p className={styles.featureDescription}>
+                Our advanced AI algorithms automatically identify irregular patterns and outliers in your financial data. 
+                Detect potential fraud, errors, or unusual transactions before they impact your business, with real-time 
+                alerts and comprehensive audit trails.
+              </p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.featureIcon}>
+                <Image
+                  src="/file.svg"
+                  alt="Regulatory compliance and financial documentation icon"
+                  width={48}
+                  height={48}
+                />
+              </div>
+              <h3 className={styles.featureTitle}>Compliance & Regulation Checks</h3>
+              <p className={styles.featureDescription}>
+                Stay ahead of changing financial regulations with our built-in compliance monitoring system. 
+                Automatically validate your financial data against the latest regulatory requirements, reducing 
+                risk and ensuring all reports meet industry standards.
+              </p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.featureIcon}>
+                <Image
+                  src="/window.svg"
+                  alt="Data Transformation"
+                  width={48}
+                  height={48}
+                />
+              </div>
+              <h3 className={styles.featureTitle}>Seamless Data Transformation</h3>
+              <p className={styles.featureDescription}>
+                Convert and normalize data from multiple sources into standardized formats instantly. 
+                Our powerful ETL tools handle complex financial data structures, making integration with your 
+                existing systems effortless while maintaining data integrity.
+              </p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.featureIcon}>
+                <Image
+                  src="/analytics-trends.svg"
+                  alt="Tax Optimization"
+                  width={48}
+                  height={48}
+                />
+              </div>
+              <h3 className={styles.featureTitle}>Tax Optimization Analysis</h3>
+              <p className={styles.featureDescription}>
+                Identify tax-saving opportunities with our intelligent tax optimization engine. Analyze spending patterns, 
+                investment strategies, and business operations to recommend actionable tax efficiency improvements, potentially 
+                saving your business significant amounts.
+              </p>
+            </div>
+
+            <div className={styles.featureCard}>
+              <div className={styles.featureIcon}>
+                <Image
+                  src="/pdf-export.svg"
+                  alt="Detailed Reports"
+                  width={48}
+                  height={48}
+                />
+              </div>
+              <h3 className={styles.featureTitle}>Comprehensive Financial Reports</h3>
+              <p className={styles.featureDescription}>
+                Generate detailed, presentation-ready reports with just a few clicks. Choose from industry-standard templates 
+                or create custom reports with interactive visualizations that bring your financial data to life and make complex 
+                information easy to understand.
+              </p>
+            </div>
+
             <div className={styles.featureCard}>
               <div className={styles.featureIcon}>
                 <Image
@@ -102,44 +189,10 @@ export default function Home() {
                   height={48}
                 />
               </div>
-              <h3 className={styles.featureTitle}>Smart Email Reports at Your Fingertips</h3>
+              <h3 className={styles.featureTitle}>Smart Email Reports</h3>
               <p className={styles.featureDescription}>
-                Receive automated financial reports directly in your inbox, scheduled to your preferences. 
-                Stay informed with custom alerts and real-time updates on your financial metrics, delivered 
-                seamlessly to your email.
-              </p>
-            </div>
-
-            <div className={styles.featureCard}>              <div className={styles.featureIcon}>
-                <Image
-                  src="/ai-finance-assistant.svg"
-                  alt="AI Financial Assistant"
-                  width={48}
-                  height={48}
-                />
-              </div>
-              <h3 className={styles.featureTitle}>24/7 AI Financial Assistant</h3>
-              <p className={styles.featureDescription}>
-                Get instant answers to your financial queries with our intelligent AI chatbot. From expense 
-                tracking to budget analysis, receive smart insights and recommendations in real-time, 
-                helping you make informed decisions faster.
-              </p>
-            </div>
-
-            <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>
-                <Image
-                  src="/pdf-export.svg"
-                  alt="PDF Export"
-                  width={48}
-                  height={48}
-                />
-              </div>
-              <h3 className={styles.featureTitle}>One-Click PDF Reports Export</h3>
-              <p className={styles.featureDescription}>
-                Transform your financial data into professional PDF reports with a single click. Generate 
-                beautifully formatted summaries, complete with charts and insights, perfect for 
-                presentations and record-keeping.
+                Schedule and receive automated financial reports directly in your inbox. Set custom delivery frequencies and 
+                content filters to ensure key stakeholders get exactly the information they need, when they need it.
               </p>
             </div>
           </div>
@@ -148,8 +201,9 @@ export default function Home() {
 
       {/* Analytics Section */}
       <section className={styles.analyticsSection}>
-        <div className={styles.sectionContainer}>          <h2 className={styles.sectionTitle}>
-            Gain visibility into financial workload and performance
+        <div className={styles.sectionContainer}>
+          <h2 className={styles.sectionTitle}>
+            Advanced Analytics for Financial Excellence
           </h2>
           <div className={styles.analyticsFeatures}>
             <div className={styles.analyticsFeature}>
@@ -162,34 +216,47 @@ export default function Home() {
                   className={styles.featureImage}
                 />
               </div>
-              <h3>Customizable Reports</h3>
-              <p>Create your own reports and visualization fit for your team's unique metrics and fields.</p>
+              <h3>Interactive Financial Dashboards</h3>
+              <p>Create tailored dashboards with drag-and-drop simplicity, combining multiple data sources into unified visualizations that reveal actionable insights instantly.</p>
             </div>
             <div className={styles.analyticsFeature}>
               <div className={styles.featureVisual}>
                 <Image
                   src="/template-reports.svg"
-                  alt="Template Reports"
+                  alt="Regulatory Compliance"
                   width={400}
                   height={300}
                   className={styles.featureImage}
                 />
               </div>
-              <h3>Template Reports</h3>
-              <p>Leverage our ready-to-use legal reports to measure industry standard metrics and implement faster.</p>
+              <h3>Regulatory Compliance Framework</h3>
+              <p>Automatically apply industry-specific regulatory requirements to your financial processes, with built-in audit trails and validation checks to ensure continuous compliance.</p>
             </div>
             <div className={styles.analyticsFeature}>
               <div className={styles.featureVisual}>
                 <Image
                   src="/analytics-trends.svg"
-                  alt="Analytics and Trends"
+                  alt="Predictive Analysis"
                   width={400}
                   height={300}
                   className={styles.featureImage}
                 />
               </div>
-              <h3>Analytics and Trends</h3>
-              <p>Use analytics to see trends in matter volume, status and type to identify seasonality and capacity gaps.</p>
+              <h3>Predictive Financial Analysis</h3>
+              <p>Leverage machine learning algorithms to forecast financial trends, detect anomalies before they impact your business, and receive AI-powered recommendations for optimizing performance.</p>
+            </div>
+            <div className={styles.analyticsFeature}>
+              <div className={styles.featureVisual}>
+                <Image
+                  src="/projects-icon.svg"
+                  alt="Data Transformation"
+                  width={400}
+                  height={300}
+                  className={styles.featureImage}
+                />
+              </div>
+              <h3>Intelligent Data Transformation</h3>
+              <p>Transform complex financial data from any source into standardized formats with our automated ETL pipeline, ensuring consistency and accuracy across all your financial reporting.</p>
             </div>
           </div>
         </div>
@@ -208,7 +275,7 @@ export default function Home() {
           <div className={styles.trustCardGrid}>
             <div className={styles.trustCard}>
               <blockquote className={styles.testimonialQuote}>
-                "Finaxial has revolutionized our financial workflows, making them more efficient and accurate than ever before. The automation capabilities have transformed our entire finance department."
+                "Finaxial's anomaly detection system identified an accounting discrepancy that saved us over $2M last quarter. The compliance checks have reduced our regulatory review time by 75%, making our audits virtually stress-free."
               </blockquote>
               <div className={styles.testimonialAuthor}>
                 <span className={styles.authorName}>Sarah Johnson</span>
@@ -218,7 +285,7 @@ export default function Home() {
 
             <div className={styles.trustCard}>
               <blockquote className={styles.testimonialQuote}>
-                "The AI-driven insights have transformed how we process and analyze financial data. We've seen a 40% reduction in processing time and improved accuracy across all reports."
+                "The tax optimization module identified $430,000 in potential savings we would have otherwise missed. Their data transformation tools seamlessly integrated with our legacy systems, eliminating months of manual work."
               </blockquote>
               <div className={styles.testimonialAuthor}>
                 <span className={styles.authorName}>Michael Chen</span>
@@ -228,7 +295,7 @@ export default function Home() {
 
             <div className={styles.trustCard}>
               <blockquote className={styles.testimonialQuote}>
-                "A game-changer for our financial operations. The automated workflows and intelligent reporting have helped us scale our operations while maintaining perfect accuracy."
+                "Our board members rave about the detailed report pages. The visualizations make complex financial data instantly understandable, and the automated compliance checks give us confidence that we're always operating within regulatory guidelines."
               </blockquote>
               <div className={styles.testimonialAuthor}>
                 <span className={styles.authorName}>Emily Wong</span>
@@ -265,38 +332,38 @@ export default function Home() {
 
               <div className={`${styles.faqQuestion} ${activeFaq === 1 ? styles.active : ''}`} onClick={() => toggleFaq(1)}>
                 <div className={styles.questionContent}>
-                  <h3 className={styles.questionText}>What kind of visualizations does Finaxial provide?</h3>
+                  <h3 className={styles.questionText}>How does Finaxial's anomaly detection work?</h3>
                   <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
                 <div className={styles.faqAnswer}>
-                  <p>Finaxial offers a comprehensive suite of data visualizations:</p>
+                  <p>Finaxial's anomaly detection system uses advanced machine learning:</p>
                   <ul>
-                    <li>Interactive charts and graphs for trend analysis</li>
-                    <li>Financial performance dashboards</li>
-                    <li>Customizable report templates</li>
-                    <li>Real-time data monitoring displays</li>
-                    <li>Comparative analysis visualizations</li>
+                    <li>Analyzes historical financial patterns to establish baselines</li>
+                    <li>Continuously monitors transactions and financial entries in real-time</li>
+                    <li>Flags unusual activities based on statistical deviations and learned patterns</li>
+                    <li>Provides detailed anomaly reports with risk assessment scores</li>
+                    <li>Adapts over time to your organization's evolving financial patterns</li>
                   </ul>
                 </div>
               </div>
 
               <div className={`${styles.faqQuestion} ${activeFaq === 2 ? styles.active : ''}`} onClick={() => toggleFaq(2)}>
                 <div className={styles.questionContent}>
-                  <h3 className={styles.questionText}>How do I share reports with my team?</h3>
+                  <h3 className={styles.questionText}>How does Finaxial help with regulatory compliance?</h3>
                   <svg className={styles.chevronIcon} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                     <path d="M6 9L12 15L18 9" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
                   </svg>
                 </div>
                 <div className={styles.faqAnswer}>
-                  <p>Sharing reports with your team is simple and secure:</p>
+                  <p>Our comprehensive compliance solution includes:</p>
                   <ul>
-                    <li>Export reports in multiple formats (PDF, Excel, etc.)</li>
-                    <li>Share via secure email links</li>
-                    <li>Collaborate in real-time through shared workspaces</li>
-                    <li>Set custom access permissions for team members</li>
-                    <li>Schedule automated report distributions</li>
+                    <li>Automated validation against current financial regulations</li>
+                    <li>Regular updates to compliance rules based on regulatory changes</li>
+                    <li>Detailed audit trails for all financial transactions</li>
+                    <li>Pre-built compliance report templates for common regulatory frameworks</li>
+                    <li>Compliance risk scoring and proactive violation prevention</li>
                   </ul>
                 </div>
               </div>
@@ -369,6 +436,9 @@ export default function Home() {
             <div className={styles.ctaContent}>
               <h2 className={styles.ctaTitle}>Ready to transform your financial workflows?</h2>
               <p className={styles.ctaText}>Join thousands of companies using Finaxial to automate their financial reporting</p>
+              <div className={styles.seoContent}>
+                <p>Experience the power of AI-driven financial analysis with advanced anomaly detection, comprehensive compliance checks, and tax optimization tools. Our platform helps businesses of all sizes transform raw financial data into actionable insights.</p>
+              </div>
               <Link href="/login" className={styles.primaryButton}>
                 Get Started
               </Link>

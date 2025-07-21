@@ -1218,3 +1218,16 @@ a {
 .dark ::-webkit-scrollbar-thumb:hover {
   background-color: var(--gray-500); /* Lighter thumb on hover for visibility */
 }
+
+/* Utility class for screen readers - SEO improvement */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border-width: 0;
+}
