@@ -9,6 +9,7 @@ import { buildApiUrl, fetchWithErrorHandling } from '../utils/apiConfig';
 import { getActivityStats } from '../services/activityService';
 import DescriptionPopup from '../components/DescriptionPopup';
 import ThemeToggle from '../components/ThemeToggle';
+import CustomDropdown from '../components/CustomDropdown';
 
 interface Workspace {
   _id: string;
@@ -243,6 +244,28 @@ function BusinessTermsButton() {
   );
 }
 
+// Helper function to generate dynamic year options
+function generateYearOptions() {
+  const currentYear = new Date().getFullYear();
+  const years = [];
+  
+  // Generate past 5 years including current year
+  for (let i = 0; i < 5; i++) {
+    const year = currentYear - i;
+    years.push({ value: year.toString(), label: year.toString() });
+  }
+  
+  const startYear5 = currentYear - 4;
+  const startYear3 = currentYear - 2;
+  
+  return [
+    { value: '', label: 'All Years' },
+    { value: 'last5', label: `Last 5 Years (${startYear5}-${currentYear})` },
+    { value: 'last3', label: `Last 3 Years (${startYear3}-${currentYear})` },
+    ...years
+  ];
+}
+
 export default function Dashboard() {
   const router = useRouter();
   const { user, loading: authLoading, error: authError, logout } = useAuth();
@@ -274,6 +297,7 @@ export default function Dashboard() {
   });
   const [searchQuery, setSearchQuery] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
+  const [yearFilter, setYearFilter] = useState('');
   
   const filteredWorkspaces = workspaces.filter(workspace => {
     // Filter by search query
@@ -287,7 +311,26 @@ export default function Dashboard() {
       matchesMonth = workspaceMonth === parseInt(monthFilter);
     }
     
-    return matchesSearch && matchesMonth;
+    // Filter by year if a year filter is selected
+    let matchesYear = true;
+    if (yearFilter) {
+      const createdDate = new Date(workspace.createdAt);
+      const workspaceYear = createdDate.getFullYear();
+      const currentYear = new Date().getFullYear();
+      
+      if (yearFilter === 'last5') {
+        // Last 5 years (dynamic based on current year)
+        matchesYear = workspaceYear >= (currentYear - 4) && workspaceYear <= currentYear;
+      } else if (yearFilter === 'last3') {
+        // Last 3 years (dynamic based on current year)
+        matchesYear = workspaceYear >= (currentYear - 2) && workspaceYear <= currentYear;
+      } else {
+        // Specific year
+        matchesYear = workspaceYear === parseInt(yearFilter);
+      }
+    }
+    
+    return matchesSearch && matchesMonth && matchesYear;
   });
 
   useEffect(() => {
@@ -780,49 +823,77 @@ export default function Dashboard() {
               </div>
               
               <div className={styles.dateFilterContainer}>
-                <select
-                  className={styles.monthFilter}
+                <CustomDropdown
+                  options={[
+                    { value: '', label: 'All Months' },
+                    { value: '1', label: 'January' },
+                    { value: '2', label: 'February' },
+                    { value: '3', label: 'March' },
+                    { value: '4', label: 'April' },
+                    { value: '5', label: 'May' },
+                    { value: '6', label: 'June' },
+                    { value: '7', label: 'July' },
+                    { value: '8', label: 'August' },
+                    { value: '9', label: 'September' },
+                    { value: '10', label: 'October' },
+                    { value: '11', label: 'November' },
+                    { value: '12', label: 'December' }
+                  ]}
                   value={monthFilter}
-                  onChange={(e) => setMonthFilter(e.target.value)}
-                  aria-label="Filter by month"
-                >
-                  <option value="">All Months</option>
-                  <option value="1">January</option>
-                  <option value="2">February</option>
-                  <option value="3">March</option>
-                  <option value="4">April</option>
-                  <option value="5">May</option>
-                  <option value="6">June</option>
-                  <option value="7">July</option>
-                  <option value="8">August</option>
-                  <option value="9">September</option>
-                  <option value="10">October</option>
-                  <option value="11">November</option>
-                  <option value="12">December</option>
-                </select>
-                <svg 
-                  className={styles.calendarIcon} 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  fill="none" 
-                  viewBox="0 0 24 24" 
-                  stroke="currentColor"
-                >
-                  <path 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round" 
-                    strokeWidth={2} 
-                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
-                  />
-                </svg>
+                  onChange={setMonthFilter}
+                  placeholder="All Months"
+                  ariaLabel="Filter by month"
+                  icon={
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                      />
+                    </svg>
+                  }
+                />
+              </div>
+              
+              <div className={styles.dateFilterContainer}>
+                <CustomDropdown
+                  options={generateYearOptions()}
+                  value={yearFilter}
+                  onChange={setYearFilter}
+                  placeholder="All Years"
+                  ariaLabel="Filter by year"
+                  icon={
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      fill="none" 
+                      viewBox="0 0 24 24" 
+                      stroke="currentColor"
+                    >
+                      <path 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round" 
+                        strokeWidth={2} 
+                        d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" 
+                      />
+                    </svg>
+                  }
+                />
               </div>
               
               {/* Clear filters button - only show when filters are active */}
-              {(searchQuery || monthFilter) && (
+              {(searchQuery || monthFilter || yearFilter) && (
                 <button
                   className={styles.clearFiltersButton}
                   onClick={() => {
                     setSearchQuery('');
                     setMonthFilter('');
+                    setYearFilter('');
                   }}
                   title="Clear all filters"
                 >
@@ -847,12 +918,18 @@ export default function Dashboard() {
           </div>
           
           {/* Show filter results count when filters are active */}
-          {(searchQuery || monthFilter) && !loading && !error && (
+          {(searchQuery || monthFilter || yearFilter) && !loading && !error && (
             <div className={styles.filterResults}>
               <span>
                 Found {filteredWorkspaces.length} {filteredWorkspaces.length === 1 ? 'workspace' : 'workspaces'}
                 {searchQuery && ` matching "${searchQuery}"`}
                 {monthFilter && ` created in ${new Date(2023, parseInt(monthFilter) - 1).toLocaleString('default', { month: 'long' })}`}
+                {yearFilter && (() => {
+                  const currentYear = new Date().getFullYear();
+                  if (yearFilter === 'last5') return ` from last 5 years (${currentYear - 4}-${currentYear})`;
+                  if (yearFilter === 'last3') return ` from last 3 years (${currentYear - 2}-${currentYear})`;
+                  return ` created in ${yearFilter}`;
+                })()}
               </span>
             </div>
           )}
@@ -863,14 +940,14 @@ export default function Dashboard() {
             <p className={styles.error}>{error}</p>
           ) : (
             <div>
-              {filteredWorkspaces.length === 0 && searchQuery === '' && monthFilter === '' && (
+              {filteredWorkspaces.length === 0 && searchQuery === '' && monthFilter === '' && yearFilter === '' && (
                 <div className={styles.emptyState}>
                   <h4>No sessions found</h4>
                   <p>Create your first session by clicking the card below</p>
                 </div>
               )}
               
-              {filteredWorkspaces.length === 0 && (searchQuery !== '' || monthFilter !== '') && (
+              {filteredWorkspaces.length === 0 && (searchQuery !== '' || monthFilter !== '' || yearFilter !== '') && (
                 <div className={styles.emptyState}>
                   <h4>No matching workspaces found</h4>
                   <p>Try different search terms or filters</p>
@@ -878,7 +955,8 @@ export default function Dashboard() {
               )}
               
               <div className={styles.workspaceGrid}>
-                {/* Create Workspace Card - Always show this */}                <button 
+                {/* Create Workspace Card - Always show this */}
+                <button 
                   type="button"
                   className={`${styles.workspaceCard} ${styles.createCard}`}
                   onClick={() => setModalOpen(true)}
@@ -893,7 +971,8 @@ export default function Dashboard() {
                   <h4 className={styles.workspaceTitle}>Create Workspace</h4>
                 </button>
                 
-                {/* Workspace Cards */}                {filteredWorkspaces.map((workspace) => (
+                {/* Workspace Cards */}
+                {filteredWorkspaces.map((workspace) => (
                 <div 
                   key={workspace._id} 
                   className={styles.workspaceCard}
@@ -927,7 +1006,8 @@ export default function Dashboard() {
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                       </svg>
-                    </button>                    <button 
+                    </button>
+                    <button 
                       className={`${styles.actionButton} ${styles.deleteButton}`}
                       onClick={(e) => {
                         e.preventDefault();

@@ -614,6 +614,43 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     if (row.isHeader) return styles.total;
     return '';
   };
+  // Function to add background logo to PDF pages
+  const addBackgroundLogo = (doc: jsPDF, logoImg?: HTMLImageElement) => {
+    try {
+      // Get page dimensions
+      const pageWidth = doc.internal.pageSize.getWidth();
+      const pageHeight = doc.internal.pageSize.getHeight();
+      
+      // Add background logo (larger, semi-transparent)
+      const logoWidth = 80; // Larger background logo
+      const logoHeight = 40;
+      const logoX = (pageWidth - logoWidth) / 2;
+      const logoY = (pageHeight - logoHeight) / 2;
+      
+      // Save current graphics state
+      doc.saveGraphicsState();
+      
+      // Set opacity for background logo (0.08 = 8% opacity for subtle background)
+      doc.setGState(doc.GState({ opacity: 0.08 }));
+      
+      if (logoImg && logoImg.complete) {
+        // Add the background logo if image is loaded
+        doc.addImage(logoImg, 'PNG', logoX, logoY, logoWidth, logoHeight);
+      }
+      
+      // Restore graphics state
+      doc.restoreGraphicsState();
+    } catch (error) {
+      console.error('Error adding background logo:', error);
+      // Restore graphics state even on error
+      try {
+        doc.restoreGraphicsState();
+      } catch (restoreError) {
+        // Ignore restore errors
+      }
+    }
+  };
+
   // Function to export the report as PDF with professional structure
   const exportToPdf = async (returnPdfData = false) => {
     if (!reportData || !workspaceData) {
@@ -630,6 +667,25 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     try {
       if (!returnPdfData) {
         toast.info('Generating professional PDF report...');
+      }
+      
+      // Preload background logo image
+      let backgroundLogoImg: HTMLImageElement | undefined;
+      try {
+        backgroundLogoImg = new Image();
+        backgroundLogoImg.crossOrigin = 'anonymous';
+        await new Promise<void>((resolve, reject) => {
+          backgroundLogoImg!.onload = () => resolve();
+          backgroundLogoImg!.onerror = () => {
+            console.warn('Background logo failed to load, continuing without it');
+            backgroundLogoImg = undefined;
+            resolve();
+          };
+          backgroundLogoImg!.src = '/finaxial-logooo.png';
+        });
+      } catch (error) {
+        console.warn('Error preloading background logo:', error);
+        backgroundLogoImg = undefined;
       }
       
       // Check if workspace data exists for use throughout the function
@@ -689,6 +745,9 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
       creator: 'Finaxial Application',
       keywords: 'financial, analysis, report'
     });
+    
+    // Add background logo to the first page
+    addBackgroundLogo(doc, backgroundLogoImg);
     
     // PAGE 1: TITLE PAGE
     // Add Finaxial logo and title page
@@ -792,6 +851,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     
     // PAGE 2: TABLE OF CONTENTS
     doc.addPage();
+    addBackgroundLogo(doc, backgroundLogoImg);
     
     // TOC Title
     doc.setFontSize(24);
@@ -886,6 +946,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     
     // PAGE 3: EXECUTIVE SUMMARY
     doc.addPage();
+    addBackgroundLogo(doc, backgroundLogoImg);
     
     doc.setFontSize(20);
     doc.setTextColor(45, 55, 72);
@@ -917,6 +978,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         // Check if we need a new page
         if (insightY > pageHeight - 60) {
           doc.addPage();
+          addBackgroundLogo(doc, backgroundLogoImg);
           insightY = 40;
         }
         
@@ -938,6 +1000,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     if (workspaceInsights) {
       try {
         doc.addPage();
+        addBackgroundLogo(doc, backgroundLogoImg);
         
         doc.setFontSize(20);
         doc.setTextColor(45, 55, 72);
@@ -986,6 +1049,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         // Check if we need a new page
         if (wsInsightY > pageHeight - 80) {
           doc.addPage();
+          addBackgroundLogo(doc, backgroundLogoImg);
           wsInsightY = 40;
         }
         
@@ -999,6 +1063,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
           // Check if we need a new page
           if (wsInsightY > pageHeight - 40) {
             doc.addPage();
+            addBackgroundLogo(doc, backgroundLogoImg);
             wsInsightY = 40;
           }
           
@@ -1028,6 +1093,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     if (workspaceCharts && workspaceCharts.length > 0) {
       try {
         doc.addPage();
+        addBackgroundLogo(doc, backgroundLogoImg);
         
         doc.setFontSize(20);
         doc.setTextColor(45, 55, 72);
@@ -1057,6 +1123,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         // Check if we need a new page
         if (chartY > pageHeight - 100) {
           doc.addPage();
+          addBackgroundLogo(doc, backgroundLogoImg);
           chartY = 40;
         }
         
@@ -1273,6 +1340,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     if (reportData.recommendations && reportData.recommendations.length > 0) {
       // Always start recommendations on a new page for consistent page numbering
       doc.addPage();
+      addBackgroundLogo(doc, backgroundLogoImg);
       
       doc.setFontSize(14);
       doc.setFont('helvetica', 'bold');
@@ -1284,6 +1352,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         // Check if we need a new page
         if (recY > pageHeight - 60) {
           doc.addPage();
+          addBackgroundLogo(doc, backgroundLogoImg);
           recY = 40;
         }
         
@@ -1302,6 +1371,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     // PAGES 4+: FINANCIAL TABLES WITH DETAILED ANALYSIS
     reportData.tables.forEach((table, tableIndex) => {
       doc.addPage(); // Each table starts on a new page
+      addBackgroundLogo(doc, backgroundLogoImg);
       
       // Table title
       doc.setFontSize(18);
@@ -1368,6 +1438,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         // Check if we need a new page for analysis
         if (analysisY > pageHeight - 80) {
           doc.addPage();
+          addBackgroundLogo(doc, backgroundLogoImg);
           analysisY = 40;
         }
         
@@ -1415,6 +1486,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         // Industry Benchmark
         if (analysisY > pageHeight - 50) {
           doc.addPage();
+          addBackgroundLogo(doc, backgroundLogoImg);
           analysisY = 40;
         }
         
@@ -1435,6 +1507,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         if (detailedAnalysis.riskFactors && detailedAnalysis.riskFactors.length > 0) {
           if (analysisY > pageHeight - 50) {
             doc.addPage();
+            addBackgroundLogo(doc, backgroundLogoImg);
             analysisY = 40;
           }
           
@@ -1448,6 +1521,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
             // Check if we need a new page before adding risk factor
             if (analysisY > pageHeight - 40) {
               doc.addPage();
+              addBackgroundLogo(doc, backgroundLogoImg);
               analysisY = 40;
             }
             
@@ -1467,6 +1541,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     
     // FINAL PAGE: COMPREHENSIVE FINANCIAL ANALYSIS SUMMARY
     doc.addPage();
+    addBackgroundLogo(doc, backgroundLogoImg);
     
     doc.setFontSize(20);
     doc.setTextColor(45, 55, 72);
@@ -1523,6 +1598,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
       // Check if we need a new page
       if (summaryY > pageHeight - 40) {
         doc.addPage();
+        addBackgroundLogo(doc, backgroundLogoImg);
         summaryY = 40;
       }
       
@@ -1539,6 +1615,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     // Check if we need a new page for conclusion
     if (summaryY > pageHeight - 80) {
       doc.addPage();
+      addBackgroundLogo(doc, backgroundLogoImg);
       summaryY = 40;
     }
     
@@ -1578,6 +1655,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     // Check if we need a new page
     if (summaryY > pageHeight - 100) {
       doc.addPage();
+      addBackgroundLogo(doc, backgroundLogoImg);
       summaryY = 40;
     }
     
@@ -1624,6 +1702,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
       // Check if we need a new page
       if (summaryY > pageHeight - 80) {
         doc.addPage();
+        addBackgroundLogo(doc, backgroundLogoImg);
         summaryY = 40;
       }
       

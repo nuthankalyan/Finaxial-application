@@ -164,7 +164,7 @@
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   padding: 1.75rem;
   overflow: hidden;
-  border-left: 5px solid #667eea;
+  border-left:none;
   transition: all 0.3s ease;
   position: relative;
 }
@@ -200,7 +200,7 @@
   padding: 1rem;
   background: #f7fafc;
   border-radius: 8px;
-  border-left: 4px solid #667eea;
+  border-left: none;
 }
 
 .table {
@@ -308,7 +308,7 @@
   border-radius: 12px;
   padding: 1.75rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border-left: 5px solid #667eea;
+  border-left: none;
   transition: all 0.3s ease;
   position: relative;
 }
@@ -375,7 +375,7 @@
   color: #4a5568;
   line-height: 1.6;
   font-size: 0.95rem;
-  border-left: 4px solid #667eea;
+  border-left: none;
   transition: all 0.2s ease;
   position: relative;
 }
@@ -418,7 +418,7 @@
   color: #4a5568;
   line-height: 1.6;
   font-size: 0.95rem;
-  border-left: 4px solid #667eea;
+  border-left: none;
   transition: all 0.2s ease;
   position: relative;
 }
@@ -622,7 +622,7 @@
   padding: 1.75rem;
   margin-bottom: 1.5rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  border-left: 5px solid #667eea;
+  border-left: none;
   transition: all 0.3s ease;
   position: relative;
 }
@@ -681,7 +681,7 @@
   color: #4a5568;
   line-height: 1.6;
   font-size: 0.95rem;
-  border-left: 4px solid #667eea;
+  border-left: none;
   transition: all 0.2s ease;
   position: relative;
 }
@@ -715,11 +715,11 @@
 }
 
 .analysisSection:has(.riskTitle) {
-  border-left-color: #e53e3e;
+  border-left-color: none !important;
 }
 
 .analysisSection:has(.riskTitle) .analysisListItem {
-  border-left-color: #e53e3e;
+  border-left-color: none !important;
 }
 
 .analysisSection:has(.riskTitle) .analysisListItem::before {
@@ -741,11 +741,11 @@
 }
 
 .analysisSection:has(.opportunityTitle) {
-  border-left-color: #38a169;
+  border-left-color: none !important;
 }
 
 .analysisSection:has(.opportunityTitle) .analysisListItem {
-  border-left-color: #38a169;
+  border-left-color: none !important;
 }
 
 .analysisSection:has(.opportunityTitle) .analysisListItem::before {
@@ -839,7 +839,7 @@
   background-color: #2d3748 !important;
   color: #f9fafb !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
-  border-left-color: #667eea !important;
+  border-left-color: none !important;
 }
 
 :global(.dark) .tableSection:hover {
@@ -853,7 +853,7 @@
 :global(.dark) .tableDescription {
   color: #cbd5e0 !important;
   background: #1a202c !important;
-  border-left-color: #667eea !important;
+  border-left-color: none !important;
 }
 
 :global(.dark) .table th {
@@ -879,7 +879,7 @@
 :global(.dark) .recommendationsCard {
   background: #2d3748 !important;
   color: #f9fafb !important;
-  border-left-color: #667eea !important;
+  border-left-color: none !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
 }
 
@@ -904,7 +904,7 @@
 :global(.dark) .recommendationsList li {
   background: #1a202c !important;
   color: #cbd5e0 !important;
-  border-left-color: #667eea !important;
+  border-left-color: none!important;
 }
 
 :global(.dark) .insightsList li:hover,
@@ -950,7 +950,7 @@
 
 :global(.dark) .analysisSection {
   background: #2d3748 !important;
-  border-left-color: #667eea !important;
+  border-left-color: none !important;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2) !important;
 }
 
