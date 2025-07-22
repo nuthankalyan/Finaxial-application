@@ -3,6 +3,9 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { queryCache, createQueryCacheKey } from '../utils/cacheManager';
 import { cleanText, cleanTextArray, cleanInsightsObject } from '../utils/textCleaner';
+import { getAuthToken } from '../utils/authUtils';
+import axios from 'axios';
+import { API_BASE_URL } from '../utils/apiConfig';
 
 export interface FileInfo {
   content: string;
@@ -36,8 +39,87 @@ export interface ChartData {
   options?: any;
 }
 
+// RAG-enhanced analysis function
+export const analyzeWithRAG = async (data: string, queryType: 'financial' | 'compliance' = 'financial'): Promise<any> => {
+  try {
+    console.log(`Starting RAG ${queryType} analysis...`);
+    
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const apiUrl = API_BASE_URL || 'http://localhost:5000';
+    const endpoint = queryType === 'compliance' ? '/api/rag/compliance' : '/api/rag/analyze';
+    
+    console.log(`Calling RAG API at ${apiUrl}${endpoint}`);
+    
+    // Make sure data is a string
+    const contentToSend = typeof data === 'string' ? data : JSON.stringify(data);
+    
+    const response = await axios.post(
+      `${apiUrl}${endpoint}`,
+      { 
+        csvContent: contentToSend,
+        query: null 
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        timeout: 30000 // 30 second timeout
+      }
+    );
+
+    console.log(`RAG API call successful, status: ${response.status}`);
+    return response.data;
+  } catch (error: any) {
+    console.error(`Error in RAG ${queryType} analysis:`, error);
+    if (error.response) {
+      // The request was made and the server responded with a status code
+      // that falls out of the range of 2xx
+      console.error(`Response data:`, error.response.data);
+      console.error(`Response status:`, error.response.status);
+      console.error(`Response headers:`, error.response.headers);
+    } else if (error.request) {
+      // The request was made but no response was received
+      console.error(`No response received:`, error.request);
+    } else {
+      // Something happened in setting up the request that triggered an Error
+      console.error(`Request setup error:`, error.message);
+    }
+    throw new Error(`Failed to analyze with RAG: ${error.message}`);
+  }
+};
+
+// Add compliance analysis function that uses RAG
+export const analyzeComplianceWithRAG = async (documentContent: string): Promise<any> => {
+  try {
+    return await analyzeWithRAG(documentContent, 'compliance');
+  } catch (error: any) {
+    console.error('Error in compliance analysis:', error);
+    throw new Error(`Failed to analyze compliance: ${error.message}`);
+  }
+};
+
 export const analyzeCsvWithGemini = async (csvContent: string): Promise<FinancialInsights> => {
   try {
+    // Check if RAG service is available and use it first
+    try {
+      const ragResponse = await analyzeWithRAG(csvContent);
+      console.log('RAG response:', ragResponse);
+      if (ragResponse && (ragResponse.data || ragResponse.insights)) {
+        console.log('Using RAG-enhanced analysis');
+        // Handle both possible response formats
+        const analysisData = ragResponse.data || ragResponse;
+        return cleanInsightsObject(analysisData);
+      }
+    } catch (ragError) {
+      console.log('RAG service unavailable, falling back to direct Gemini API', ragError);
+      // Continue with standard Gemini analysis if RAG fails
+    }
+    
     // Initialize the Gemini API client
     const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
     

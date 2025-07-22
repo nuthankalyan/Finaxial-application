@@ -16,6 +16,7 @@
     "@tsparticles/engine": "^3.8.1",
     "@tsparticles/react": "^3.0.0",
     "@tsparticles/slim": "^3.8.1",
+    "axios": "^1.10.0",
     "chart.js": "^4.4.8",
     "chartjs-plugin-datalabels": "^2.2.0",
     "clsx": "^2.1.1",

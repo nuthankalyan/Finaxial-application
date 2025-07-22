@@ -47,6 +47,7 @@ app.use('/api/workspaces', require('./routes/workspaceRoutes'));
 app.use('/api/email', require('./routes/emailRoutes'));
 app.use('/api/vector', require('./routes/vectorSearchRoutes'));
 app.use('/api/activity', require('./routes/userActivityRoutes'));
+app.use('/api/rag', require('./routes/ragRoutes'));
 
 // Test route
 app.get('/', (req, res) => {
