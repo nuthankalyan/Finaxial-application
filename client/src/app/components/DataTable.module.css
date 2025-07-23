@@ -1,0 +1,356 @@
+/* DataTable.module.css */
+
+.tableContainer {
+  background-color: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  margin: 1rem 0;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.tableHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem;
+  background-color: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.tableTitle {
+  margin: 0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tableTitle::before {
+  content: "📊";
+  font-size: 1rem;
+}
+
+.tableActions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.actionButton {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.actionButton:hover:not(:disabled) {
+  background-color: #f9fafb;
+  border-color: #9ca3af;
+  color: #111827;
+}
+
+.actionButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.actionButton svg {
+  color: #6366f1;
+}
+
+.tableWrapper {
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 400px;
+}
+
+.dataTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+}
+
+.tableHeaderCell {
+  background-color: #f1f5f9;
+  color: #1e293b;
+  font-weight: 600;
+  text-align: left;
+  padding: 0.75rem;
+  border-bottom: 2px solid #e2e8f0;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.tableRow {
+  transition: background-color 0.2s ease;
+}
+
+.tableRow:nth-child(even) {
+  background-color: #f8fafc;
+}
+
+.tableRow:hover {
+  background-color: #e0f2fe;
+}
+
+.tableCell {
+  padding: 0.75rem;
+  border-bottom: 1px solid #e2e8f0;
+  color: #334155;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.tableCell:hover {
+  overflow: visible;
+  white-space: normal;
+  word-wrap: break-word;
+}
+
+.tableFooter {
+  padding: 0.75rem 1rem;
+  background-color: #f8fafc;
+  border-top: 1px solid #e2e8f0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tableInfo {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+/* Dark theme support */
+.dark .tableContainer, :global(.dark) .tableContainer {
+  background-color: #1e293b;
+  border-color: #334155;
+}
+
+.dark .tableHeader, :global(.dark) .tableHeader {
+  background-color: #334155;
+  border-bottom-color: #475569;
+}
+
+.dark .tableTitle, :global(.dark) .tableTitle {
+  color: #f1f5f9;
+}
+
+.dark .actionButton, :global(.dark) .actionButton {
+  background-color: #374151;
+  border-color: #4b5563;
+  color: #d1d5db;
+}
+
+.dark .actionButton:hover:not(:disabled), :global(.dark) .actionButton:hover:not(:disabled) {
+  background-color: #4b5563;
+  border-color: #6b7280;
+  color: #f9fafb;
+}
+
+.dark .tableHeaderCell, :global(.dark) .tableHeaderCell {
+  background-color: #475569;
+  color: #f1f5f9;
+  border-bottom-color: #64748b;
+}
+
+.dark .tableRow:nth-child(even), :global(.dark) .tableRow:nth-child(even) {
+  background-color: #334155;
+}
+
+.dark .tableRow:hover, :global(.dark) .tableRow:hover {
+  background-color: #1e40af;
+}
+
+.dark .tableCell, :global(.dark) .tableCell {
+  color: #e2e8f0;
+  border-bottom-color: #475569;
+}
+
+.dark .tableFooter, :global(.dark) .tableFooter {
+  background-color: #334155;
+  border-top-color: #475569;
+}
+
+.dark .tableInfo, :global(.dark) .tableInfo {
+  color: #94a3b8;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .tableHeader {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+  
+  .tableActions {
+    width: 100%;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .actionButton {
+    padding: 0.625rem 1rem;
+    font-size: 0.875rem;
+    min-height: 44px;
+    border-radius: 0.5rem;
+  }
+  
+  .tableCell {
+    max-width: 120px;
+    font-size: 0.875rem;
+    padding: 0.625rem 0.5rem;
+  }
+  
+  .tableHeaderCell {
+    font-size: 0.875rem;
+    padding: 0.625rem 0.5rem;
+  }
+  
+  .tableWrapper {
+    max-height: 350px;
+  }
+  
+  .tableTitle {
+    font-size: 1rem;
+  }
+  
+  .tableFooter {
+    padding: 0.75rem 1rem;
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+  
+  .tableInfo {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .tableHeader {
+    padding: 0.75rem;
+  }
+  
+  .actionButton {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    min-height: 48px;
+    flex: 1;
+    min-width: 120px;
+  }
+  
+  .tableActions {
+    width: 100%;
+    justify-content: space-between;
+  }
+  
+  .tableCell {
+    max-width: 100px;
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.375rem;
+  }
+  
+  .tableHeaderCell {
+    font-size: 0.8125rem;
+    padding: 0.5rem 0.375rem;
+  }
+  
+  .tableWrapper {
+    max-height: 320px;
+  }
+  
+  .tableTitle {
+    font-size: 0.9375rem;
+  }
+  
+  .tableFooter {
+    padding: 0.625rem 0.75rem;
+  }
+  
+  .tableInfo {
+    font-size: 0.75rem;
+  }
+  
+  /* Stack table horizontally scrollable on mobile */
+  .tableWrapper {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .dataTable {
+    min-width: 500px;
+  }
+}
+
+/* Loading states */
+.actionButton:disabled {
+  position: relative;
+}
+
+.actionButton:disabled::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  margin: auto;
+  border: 2px solid transparent;
+  border-top-color: currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Scroll indicators */
+.tableWrapper::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+.tableWrapper::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 4px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.tableWrapper::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+.dark .tableWrapper::-webkit-scrollbar-track, :global(.dark) .tableWrapper::-webkit-scrollbar-track {
+  background: #374151;
+}
+
+.dark .tableWrapper::-webkit-scrollbar-thumb, :global(.dark) .tableWrapper::-webkit-scrollbar-thumb {
+  background: #6b7280;
+}
+
+.dark .tableWrapper::-webkit-scrollbar-thumb:hover, :global(.dark) .tableWrapper::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}

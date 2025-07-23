@@ -55,6 +55,7 @@
   height: auto;
   object-fit: contain;
   margin: -10px 0;
+  max-height: 60px;
 }
 
 .logoText {
@@ -361,4 +362,301 @@
 .headerFeatures {
   display: flex;
   align-items: center;
+}
+
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+   ======================================== */
+
+@media (max-width: 768px) {
+  .container {
+    padding: 0.75rem 1rem;
+  }
+
+  .flexContainer {
+    position: relative;
+    justify-content: space-between;
+  }
+
+  .logoContainer {
+    flex: 0 0 auto;
+    margin-right: 0.75rem;
+  }
+
+  .authContainer {
+    flex: 0 0 auto;
+    gap: 0.5rem;
+  }
+
+  .logoText {
+    font-size: 1.25rem;
+  }
+
+  .logoImage {
+    width: 100px;
+    height: auto;
+    object-fit: contain;
+    max-height: 50px;
+  }
+
+  /* Navigation mobile styles */
+  .navigation {
+    position: fixed;
+    top: 0;
+    left: -100%;
+    width: 280px;
+    height: 100vh;
+    background-color: white;
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
+    transition: left 0.3s ease;
+    z-index: 1000;
+    overflow-y: auto;
+    padding-top: 4rem;
+  }
+
+  :global(.dark) .navigation {
+    background-color: var(--gray-800);
+    box-shadow: 2px 0 10px rgba(0, 0, 0, 0.3);
+  }
+
+  .navigation.open {
+    left: 0;
+  }
+
+  .navList {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 1rem 0;
+  }
+
+  .navItem {
+    width: 100%;
+  }
+
+  .navLink {
+    display: block;
+    width: 100%;
+    padding: 1rem 1.5rem;
+    color: var(--gray-700);
+    border-bottom: 1px solid var(--gray-200);
+    transition: background-color 0.2s ease;
+  }
+
+  :global(.dark) .navLink {
+    color: var(--gray-300);
+    border-bottom-color: var(--gray-700);
+  }
+
+  .navLink:hover {
+    background-color: var(--gray-50);
+    color: var(--primary-600);
+  }
+
+  :global(.dark) .navLink:hover {
+    background-color: var(--gray-700);
+    color: var(--primary-400);
+  }
+
+  /* Mobile menu button */
+  .mobileMenuButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: var(--gray-700);
+    transition: color 0.2s ease;
+    z-index: 1001;
+  }
+
+  :global(.dark) .mobileMenuButton {
+    color: var(--gray-300);
+  }
+
+  .mobileMenuButton:hover {
+    color: var(--primary-600);
+  }
+
+  :global(.dark) .mobileMenuButton:hover {
+    color: var(--primary-400);
+  }
+
+  /* Header actions mobile */
+  .headerActions {
+    gap: 0.5rem;
+  }
+
+  .authButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    min-width: auto;
+  }
+
+  .signUpButton {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+  }
+
+  /* Theme toggle mobile adjustments */
+  .themeToggle {
+    padding: 0.5rem;
+    width: 40px;
+    height: 40px;
+  }
+
+  /* Mobile overlay */
+  .mobileOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
+  }
+
+  .mobileOverlay.show {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  /* Mobile navigation items in overlay */
+  .mobileNavActions {
+    padding: 1.5rem;
+    border-top: 1px solid var(--gray-200);
+    background-color: var(--gray-50);
+    margin-top: auto;
+  }
+
+  :global(.dark) .mobileNavActions {
+    border-top-color: var(--gray-700);
+    background-color: var(--gray-700);
+  }
+
+  .mobileAuthButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .mobileAuthButtons .authButton,
+  .mobileAuthButtons .signUpButton {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+  }
+
+  /* Hide desktop navigation */
+  .headerFeatures {
+    display: none;
+  }
+
+  /* Show mobile menu button */
+  .mobileMenuButton {
+    display: flex;
+  }
+}
+
+/* Tablet responsive adjustments */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .navList {
+    gap: 1rem;
+  }
+
+  .navLink {
+    font-size: 0.9rem;
+    padding: 0.5rem 1rem;
+  }
+
+  .authButton,
+  .signUpButton {
+    padding: 0.5rem 1.25rem;
+    font-size: 0.9rem;
+  }
+}
+
+/* Small mobile adjustments */
+@media (max-width: 480px) {
+  .container {
+    padding: 0.5rem 0.75rem;
+  }
+
+  .logoContainer {
+    margin-right: 0.5rem;
+  }
+
+  .logoText {
+    font-size: 1.125rem;
+  }
+
+  .logoImage {
+    width: 85px;
+    height: auto;
+    object-fit: contain;
+    max-height: 45px;
+  }
+
+  .navigation {
+    width: 100vw;
+    left: -100vw;
+  }
+
+  .navigation.open {
+    left: 0;
+  }
+
+  .headerActions {
+    gap: 0.25rem;
+  }
+
+  .authButton {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+  }
+
+  .signUpButton {
+    padding: 0.375rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}
+
+/* Extra small mobile adjustments */
+@media (max-width: 360px) {
+  .container {
+    padding: 0.5rem 0.5rem;
+  }
+
+  .logoContainer {
+    margin-right: 0.25rem;
+  }
+
+  .logoImage {
+    width: 75px;
+    height: auto;
+    object-fit: contain;
+    max-height: 40px;
+  }
+
+  .headerActions {
+    gap: 0.125rem;
+  }
+}
+
+/* Ensure mobile menu button is hidden on desktop */
+@media (min-width: 769px) {
+  .mobileMenuButton {
+    display: none;
+  }
+
+  .mobileOverlay {
+    display: none;
+  }
 } 

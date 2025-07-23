@@ -10,6 +10,23 @@
   overflow: hidden;
 }
 
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+    min-height: 100vh;
+    justify-content: flex-start;
+    padding-top: 3rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .container {
+    padding: 0.75rem;
+    padding-top: 2rem;
+  }
+}
+
 .container::before {
   content: '';
   position: absolute;
@@ -20,6 +37,21 @@
   background: linear-gradient(135deg, #4E71FF 0%, #3b5fff 100%);
   transform: skewY(-4deg) translateY(-100px);
   z-index: 0;
+}
+
+/* Mobile adjustments for background element */
+@media (max-width: 768px) {
+  .container::before {
+    height: 150px;
+    transform: skewY(-3deg) translateY(-75px);
+  }
+}
+
+@media (max-width: 480px) {
+  .container::before {
+    height: 120px;
+    transform: skewY(-2deg) translateY(-60px);
+  }
 }
 
 .loginForm {
@@ -34,6 +66,25 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Mobile responsive form */
+@media (max-width: 768px) {
+  .loginForm {
+    padding: 2rem;
+    border-radius: 0.75rem;
+    max-width: 100%;
+    margin: 0 auto;
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+  }
+}
+
+@media (max-width: 480px) {
+  .loginForm {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  }
+}
+
 .title {
   font-size: 2rem;
   font-weight: 700;
@@ -44,9 +95,37 @@
   z-index: 1;
 }
 
+/* Mobile responsive title */
+@media (max-width: 768px) {
+  .title {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 1.5rem;
+    margin-bottom: 1.25rem;
+  }
+}
+
 .formGroup {
   margin-bottom: 1.5rem;
   position: relative;
+}
+
+/* Mobile responsive form groups */
+@media (max-width: 768px) {
+  .formGroup {
+    margin-bottom: 1.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .formGroup {
+    margin-bottom: 2rem;
+  }
 }
 
 .formGroup label {
@@ -57,6 +136,21 @@
   font-size: 0.9375rem;
 }
 
+/* Mobile responsive labels */
+@media (max-width: 768px) {
+  .formGroup label {
+    font-size: 1rem;
+    margin-bottom: 0.625rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .formGroup label {
+    font-size: 1.0625rem;
+    margin-bottom: 0.75rem;
+  }
+}
+
 .input {
   width: 100%;
   padding: 0.75rem;
@@ -64,6 +158,26 @@
   border-radius: 0.375rem;
   font-size: 1rem;
   transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+/* Mobile responsive input */
+@media (max-width: 768px) {
+  .input {
+    padding: 0.875rem;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    /* Improved touch targets */
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .input {
+    padding: 1rem;
+    font-size: 1.0625rem; /* 17px to prevent zoom on iOS */
+    border-radius: 0.5rem;
+    min-height: 48px;
+  }
 }
 
 .input:focus {
@@ -84,6 +198,28 @@
   cursor: pointer;
   transition: background-color 0.2s;
   margin-top: 0.5rem;
+}
+
+/* Mobile responsive button */
+@media (max-width: 768px) {
+  .button {
+    padding: 0.875rem;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+    margin-top: 1rem;
+    /* Improved touch targets */
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .button {
+    padding: 1rem;
+    font-size: 1.0625rem;
+    border-radius: 0.5rem;
+    margin-top: 1.25rem;
+    min-height: 48px;
+  }
 }
 
 .button:hover {
@@ -122,6 +258,21 @@
   color: #6b7280;
 }
 
+/* Mobile responsive links */
+@media (max-width: 768px) {
+  .links {
+    margin-top: 2rem;
+    font-size: 0.9375rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .links {
+    margin-top: 2.25rem;
+    font-size: 1rem;
+  }
+}
+
 .link {
   color: #2563eb;
   text-decoration: none;
@@ -158,9 +309,68 @@
   transition: color 0.2s ease;
 }
 
+/* Mobile responsive forgot password link */
+@media (max-width: 768px) {
+  .forgotPasswordLink {
+    font-size: 0.9375rem;
+    /* Improve touch target */
+    padding: 0.25rem 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .forgotPasswordLink {
+    font-size: 1rem;
+    padding: 0.375rem 0;
+    /* Stack below label on very small screens */
+    position: static;
+    display: block;
+    text-align: right;
+    margin-top: 0.25rem;
+  }
+}
+
 .forgotPasswordLink:hover {
   color: #3b5fff;
   text-decoration: underline;
 }
 
 /* Password input styling is now handled by PasswordInput.module.css */
+
+/* Additional mobile optimizations */
+@media (max-width: 768px) {
+  /* Ensure proper spacing and touch targets */
+  .error {
+    padding: 1rem;
+    margin-bottom: 1.5rem;
+    font-size: 0.9375rem;
+    border-radius: 0.5rem;
+  }
+  
+  .link {
+    padding: 0.25rem;
+    /* Improve touch targets for links */
+    display: inline-block;
+  }
+}
+
+@media (max-width: 480px) {
+  .error {
+    padding: 1.125rem;
+    margin-bottom: 1.75rem;
+    font-size: 1rem;
+    border-radius: 0.5rem;
+  }
+  
+  .link {
+    padding: 0.375rem;
+  }
+  
+  /* Adjust viewport for better mobile experience */
+  .container {
+    /* Add safe area insets for devices with notches */
+    padding-left: max(0.75rem, env(safe-area-inset-left));
+    padding-right: max(0.75rem, env(safe-area-inset-right));
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+}

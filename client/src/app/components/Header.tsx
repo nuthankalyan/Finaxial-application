@@ -104,62 +104,61 @@ export default function Header() {
 
         {/* Mobile Menu */}
         {isMenuOpen && (
-          <div className={styles.mobileMenu}>
-            <nav className={styles.mobileNavList}>
-              <div className={styles.mobileFeaturesHeading}>Features</div>
-              <div className={styles.mobileFeaturesList}>
-                <div className={styles.mobileNavItem}>
-                  <Link href="/features/anomaly-detection" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Anomaly Detection</Link>
+          <>
+            <div 
+              className={`${styles.mobileOverlay} ${isMenuOpen ? styles.show : ''}`}
+              onClick={() => setIsMenuOpen(false)}
+            />
+            <nav className={`${styles.navigation} ${isMenuOpen ? styles.open : ''}`}>
+              <div className={styles.navList}>
+                <div className={styles.mobileFeaturesHeading}>Features</div>
+                <div className={styles.mobileFeaturesList}>
+                  <div className={styles.navItem}>
+                    <Link href="/features/anomaly-detection" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Anomaly Detection</Link>
+                  </div>
+                  <div className={styles.navItem}>
+                    <Link href="/features/compliance-automation" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Compliance Automation</Link>
+                  </div>
+                  <div className={styles.navItem}>
+                    <Link href="/features/tax-optimization" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Tax Optimization</Link>
+                  </div>
+                  <div className={styles.navItem}>
+                    <Link href="/features/financial-reporting" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Financial Reporting</Link>
+                  </div>
+                  <div className={styles.navItem}>
+                    <Link href="/features/data-transformation" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Data Transformation</Link>
+                  </div>
                 </div>
-                <div className={styles.mobileNavItem}>
-                  <Link href="/features/compliance-automation" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Compliance Automation</Link>
+                <div className={styles.navItem}>
+                  <a href="#testimonials" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Testimonials</a>
                 </div>
-                <div className={styles.mobileNavItem}>
-                  <Link href="/features/tax-optimization" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Tax Optimization</Link>
+                <div className={styles.navItem}>
+                  <a href="#pricing" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Pricing</a>
                 </div>
-                <div className={styles.mobileNavItem}>
-                  <Link href="/features/financial-reporting" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Financial Reporting</Link>
-                </div>
-                <div className={styles.mobileNavItem}>
-                  <Link href="/features/data-transformation" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Data Transformation</Link>
+                <div className={styles.navItem}>
+                  <a href="#contact" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Contact</a>
                 </div>
               </div>
-              <div className={styles.mobileNavItem}>
-                <a href="#testimonials" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Testimonials</a>
-              </div>
-              <div className={styles.mobileNavItem}>
-                <a href="#pricing" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Pricing</a>
-              </div>
-              <div className={styles.mobileNavItem}>
-                <a href="#contact" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Contact</a>
-              </div>
-              {user ? (
-                <>
-                  <div className={styles.mobileNavItem}>
-                    <Link href="/dashboard" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+              
+              <div className={styles.mobileNavActions}>
+                {user ? (
+                  <div className={styles.mobileAuthButtons}>
+                    <Link href="/dashboard" className={styles.authButton} onClick={() => setIsMenuOpen(false)}>Dashboard</Link>
+                    <button onClick={() => { logout(); setIsMenuOpen(false); }} className={styles.authButton}>Logout</button>
                   </div>
-                  <div className={styles.mobileNavItem}>
-                    <button onClick={logout} className={styles.navLink}>Logout</button>
+                ) : (
+                  <div className={styles.mobileAuthButtons}>
+                    <Link href="/login" className={styles.authButton} onClick={() => setIsMenuOpen(false)}>Login</Link>
+                    <Link href="/signup" className={styles.signUpButton} onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
                   </div>
-                </>
-              ) : (
-                <>
-                  <div className={styles.mobileNavItem}>
-                    <Link href="/login" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Login</Link>
-                  </div>
-                  <div className={styles.mobileNavItem}>
-                    <Link href="/signup" className={styles.navLink} onClick={() => setIsMenuOpen(false)}>Sign Up</Link>
-                  </div>
-                </>
-              )}
-              <div className={styles.mobileNavItem}>
+                )}
                 <div className={styles.mobileThemeToggle}>
                   <ThemeToggle />
                   <span>Toggle theme</span>
                 </div>
               </div>
             </nav>
-          </div>
+          </>
         )}
       </div>
     </header>
