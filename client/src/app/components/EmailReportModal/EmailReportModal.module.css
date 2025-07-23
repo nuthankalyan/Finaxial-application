@@ -290,3 +290,139 @@
     justify-content: center;
   }
 }
+
+/* Format Selector Styles */
+.formatSelector {
+  position: relative;
+  width: 100%;
+}
+
+.formatButton {
+  width: 100%;
+  padding: 0.875rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  background: white;
+  color: #374151;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-family: inherit;
+}
+
+.formatButton:hover:not(:disabled) {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.formatButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.formatButtonText {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.formatIcon {
+  width: 1.25rem;
+  height: 1.25rem;
+  color: #6b7280;
+}
+
+.formatDropdownArrow {
+  width: 1rem;
+  height: 1rem;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+}
+
+.formatDropdownArrowOpen {
+  transform: rotate(180deg);
+}
+
+.formatDropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+  z-index: 50;
+  margin-top: 0.5rem;
+  overflow: hidden;
+  animation: slideDown 0.2s ease-out;
+}
+
+.formatDropdownItem {
+  width: 100%;
+  padding: 1rem;
+  border: none;
+  background: white;
+  color: #374151;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-family: inherit;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.formatDropdownItem:last-child {
+  border-bottom: none;
+}
+
+.formatDropdownItem:hover {
+  background: #f8fafc;
+  color: #667eea;
+}
+
+.formatDropdownItem:hover .formatIcon {
+  color: #667eea;
+}
+
+.formatDropdownItemActive {
+  background: #eff6ff;
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.formatDropdownItemActive .formatIcon {
+  color: #2563eb;
+}
+
+.formatDescription {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin-left: auto;
+  font-weight: normal;
+}
+
+.formatDropdownItemActive .formatDescription {
+  color: #64748b;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Click outside handler for format dropdown */
+.formatSelector:focus-within .formatDropdownMenu {
+  display: block;
+}

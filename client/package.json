@@ -21,7 +21,9 @@
     "chartjs-plugin-datalabels": "^2.2.0",
     "clsx": "^2.1.1",
     "critters": "^0.0.25",
+    "docx": "^9.5.1",
     "express": "^5.1.0",
+    "file-saver": "^2.0.5",
     "framer-motion": "^11.18.2",
     "fs": "0.0.1-security",
     "jspdf": "^3.0.1",
@@ -40,7 +42,8 @@
     "react-zoom-pan-pinch": "^3.7.0",
     "tailwind-merge": "^3.3.1",
     "typescript": "^5",
-    "xlsx": "^0.18.5"
+    "xlsx": "^0.18.5",
+    "xml-js": "^1.6.11"
   },
   "devDependencies": {
     "@types/axios": "^0.14.4",

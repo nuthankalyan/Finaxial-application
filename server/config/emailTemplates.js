@@ -120,7 +120,7 @@ const resetPasswordTemplate = (username, otp) => `
 </html>
 `;
 
-const reportEmailTemplate = (recipientName, workspaceName, reportDate, customMessage) => `
+const reportEmailTemplate = (recipientName, workspaceName, reportDate, customMessage, formatName = 'PDF') => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -171,13 +171,13 @@ const reportEmailTemplate = (recipientName, workspaceName, reportDate, customMes
                 <h3>Report Details</h3>
                 <p><strong>Workspace:</strong> ${workspaceName || 'Financial Analysis'}</p>
                 <p><strong>Generated:</strong> ${reportDate || new Date().toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                <p><strong>Format:</strong> Professional PDF with comprehensive analysis</p>
+                <p><strong>Format:</strong> Professional ${formatName} with comprehensive analysis</p>
                 <p><strong>Analysis Type:</strong> AI-powered financial insights and recommendations</p>
             </div>
             
             <div class="attachment-info">
                 <div class="attachment-text">
-                    <h4>PDF Report Attached</h4>
+                    <h4>${formatName} Report Attached</h4>
                     <p>Your complete financial analysis report is attached to this email. Open it to view detailed insights, recommendations, and professional formatting.</p>
                 </div>
             </div>

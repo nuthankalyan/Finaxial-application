@@ -148,11 +148,11 @@ const sendPasswordResetEmail = async (userEmail, username, otp) => {
 };
 
 // Function to send report email with professional template
-const sendReportEmail = async (recipientEmail, recipientName, pdfBuffer, fileName, workspaceName, customMessage) => {
+const sendReportEmail = async (recipientEmail, recipientName, fileBuffer, fileName, workspaceName, customMessage, contentType = 'application/pdf', exportFormat = 'pdf') => {
   try {
     // Validate inputs
-    if (!recipientEmail || !pdfBuffer || !Buffer.isBuffer(pdfBuffer) || pdfBuffer.length === 0) {
-      throw new Error('Recipient email and valid PDF buffer are required');
+    if (!recipientEmail || !fileBuffer || !Buffer.isBuffer(fileBuffer) || fileBuffer.length === 0) {
+      throw new Error('Recipient email and valid file buffer are required');
     }
 
     const transporter = createTransporter();
@@ -167,7 +167,24 @@ const sendReportEmail = async (recipientEmail, recipientName, pdfBuffer, fileNam
     
     // Generate a unique attachment ID to avoid caching issues
     const attachmentId = `${Date.now()}-${Math.floor(Math.random() * 1000)}`;
-    const finalFileName = fileName || `financial-report-${attachmentId}.pdf`;
+    let finalFileName = fileName;
+    
+    // Set default filename based on format if not provided
+    if (!finalFileName) {
+      switch (exportFormat) {
+        case 'word':
+          finalFileName = `financial-report-${attachmentId}.doc`;
+          break;
+        case 'xml':
+          finalFileName = `financial-report-${attachmentId}.xml`;
+          break;
+        default:
+          finalFileName = `financial-report-${attachmentId}.pdf`;
+      }
+    }
+    
+    // Update email template to reflect the format
+    const formatName = exportFormat === 'word' ? 'Word Document' : exportFormat === 'xml' ? 'XML Data' : 'PDF';
     
     const mailOptions = {
       from: {
@@ -176,19 +193,19 @@ const sendReportEmail = async (recipientEmail, recipientName, pdfBuffer, fileNam
       },
       to: recipientEmail,
       subject: `${workspaceName || 'Financial'} Analysis Report - ${reportDate}`,
-      html: reportEmailTemplate(recipientName, workspaceName, reportDate, customMessage),
+      html: reportEmailTemplate(recipientName, workspaceName, reportDate, customMessage, formatName),
       attachments: [
         {
           filename: finalFileName,
-          content: pdfBuffer,
-          contentType: 'application/pdf',
+          content: fileBuffer,
+          contentType: contentType,
           contentDisposition: 'attachment'
         }
       ]
     };
 
     console.log(`Sending professional report email to: ${recipientEmail}`);
-    console.log(`PDF attachment: ${finalFileName} (${pdfBuffer.length} bytes)`);
+    console.log(`${formatName} attachment: ${finalFileName} (${fileBuffer.length} bytes)`);
     
     const info = await transporter.sendMail(mailOptions);
     console.log('Report email sent successfully. Message ID:', info.messageId);

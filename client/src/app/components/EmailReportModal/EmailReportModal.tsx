@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import styles from './EmailReportModal.module.css';
 
 interface EmailReportModalProps {
@@ -17,6 +17,7 @@ interface EmailData {
   recipientName: string;
   workspaceName: string;
   customMessage: string;
+  exportFormat: 'pdf' | 'word' | 'xml';
 }
 
 const EmailReportModal: React.FC<EmailReportModalProps> = ({
@@ -31,11 +32,28 @@ const EmailReportModal: React.FC<EmailReportModalProps> = ({
     recipientEmail: '',
     recipientName: '',
     workspaceName: workspaceName,
-    customMessage: ''
+    customMessage: '',
+    exportFormat: 'pdf'
   });
   const [errors, setErrors] = useState<{[key: string]: string}>({});
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [showFormatDropdown, setShowFormatDropdown] = useState(false);
+  const formatDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside handler for format dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (formatDropdownRef.current && !formatDropdownRef.current.contains(event.target as Node)) {
+        setShowFormatDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const validateEmail = (email: string): boolean => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -102,11 +120,13 @@ const EmailReportModal: React.FC<EmailReportModalProps> = ({
       recipientEmail: '',
       recipientName: '',
       workspaceName: workspaceName,
-      customMessage: ''
+      customMessage: '',
+      exportFormat: 'pdf'
     });
     setErrors({});
     setSuccessMessage('');
     setErrorMessage('');
+    setShowFormatDropdown(false);
     onClose();
   };
 
@@ -195,6 +215,133 @@ const EmailReportModal: React.FC<EmailReportModalProps> = ({
             </div>
 
             <div className={styles.formGroup}>
+              <label className={styles.formLabel}>
+                Export Format *
+              </label>
+              <div className={styles.formatSelector} ref={formatDropdownRef}>
+                <button
+                  type="button"
+                  className={styles.formatButton}
+                  onClick={() => setShowFormatDropdown(!showFormatDropdown)}
+                  disabled={isLoading}
+                >
+                  <span className={styles.formatButtonText}>
+                    {formData.exportFormat === 'pdf' && (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <polyline points="10 9 9 9 8 9"></polyline>
+                        </svg>
+                        PDF Format
+                      </>
+                    )}
+                    {formData.exportFormat === 'word' && (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="16" y1="13" x2="8" y2="13"></line>
+                          <line x1="16" y1="17" x2="8" y2="17"></line>
+                          <line x1="16" y1="9" x2="8" y2="9"></line>
+                        </svg>
+                        Word Document
+                      </>
+                    )}
+                    {formData.exportFormat === 'xml' && (
+                      <>
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                          <polyline points="14 2 14 8 20 8"></polyline>
+                          <line x1="9.5" y1="12.5" x2="14.5" y2="17.5"></line>
+                          <line x1="14.5" y1="12.5" x2="9.5" y2="17.5"></line>
+                        </svg>
+                        XML Format
+                      </>
+                    )}
+                  </span>
+                  <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    className={`${styles.formatDropdownArrow} ${showFormatDropdown ? styles.formatDropdownArrowOpen : ''}`} 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                  >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </button>
+                
+                {showFormatDropdown && (
+                  <div className={styles.formatDropdownMenu}>
+                    <button
+                      type="button"
+                      className={`${styles.formatDropdownItem} ${formData.exportFormat === 'pdf' ? styles.formatDropdownItemActive : ''}`}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, exportFormat: 'pdf' }));
+                        setShowFormatDropdown(false);
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                      PDF Format
+                      <span className={styles.formatDescription}>Professional PDF with styling</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      className={`${styles.formatDropdownItem} ${formData.exportFormat === 'word' ? styles.formatDropdownItemActive : ''}`}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, exportFormat: 'word' }));
+                        setShowFormatDropdown(false);
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <line x1="16" y1="9" x2="8" y2="9"></line>
+                      </svg>
+                      Word Document
+                      <span className={styles.formatDescription}>Editable .docx format</span>
+                    </button>
+                    
+                    <button
+                      type="button"
+                      className={`${styles.formatDropdownItem} ${formData.exportFormat === 'xml' ? styles.formatDropdownItemActive : ''}`}
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, exportFormat: 'xml' }));
+                        setShowFormatDropdown(false);
+                      }}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="9.5" y1="12.5" x2="14.5" y2="17.5"></line>
+                        <line x1="14.5" y1="12.5" x2="9.5" y2="17.5"></line>
+                      </svg>
+                      XML Format
+                      <span className={styles.formatDescription}>Structured data format</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+              <div className={styles.helpText}>
+                Select the file format for your email attachment
+              </div>
+            </div>
+
+            <div className={styles.formGroup}>
               <label htmlFor="customMessage" className={styles.formLabel}>
                 Custom Message (Optional)
               </label>
@@ -217,7 +364,10 @@ const EmailReportModal: React.FC<EmailReportModalProps> = ({
               <h4>Email Preview</h4>
               <p><strong>To:</strong> {formData.recipientEmail || 'recipient@example.com'}</p>
               <p><strong>Subject:</strong>  {formData.workspaceName || 'Financial'} Analysis Report</p>
-              <p><strong>Attachment:</strong> <span className={styles.previewHighlight}>{fileName}</span></p>
+              <p><strong>Format:</strong> {formData.exportFormat.toUpperCase()} ({formData.exportFormat === 'pdf' ? 'Professional PDF with styling' : formData.exportFormat === 'word' ? 'Editable Word document' : 'Structured XML data'})</p>
+              <p><strong>Attachment:</strong> <span className={styles.previewHighlight}>
+                {fileName?.replace(/\.[^/.]+$/, '') || 'financial-report'}.{formData.exportFormat === 'word' ? 'docx' : formData.exportFormat}
+              </span></p>
               <p><strong>Template:</strong> Professional FinAxial email template with branding</p>
             </div>
 
