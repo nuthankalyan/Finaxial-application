@@ -806,6 +806,166 @@ export const askFinancialQuestionCached = async (csvContent: string, question: s
 };
 
 /**
+ * Enhanced financial question function that can generate visualizations
+ */
+export const askFinancialQuestionWithVisualization = async (
+  csvContent: string, 
+  question: string
+): Promise<{ response: string; chart?: ChartData; tableData?: { headers: string[]; rows: any[][] } }> => {
+  try {
+    // Check if the question is asking for visualization
+    const isAskingForVisualization = question.toLowerCase().includes('chart') || 
+                                   question.toLowerCase().includes('graph') ||
+                                   question.toLowerCase().includes('plot') ||
+                                   question.toLowerCase().includes('visualize') ||
+                                   question.toLowerCase().includes('visualization') ||
+                                   question.toLowerCase().includes('show me') ||
+                                   question.toLowerCase().includes('create a');
+
+    // Check if the question is asking for tables/data
+    const isAskingForTable = question.toLowerCase().includes('table') ||
+                           question.toLowerCase().includes('data') ||
+                           question.toLowerCase().includes('list') ||
+                           question.toLowerCase().includes('show all') ||
+                           question.toLowerCase().includes('display');
+
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('Gemini API key is not configured');
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+
+    let result: { response: string; chart?: ChartData; tableData?: { headers: string[]; rows: any[][] } } = {
+      response: ''
+    };
+
+    // Generate text response first
+    const textResponse = await askFinancialQuestion(csvContent, question);
+    result.response = textResponse;
+
+    // Generate visualization if requested
+    if (isAskingForVisualization) {
+      try {
+        const chartPrompt = `
+Based on the following CSV data and user question, generate a single chart visualization that best answers their question.
+
+CSV DATA:
+${csvContent}
+
+USER QUESTION: ${question}
+
+Create a chart that directly addresses their question. Return only a valid JSON object with the following structure:
+{
+  "type": "bar|line|pie|doughnut|radar",
+  "title": "Clear, descriptive title",
+  "description": "Brief description of what this chart shows",
+  "data": {
+    "labels": ["Label1", "Label2", "Label3"],
+    "datasets": [{
+      "label": "Dataset Name",
+      "data": [value1, value2, value3],
+      "backgroundColor": ["#3B82F6", "#EF4444", "#10B981", "#F59E0B", "#8B5CF6"]
+    }]
+  }
+}
+
+Choose the most appropriate chart type for the data and question. Use realistic values from the CSV data.
+`;
+
+        const chartResult = await model.generateContent(chartPrompt);
+        const chartResponse = await chartResult.response;
+        const chartText = chartResponse.text();
+
+        // Try to parse the chart JSON
+        try {
+          const cleanedChartText = chartText.replace(/```json|```/g, '').trim();
+          const chartData = JSON.parse(cleanedChartText);
+          
+          if (chartData.type && chartData.title && chartData.data) {
+            result.chart = {
+              type: chartData.type,
+              title: chartData.title,
+              description: chartData.description || 'Data visualization',
+              data: chartData.data,
+              options: {
+                plugins: {
+                  title: {
+                    display: true,
+                    text: chartData.title
+                  },
+                  tooltip: {
+                    enabled: true
+                  }
+                },
+                responsive: true,
+                maintainAspectRatio: false
+              }
+            };
+          }
+        } catch (parseError) {
+          console.warn('Could not parse chart data:', parseError);
+        }
+      } catch (chartError) {
+        console.warn('Could not generate chart:', chartError);
+      }
+    }
+
+    // Generate table data if requested
+    if (isAskingForTable) {
+      try {
+        const tablePrompt = `
+Based on the following CSV data and user question, extract and format the most relevant data as a structured table.
+
+CSV DATA:
+${csvContent}
+
+USER QUESTION: ${question}
+
+Return a JSON object with the following structure:
+{
+  "headers": ["Column1", "Column2", "Column3"],
+  "rows": [
+    ["Value1", "Value2", "Value3"],
+    ["Value4", "Value5", "Value6"]
+  ]
+}
+
+Include the most relevant data that answers their question. Limit to 10-15 rows for readability.
+`;
+
+        const tableResult = await model.generateContent(tablePrompt);
+        const tableResponse = await tableResult.response;
+        const tableText = tableResponse.text();
+
+        // Try to parse the table JSON
+        try {
+          const cleanedTableText = tableText.replace(/```json|```/g, '').trim();
+          const tableData = JSON.parse(cleanedTableText);
+          
+          if (tableData.headers && tableData.rows && Array.isArray(tableData.headers) && Array.isArray(tableData.rows)) {
+            result.tableData = {
+              headers: tableData.headers,
+              rows: tableData.rows
+            };
+          }
+        } catch (parseError) {
+          console.warn('Could not parse table data:', parseError);
+        }
+      } catch (tableError) {
+        console.warn('Could not generate table:', tableError);
+      }
+    }
+
+    return result;
+  } catch (error: any) {
+    console.error('Error in enhanced financial question service:', error);
+    throw new Error(`Failed to process your question: ${error.message}`);
+  }
+};
+
+/**
  * Analyzes multiple CSV files together using Gemini AI
  * 
  * @param files - Array of file information containing content and fileName

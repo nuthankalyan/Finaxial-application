@@ -1135,3 +1135,277 @@
   color: rgba(255, 255, 255, 0.7);
   text-align: center;
 }
+
+/* ========================================
+   MOBILE RESPONSIVE STYLES
+   ======================================== */
+
+/* Mobile breakpoints */
+@media (max-width: 768px) {
+  .page {
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Hero Section Mobile */
+  .heroSection {
+    padding: 1.5rem 1rem 3rem;
+    margin: 1rem;
+    border-radius: 16px;
+  }
+
+  .heroWrapper {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .heroTitle {
+    font-size: 2.25rem;
+    line-height: 1.2;
+    margin-bottom: 1rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1.1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .heroDescription {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .heroActions {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .heroButtons {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    width: 100%;
+  }
+
+  .primaryButton, .secondaryButton {
+    width: 100%;
+    justify-content: center;
+    padding: 1rem 1.5rem;
+    font-size: 1rem;
+  }
+
+  /* Dashboard Preview Mobile */
+  .dashboardPreview {
+    transform: none;
+    padding: 1rem;
+    margin-top: 1rem;
+  }
+
+  .dashboardPreview:hover {
+    transform: none;
+  }
+
+  .dashboardGrid {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .dashboardCard {
+    padding: 1rem;
+  }
+
+  /* Features Section Mobile */
+  .featuresGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .featureCard {
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .featureIcon {
+    margin: 0 auto 1rem;
+  }
+
+  /* Benefits Section Mobile */
+  .benefitsContent {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .benefitsList {
+    margin-top: 1.5rem;
+  }
+
+  /* Pricing Section Mobile */
+  .pricingGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .pricingCard {
+    margin: 0;
+    transform: none;
+  }
+
+  .pricingCard.featured {
+    transform: none;
+    margin: 0;
+  }
+
+  /* FAQ Section Mobile */
+  .faqGrid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .faqQuestion {
+    padding: 1rem;
+  }
+
+  .faqTitle {
+    font-size: 0.95rem;
+    padding-right: 2rem;
+  }
+
+  /* Footer Mobile */
+  .footerContent {
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    text-align: center;
+  }
+
+  .footerSection {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding-bottom: 1.5rem;
+  }
+
+  .footerSection:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .footerLinks {
+    justify-content: center;
+  }
+
+  .socialLinks {
+    justify-content: center;
+  }
+
+  /* Section Container Mobile */
+  .sectionContainer {
+    padding: 0 1rem;
+  }
+
+  /* Section Spacing Mobile */
+  .featuresSection,
+  .benefitsSection,
+  .pricingSection,
+  .faqSection {
+    padding: 3rem 1rem;
+  }
+
+  /* Typography Mobile */
+  .sectionTitle {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  .sectionSubtitle {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .featureTitle {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .featureDescription {
+    font-size: 0.95rem;
+  }
+}
+
+/* Tablet breakpoint */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .heroWrapper {
+    gap: 3rem;
+  }
+
+  .heroTitle {
+    font-size: 3rem;
+  }
+
+  .featuresGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .pricingGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .dashboardGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Small mobile breakpoint */
+@media (max-width: 480px) {
+  .heroSection {
+    margin: 0.5rem;
+    padding: 1rem 0.75rem 2rem;
+  }
+
+  .heroTitle {
+    font-size: 1.875rem;
+  }
+
+  .heroSubtitle {
+    font-size: 1rem;
+  }
+
+  .tag {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.75rem;
+  }
+
+  .sectionTitle {
+    font-size: 1.75rem;
+  }
+
+  .featuresSection,
+  .benefitsSection,
+  .pricingSection,
+  .faqSection {
+    padding: 2rem 0.75rem;
+  }
+
+  .featureCard {
+    padding: 1.25rem;
+  }
+
+  .pricingCard {
+    padding: 1.25rem;
+  }
+}
+
+/* Landscape mobile orientation */
+@media (max-width: 768px) and (orientation: landscape) {
+  .heroSection {
+    padding: 1rem 1rem 2rem;
+  }
+
+  .heroTitle {
+    font-size: 2rem;
+  }
+
+  .heroWrapper {
+    gap: 1.5rem;
+  }
+}

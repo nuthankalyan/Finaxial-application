@@ -12,6 +12,19 @@
   min-height: 100vh;
 }
 
+/* Mobile responsive main layout */
+@media (max-width: 768px) {
+  .workspaceLayout {
+    flex-direction: column;
+  }
+}
+
+@media (max-width: 480px) {
+  .workspaceLayout {
+    flex-direction: column;
+  }
+}
+
 /* Sidebar styles */
 .sidebar {
   width: 260px;
@@ -25,12 +38,50 @@
   flex-shrink: 0;
 }
 
+/* Mobile responsive sidebar */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%;
+    height: auto;
+    position: static;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem;
+    max-height: 40vh;
+    overflow-y: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebar {
+    padding: 0.75rem;
+    max-height: 35vh;
+  }
+}
+
 .sidebarTitle {
   font-size: 1.5rem;
   font-weight: 700;
   
   
   border-bottom: 1px solid #e5e7eb;
+}
+
+/* Mobile responsive sidebar title */
+@media (max-width: 768px) {
+  .sidebarTitle {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .sidebarTitle {
+    font-size: 1.125rem;
+    margin-bottom: 0.75rem;
+    padding-bottom: 0.5rem;
+  }
 }
 
 .previousInsights {
@@ -140,6 +191,24 @@
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
+/* Mobile responsive header */
+@media (max-width: 768px) {
+  .header {
+    padding: 1rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0.75rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.5rem;
+  }
+}
+
 .backButton {
   display: flex;
   align-items: center;
@@ -157,6 +226,25 @@
   font-family: inherit;
 }
 
+/* Mobile responsive back button */
+@media (max-width: 768px) {
+  .backButton {
+    padding: 0.625rem 1rem;
+    font-size: 0.9375rem;
+    min-height: 44px;
+  }
+}
+
+@media (max-width: 480px) {
+  .backButton {
+    padding: 0.75rem 1rem;
+    font-size: 1rem;
+    min-height: 48px;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
 .backButton:hover {
   background-color: rgb(118, 118, 241);
   color: white;
@@ -171,12 +259,42 @@
   color: #111827;
 }
 
+/* Mobile responsive workspace title */
+@media (max-width: 768px) {
+  .workspaceTitle h1 {
+    font-size: 1.25rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .workspaceTitle h1 {
+    font-size: 1.125rem;
+    text-align: center;
+  }
+}
+
 .workspaceDate {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   font-size: 0.75rem;
   color: #6b7280;
+}
+
+/* Mobile responsive workspace date */
+@media (max-width: 768px) {
+  .workspaceDate {
+    font-size: 0.8125rem;
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .workspaceDate {
+    font-size: 0.875rem;
+    align-items: center;
+    text-align: center;
+  }
 }
 
 .workspaceDate p {
@@ -190,6 +308,19 @@
   display: flex;
   flex-direction: column;
   align-items: center;
+}
+
+/* Mobile responsive upload area */
+@media (max-width: 768px) {
+  .uploadArea {
+    padding: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .uploadArea {
+    padding: 0.75rem;
+  }
 }
 
 .disclaimerBox {
@@ -2199,4 +2330,163 @@
 :global(.dark) .cancelButton:disabled, :global(.dark) .sendButton:disabled {
   opacity: 0.5 !important;
   cursor: not-allowed !important;
+}
+
+/* =============================
+   WORKSPACE MOBILE OPTIMIZATIONS
+   ============================= */
+
+/* Tablet responsive optimizations */
+@media (max-width: 768px) {
+  .container {
+    font-size: 0.9375rem;
+  }
+
+  /* Insight items mobile optimization */
+  .insightItem {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .insightItem h4 {
+    font-size: 0.9375rem;
+  }
+
+  .insightItem p {
+    font-size: 0.8125rem;
+  }
+
+  .viewVisualizations {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .visualizationIcon {
+    width: 18px;
+    height: 18px;
+  }
+
+  /* Main content adjustments */
+  .mainContent {
+    min-height: 60vh;
+  }
+
+  /* Disclaimer box mobile */
+  .disclaimerBox {
+    padding: 1rem;
+    margin-bottom: 1rem;
+    font-size: 0.875rem;
+  }
+}
+
+/* Mobile phone optimizations */
+@media (max-width: 480px) {
+  .container {
+    /* Safe area support */
+    padding-left: max(0, env(safe-area-inset-left));
+    padding-right: max(0, env(safe-area-inset-right));
+    padding-bottom: max(0, env(safe-area-inset-bottom));
+  }
+
+  /* Enhanced touch targets */
+  .insightItem {
+    padding: 1.125rem 1rem;
+    margin-bottom: 0.625rem;
+    border-radius: 0.5rem;
+  }
+
+  .insightItem h4 {
+    font-size: 1rem;
+  }
+
+  .insightItem p {
+    font-size: 0.875rem;
+  }
+
+  .viewVisualizations {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    border-radius: 0.5rem;
+  }
+
+  .visualizationIcon {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* Previous insights mobile */
+  .previousInsights h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+
+  /* No insights message */
+  .noInsights {
+    font-size: 0.9375rem;
+    padding: 1.5rem 1rem;
+  }
+
+  /* Disclaimer adjustments */
+  .disclaimerBox {
+    padding: 1.125rem 1rem;
+    margin-bottom: 1.125rem;
+    font-size: 0.9375rem;
+    border-radius: 0.5rem;
+  }
+
+  /* Main content mobile */
+  .mainContent {
+    min-height: 65vh;
+    overflow-x: hidden;
+  }
+}
+
+/* Very small screen optimizations */
+@media (max-width: 360px) {
+  .sidebar {
+    padding: 0.5rem;
+  }
+
+  .header {
+    padding: 0.5rem;
+  }
+
+  .uploadArea {
+    padding: 0.5rem;
+  }
+
+  .workspaceTitle h1 {
+    font-size: 1rem;
+  }
+
+  .sidebarTitle {
+    font-size: 1rem;
+  }
+
+  .insightItem {
+    padding: 1rem 0.75rem;
+  }
+}
+
+/* Landscape mobile optimization */
+@media (max-width: 768px) and (orientation: landscape) {
+  .sidebar {
+    max-height: 50vh;
+  }
+
+  .workspaceLayout {
+    flex-direction: row;
+  }
+
+  .sidebar {
+    width: 280px;
+    height: 100vh;
+    position: sticky;
+    border-right: 1px solid #e5e7eb;
+    border-bottom: none;
+  }
 }

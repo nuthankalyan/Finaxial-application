@@ -3,7 +3,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import styles from './FinancialAssistant.module.css';
-import { askFinancialQuestionCached, FileInfo } from '../services/geminiService';
+import { askFinancialQuestionCached, askFinancialQuestionWithVisualization, FileInfo } from '../services/geminiService';
 import SqlCodeBlock from './SqlCodeBlock';
 import { formatMessage } from '../utils/messageFormatter';
 import { queryCache } from '../utils/cacheManager';
@@ -15,6 +15,8 @@ export interface Message {
   sender: 'user' | 'assistant';
   timestamp: Date;
   fromCache?: boolean;
+  chartData?: any;
+  tableData?: { headers: string[]; rows: any[][] };
 }
 
 interface FinancialAssistantProps {
@@ -155,15 +157,38 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
       let fromCache = false;
       
       let response: string;
+      let chartData: any = null;
+      let tableData: { headers: string[]; rows: any[][] } | undefined = undefined;
+      
+      // Check if user is asking for visualizations
+      const userText = userMessage.text.toLowerCase();
+      const isVisualizationRequest = userText.includes('chart') || userText.includes('graph') || 
+                                   userText.includes('plot') || userText.includes('visualiz') ||
+                                   userText.includes('show') || userText.includes('display');
       
       // Check if we're using multiple files (files prop) or single file (csvData prop)
       if (files && files.length > 0) {
-        // For now, we'll use the first file for questions as the askFinancialQuestionCached API
-        // doesn't yet support multiple files. This can be expanded in the future.
-        response = await askFinancialQuestionCached(files[0].content, userMessage.text);
+        if (isVisualizationRequest) {
+          // Use the enhanced service for visualization requests
+          const result = await askFinancialQuestionWithVisualization(files[0].content, userMessage.text);
+          response = result.response;
+          chartData = result.chart;
+          tableData = result.tableData;
+        } else {
+          // Use the cached service for regular questions
+          response = await askFinancialQuestionCached(files[0].content, userMessage.text);
+        }
       } else if (csvData) {
-        // Use the original single file approach
-        response = await askFinancialQuestionCached(csvData, userMessage.text);
+        if (isVisualizationRequest) {
+          // Use the enhanced service for visualization requests
+          const result = await askFinancialQuestionWithVisualization(csvData, userMessage.text);
+          response = result.response;
+          chartData = result.chart;
+          tableData = result.tableData;
+        } else {
+          // Use the cached service for regular questions
+          response = await askFinancialQuestionCached(csvData, userMessage.text);
+        }
       } else {
         throw new Error('No data available');
       }
@@ -184,7 +209,9 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
           text: response,
           sender: 'assistant',
           timestamp: new Date(),
-          fromCache
+          fromCache,
+          chartData,
+          tableData
         }];
       });
       
@@ -325,21 +352,56 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
     setShowToast(true);
     
     try {
-      // Generate the PDF without visualizations
+      // Collect all chart canvases from the DOM with a more specific selector
+      const chartContainers = document.querySelectorAll('.chart-canvas');
+      const chartCanvases: HTMLCanvasElement[] = [];
+      
+      chartContainers.forEach(container => {
+        const canvas = container.querySelector('canvas') as HTMLCanvasElement;
+        if (canvas) {
+          chartCanvases.push(canvas);
+        }
+      });
+      
+      // Alternative approach: look for canvases in chart containers
+      if (chartCanvases.length === 0) {
+        const allCanvases = document.querySelectorAll('canvas');
+        allCanvases.forEach(canvas => {
+          // Check if the canvas is within a chart visualization container
+          const chartContainer = canvas.closest('[class*="chartContainer"]');
+          if (chartContainer) {
+            chartCanvases.push(canvas);
+          }
+        });
+      }
+      
+      console.log(`Found ${chartCanvases.length} chart canvases for PDF export`);
+      
+      // Filter messages with chart and table data
+      const messagesWithData = messages.map(msg => ({
+        ...msg,
+        hasVisualization: !!(msg.chartData || msg.tableData)
+      }));
+      
+      // Generate the PDF with visualizations and tables
       await generateChatPDF(
-        messages, 
-        undefined, // Pass undefined for visualizations to not include them
+        messagesWithData, 
+        chartCanvases.length > 0 ? chartCanvases : undefined,
         fileName || undefined,
-        { includeCharts: false } // Explicitly set to not include charts
+        { 
+          includeCharts: chartCanvases.length > 0,
+          includeTimestamp: true,
+          title: 'Financial Analysis Report'
+        }
       );
       
-      setToastMessage('Chat history exported to PDF');
+      setToastMessage('Chat history exported to PDF successfully');
     } catch (error) {
       console.error('Error exporting to PDF:', error);
       setToastMessage('Failed to export chat history');
     } finally {
       setShowToast(true);
-      setTimeout(() => setShowToast(false), 2000);
+      setTimeout(() => setShowToast(false), 3000);
       setIsExportingPDF(false);
     }
   };
@@ -446,7 +508,7 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
                   </div>
                 ) : message.sender === 'assistant' ? (
                   <>
-                    {formatMessage(message.text, styles, setToastMessage, setShowToast, copyToClipboard)}
+                    {formatMessage(message.text, styles, setToastMessage, setShowToast, copyToClipboard, message.chartData, message.tableData)}
                     {message.fromCache && (
                       <div className={styles.cacheIndicator} title="Response loaded from cache">
                         <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
