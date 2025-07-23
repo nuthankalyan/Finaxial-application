@@ -60,7 +60,7 @@ const convertSheetToCSV = (sheetData: ExcelSheetData): string => {
  */
 export const generateExcelSummaryTables = async (excelContent: string, fileName?: string): Promise<ReportData> => {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_3;
     
     if (!apiKey) {
       throw new Error('Gemini API key is not configured');
@@ -299,7 +299,7 @@ export const generateSummaryTablesEnhanced = async (content: string, fileName?: 
  */
 export const generateMultiFileSummaryTablesEnhanced = async (files: { content: string; fileName: string }[]): Promise<ReportData> => {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_3;
     
     if (!apiKey) {
       throw new Error('Gemini API key is not configured');
@@ -445,7 +445,7 @@ Format your response in the same structure as previous examples.
  */
 export const generateSummaryTables = async (csvContent: string, fileName?: string): Promise<ReportData> => {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_3;
     
     if (!apiKey) {
       throw new Error('Gemini API key is not configured');
@@ -679,7 +679,7 @@ RECOMMENDATIONS:
  */
 export const generateMultiFileSummaryTables = async (files: { content: string; fileName: string }[]): Promise<ReportData> => {
   try {
-    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_3;
     
     if (!apiKey) {
       throw new Error('Gemini API key is not configured');

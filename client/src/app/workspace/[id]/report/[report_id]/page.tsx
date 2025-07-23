@@ -86,7 +86,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
     fileName: string
   ): Promise<DetailedTableAnalysis> => {
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_2;
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_5;
       
       if (!apiKey) {
         throw new Error('Gemini API key is not configured');

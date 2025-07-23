@@ -66,7 +66,7 @@ class ComplianceService {
   private apiKey: string | undefined;
 
   constructor() {
-    this.apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+    this.apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY_2;
   }
 
   // Pre-defined compliance rules for common financial data validation
