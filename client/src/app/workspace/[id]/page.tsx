@@ -42,13 +42,30 @@ interface Workspace {
 interface EmailModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (email: string) => void;
+  onSubmit: (email: string, format: 'pdf' | 'word' | 'xml') => void;
   sending: boolean;
 }
 
 function EmailModal({ isOpen, onClose, onSubmit, sending }: EmailModalProps) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [exportFormat, setExportFormat] = useState<'pdf' | 'word' | 'xml'>('pdf');
+  const [showFormatDropdown, setShowFormatDropdown] = useState(false);
+  const formatDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Click outside handler for format dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (formatDropdownRef.current && !formatDropdownRef.current.contains(event.target as Node)) {
+        setShowFormatDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -60,7 +77,7 @@ function EmailModal({ isOpen, onClose, onSubmit, sending }: EmailModalProps) {
     }
     
     setError('');
-    onSubmit(email);
+    onSubmit(email, exportFormat);
   };
   
   if (!isOpen) return null;
@@ -86,6 +103,128 @@ function EmailModal({ isOpen, onClose, onSubmit, sending }: EmailModalProps) {
               disabled={sending}
             />
             {error && <p className={styles.formError}>{error}</p>}
+          </div>
+
+          <div className={styles.formGroup}>
+            <label>Export Format:</label>
+            <div className={styles.formatSelector} ref={formatDropdownRef}>
+              <button
+                type="button"
+                className={styles.formatButton}
+                onClick={() => setShowFormatDropdown(!showFormatDropdown)}
+                disabled={sending}
+              >
+                <span className={styles.formatButtonText}>
+                  {exportFormat === 'pdf' && (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <polyline points="10 9 9 9 8 9"></polyline>
+                      </svg>
+                      PDF Format
+                    </>
+                  )}
+                  {exportFormat === 'word' && (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="16" y1="13" x2="8" y2="13"></line>
+                        <line x1="16" y1="17" x2="8" y2="17"></line>
+                        <line x1="16" y1="9" x2="8" y2="9"></line>
+                      </svg>
+                      Word Document
+                    </>
+                  )}
+                  {exportFormat === 'xml' && (
+                    <>
+                      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                        <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                        <polyline points="14 2 14 8 20 8"></polyline>
+                        <line x1="9.5" y1="12.5" x2="14.5" y2="17.5"></line>
+                        <line x1="14.5" y1="12.5" x2="9.5" y2="17.5"></line>
+                      </svg>
+                      XML Format
+                    </>
+                  )}
+                </span>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className={`${styles.formatDropdownArrow} ${showFormatDropdown ? styles.formatDropdownArrowOpen : ''}`} 
+                  viewBox="0 0 24 24" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </button>
+              
+              {showFormatDropdown && (
+                <div className={styles.formatDropdownMenu}>
+                  <button
+                    type="button"
+                    className={`${styles.formatDropdownItem} ${exportFormat === 'pdf' ? styles.formatDropdownItemActive : ''}`}
+                    onClick={() => {
+                      setExportFormat('pdf');
+                      setShowFormatDropdown(false);
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    PDF Format
+                    <span className={styles.formatDescription}>Professional PDF with styling</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    className={`${styles.formatDropdownItem} ${exportFormat === 'word' ? styles.formatDropdownItemActive : ''}`}
+                    onClick={() => {
+                      setExportFormat('word');
+                      setShowFormatDropdown(false);
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <line x1="16" y1="9" x2="8" y2="9"></line>
+                    </svg>
+                    Word Document
+                    <span className={styles.formatDescription}>Editable .docx format</span>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    className={`${styles.formatDropdownItem} ${exportFormat === 'xml' ? styles.formatDropdownItemActive : ''}`}
+                    onClick={() => {
+                      setExportFormat('xml');
+                      setShowFormatDropdown(false);
+                    }}
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2} className={styles.formatIcon}>
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="9.5" y1="12.5" x2="14.5" y2="17.5"></line>
+                      <line x1="14.5" y1="12.5" x2="9.5" y2="17.5"></line>
+                    </svg>
+                    XML Format
+                    <span className={styles.formatDescription}>Structured data format</span>
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
           
           <div className={styles.modalButtons}>
@@ -238,6 +377,8 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   // Add new state for email functionality
   const [showEmailModal, setShowEmailModal] = useState(false);
   const [sending, setSending] = useState(false);
+  const [showExportDropdown, setShowExportDropdown] = useState(false);
+  const [showModalExportDropdown, setShowModalExportDropdown] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   
   // Add a ref for scroll-into-view functionality
@@ -284,6 +425,29 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   const [taxOptimizationResult, setTaxOptimizationResult] = useState<TaxOptimizationResult | null>(null);
   const [showTaxOptimizationModal, setShowTaxOptimizationModal] = useState(false);
   const [generatingTaxOptimization, setGeneratingTaxOptimization] = useState(false);
+  
+  // Effect to handle clicks outside dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      
+      // Close main export dropdown if clicking outside
+      if (showExportDropdown && !target.closest(`.${styles.exportDropdown}`)) {
+        setShowExportDropdown(false);
+      }
+      
+      // Close modal export dropdown if clicking outside
+      if (showModalExportDropdown && !target.closest(`.${styles.modalExportDropdown}`)) {
+        setShowModalExportDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportDropdown, showModalExportDropdown]);
+  
   
   // Effect to restore insights and other data from session storage when component mounts
   useEffect(() => {
@@ -1145,6 +1309,182 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
       setExporting(false);
     }
   };
+
+  // Export to Word function
+  const exportToWord = async () => {
+    setExporting(true);
+    
+    try {
+      if (!insights || !fileName) {
+        toast.error('No data available to export');
+        return;
+      }
+
+      // Create Word document content as HTML
+      let htmlContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Financial Assistant Analysis Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+            h1 { color: #4f46e5; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
+            h2 { color: #374151; margin-top: 30px; }
+            .header-info { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+            .insight-item { margin-bottom: 15px; padding: 10px; background-color: #f9fafb; border-left: 4px solid #4f46e5; }
+            table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+            th, td { border: 1px solid #d1d5db; padding: 12px; text-align: left; }
+            th { background-color: #4f46e5; color: white; }
+            .metrics-table { margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <h1>Financial Assistant Analysis Report</h1>
+          <div class="header-info">
+            <p><strong>File:</strong> ${fileName}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+          </div>
+      `;
+
+      // Add Key Metrics if available
+      const insightCardsData = savedInsightCards || getNumericalInsightsFromData(insights);
+      if (insightCardsData && insightCardsData.length > 0) {
+        htmlContent += `
+          <h2>Key Metrics</h2>
+          <table class="metrics-table">
+            <tr><th>Metric</th><th>Value</th><th>Change</th></tr>
+        `;
+        
+        insightCardsData.forEach(card => {
+          const changeText = card.change ? 
+            `${card.change.positive ? '+' : '-'}${Math.abs(card.change.value)}%` : 
+            'N/A';
+          htmlContent += `<tr><td>${card.label}</td><td>${card.value}</td><td>${changeText}</td></tr>`;
+        });
+        
+        htmlContent += `</table>`;
+      }
+
+      // Add Summary
+      htmlContent += `
+        <h2>Summary</h2>
+        <p>${insights.summary}</p>
+      `;
+
+      // Add Key Insights
+      if (Array.isArray(insights.insights) && insights.insights.length > 0) {
+        htmlContent += `<h2>Key Insights</h2>`;
+        insights.insights.forEach((insight, index) => {
+          htmlContent += `<div class="insight-item">${index + 1}. ${insight}</div>`;
+        });
+      }
+
+      htmlContent += `
+        </body>
+        </html>
+      `;
+
+      // Create and download the Word document
+      const blob = new Blob([htmlContent], { type: 'application/msword' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName.replace(/\.[^/.]+$/, '')}-report.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('Word document exported successfully');
+    } catch (error) {
+      console.error('Error exporting Word document:', error);
+      toast.error('Failed to export Word document');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Export to XML function
+  const exportToXML = async () => {
+    setExporting(true);
+    
+    try {
+      if (!insights || !fileName) {
+        toast.error('No data available to export');
+        return;
+      }
+
+      // Create XML content
+      let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<FinancialReport>
+  <Header>
+    <Title>Financial Assistant Analysis Report</Title>
+    <FileName>${fileName}</FileName>
+    <GeneratedDate>${new Date().toISOString()}</GeneratedDate>
+  </Header>
+      `;
+
+      // Add Key Metrics if available
+      const insightCardsData = savedInsightCards || getNumericalInsightsFromData(insights);
+      if (insightCardsData && insightCardsData.length > 0) {
+        xmlContent += `
+  <KeyMetrics>`;
+        
+        insightCardsData.forEach(card => {
+          const changeValue = card.change ? card.change.value : 0;
+          const changeDirection = card.change ? (card.change.positive ? 'positive' : 'negative') : 'none';
+          xmlContent += `
+    <Metric>
+      <Label>${card.label}</Label>
+      <Value>${card.value}</Value>
+      <Change direction="${changeDirection}">${changeValue}</Change>
+    </Metric>`;
+        });
+        
+        xmlContent += `
+  </KeyMetrics>`;
+      }
+
+      // Add Summary
+      xmlContent += `
+  <Summary><![CDATA[${insights.summary}]]></Summary>
+      `;
+
+      // Add Key Insights
+      if (Array.isArray(insights.insights) && insights.insights.length > 0) {
+        xmlContent += `
+  <KeyInsights>`;
+        insights.insights.forEach((insight, index) => {
+          xmlContent += `
+    <Insight id="${index + 1}"><![CDATA[${insight}]]></Insight>`;
+        });
+        xmlContent += `
+  </KeyInsights>`;
+      }
+
+      xmlContent += `
+</FinancialReport>`;
+
+      // Create and download the XML file
+      const blob = new Blob([xmlContent], { type: 'application/xml' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName.replace(/\.[^/.]+$/, '')}-report.xml`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('XML file exported successfully');
+    } catch (error) {
+      console.error('Error exporting XML file:', error);
+      toast.error('Failed to export XML file');
+    } finally {
+      setExporting(false);
+    }
+  };
   
   const sendEmailWithPdf = async (recipientEmail: string) => {
     if (!insights || !fileName) return;
@@ -1221,6 +1561,185 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
   // Function to close notification
   const closeNotification = () => {
     setNotification(prev => ({ ...prev, show: false }));
+  };
+
+  // Function to handle email submission with format selection
+  const handleEmailSubmit = async (email: string, format: 'pdf' | 'word' | 'xml') => {
+    if (!insights || !fileName) {
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'No Data Available',
+        message: 'Please upload and analyze financial data first before sending email.'
+      });
+      return;
+    }
+
+    setSending(true);
+    
+    try {
+      let fileData: string;
+      let fileName_final: string;
+      let contentType: string;
+      
+      const baseFileName = `financial-insights-${fileName.replace(/\.[^/.]+$/, '')}-${Date.now()}`;
+      
+      // Generate data based on selected format
+      switch (format) {
+        case 'pdf':
+          // Generate PDF as base64
+          const doc = await generatePdf();
+          if (!doc) {
+            throw new Error('Failed to generate PDF for email');
+          }
+          const pdfData = doc.output('datauristring');
+          const base64Data = pdfData.split(',')[1];
+          if (!base64Data) {
+            throw new Error('Failed to generate PDF data');
+          }
+          fileData = base64Data;
+          fileName_final = `${baseFileName}.pdf`;
+          contentType = 'application/pdf';
+          break;
+          
+        case 'word':
+          // Generate Word document HTML content
+          let htmlContent = `
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="UTF-8">
+              <title>Financial Assistant Analysis Report</title>
+              <style>
+                body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                h1 { color: #4f46e5; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
+                h2 { color: #374151; margin-top: 30px; }
+                .header-info { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+                .insight-item { margin-bottom: 15px; padding: 10px; background-color: #f9fafb; border-left: 4px solid #4f46e5; }
+              </style>
+            </head>
+            <body>
+              <h1>Financial Assistant Analysis Report</h1>
+              <div class="header-info">
+                <p><strong>File:</strong> ${fileName}</p>
+                <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+              </div>
+              <h2>Key Insights</h2>
+          `;
+          
+          insights.insights.forEach(insight => {
+            htmlContent += `<div class="insight-item">${insight}</div>`;
+          });
+          
+          htmlContent += `<h2>Recommendations</h2>`;
+          insights.recommendations.forEach(recommendation => {
+            htmlContent += `<div class="insight-item">${recommendation}</div>`;
+          });
+          
+          htmlContent += `</body></html>`;
+          
+          // Convert HTML to base64 for email sending
+          fileData = btoa(unescape(encodeURIComponent(htmlContent)));
+          fileName_final = `${baseFileName}.doc`;
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          break;
+          
+        case 'xml':
+          // Generate XML content
+          let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<FinancialReport>
+  <Header>
+    <Title>Financial Assistant Analysis Report</Title>
+    <FileName>${fileName}</FileName>
+    <GeneratedDate>${new Date().toISOString()}</GeneratedDate>
+  </Header>
+  <Insights>`;
+          
+          insights.insights.forEach((insight, index) => {
+            xmlContent += `
+    <Insight id="${index + 1}">
+      <Content>${insight}</Content>
+    </Insight>`;
+          });
+          
+          xmlContent += `
+  </Insights>
+  <Recommendations>`;
+          
+          insights.recommendations.forEach((recommendation, index) => {
+            xmlContent += `
+    <Recommendation id="${index + 1}">
+      <Content>${recommendation}</Content>
+    </Recommendation>`;
+          });
+          
+          xmlContent += `
+  </Recommendations>
+</FinancialReport>`;
+          
+          // Convert XML to base64 for email sending
+          fileData = btoa(unescape(encodeURIComponent(xmlContent)));
+          fileName_final = `${baseFileName}.xml`;
+          contentType = 'application/xml';
+          break;
+          
+        default:
+          throw new Error('Invalid export format selected');
+      }
+
+      // Send the email using our API
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(buildApiUrl('api/email/send-professional-report'), {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          recipientEmail: email,
+          recipientName: 'User', // Default recipient name
+          fileData: fileData,
+          fileName: fileName_final,
+          contentType: contentType,
+          exportFormat: format,
+          workspaceName: workspace?.name || 'Financial Analysis',
+          customMessage: `Please find attached the financial analysis report in ${format.toUpperCase()} format.`
+        })
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Failed to send email');
+      }
+
+      // Show success notification
+      setNotification({
+        show: true,
+        type: 'success',
+        title: 'Email Sent',
+        message: `Report successfully sent to ${email} as ${format.toUpperCase()}!`
+      });
+      
+      // Close the modal
+      setShowEmailModal(false);
+    } catch (err: any) {
+      console.error('Error sending email:', err);
+      
+      // Show error notification
+      setNotification({
+        show: true,
+        type: 'error',
+        title: 'Email Failed',
+        message: err.message || 'Failed to send email'
+      });
+    } finally {
+      setSending(false);
+    }
   };
 
   // Function to generate tax optimization suggestions
@@ -1878,38 +2397,213 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       </motion.button>
                     )}
                     
-                    <motion.button
-                      className={styles.exportButton}
-                      onClick={exportToPdf}
-                      disabled={saving || exporting || sending}
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
+                    <div 
+                      className={styles.exportDropdown}
+                      style={{ 
+                        position: 'relative', 
+                        zIndex: 1000,
+                        overflow: 'visible'
+                      }}
                     >
-                      {exporting ? (
-                        <>
-                          <div className={styles.buttonSpinner}></div>
-                          Exporting...
-                        </>
-                      ) : (
-                        <>
-                          <svg 
-                            xmlns="http://www.w3.org/2000/svg" 
-                            className={styles.exportIcon} 
-                            viewBox="0 0 24 24" 
-                            fill="none" 
-                            stroke="currentColor" 
-                            strokeWidth="2" 
-                            strokeLinecap="round" 
-                            strokeLinejoin="round"
+                      <motion.button
+                        className={styles.exportButton}
+                        onClick={() => setShowExportDropdown(!showExportDropdown)}
+                        disabled={saving || exporting || sending}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                      >
+                        {exporting ? (
+                          <>
+                            <div className={styles.buttonSpinner}></div>
+                            Exporting...
+                          </>
+                        ) : (
+                          <>
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className={styles.exportIcon} 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                              <polyline points="7 10 12 15 17 10"></polyline>
+                              <line x1="12" y1="15" x2="12" y2="3"></line>
+                            </svg>
+                            Export
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className={styles.dropdownArrow} 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
+                          </>
+                        )}
+                      </motion.button>
+                      
+                      {showExportDropdown && (
+                        <div 
+                          style={{
+                            position: 'absolute',
+                            top: '100%',
+                            left: '0',
+                            backgroundColor: 'white',
+                            border: '1px solid #e5e7eb',
+                            borderRadius: '8px',
+                            zIndex: 999999,
+                            width: '200px',
+                            boxShadow: '0 4px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                            marginTop: '8px',
+                            maxHeight: '200px',
+                            overflow: 'visible',
+                            animation: 'dropdownFadeIn 0.2s ease-out'
+                          }}
+                        >
+                          <style>{`
+                            @keyframes dropdownFadeIn {
+                              from {
+                                opacity: 0;
+                                transform: translateY(10px);
+                              }
+                              to {
+                                opacity: 1;
+                                transform: translateY(0);
+                              }
+                            }
+                            .dropdown-item {
+                              display: flex !important;
+                              align-items: center !important;
+                              width: 100% !important;
+                              padding: 12px 16px !important;
+                              text-align: left !important;
+                              background: none !important;
+                              border: none !important;
+                              color: #374151 !important;
+                              font-size: 14px !important;
+                              font-weight: 500 !important;
+                              cursor: pointer !important;
+                              transition: all 0.15s ease !important;
+                              border-radius: 6px !important;
+                              margin: 4px !important;
+                            }
+                            .dropdown-item:hover {
+                              background-color: #f3f4f6 !important;
+                              color: #4f46e5 !important;
+                              transform: translateX(4px) !important;
+                            }
+                            .dropdown-item:active {
+                              background-color: #e5e7eb !important;
+                              transform: translateX(2px) !important;
+                            }
+                            .dropdown-item:first-child {
+                              border-top-left-radius: 8px !important;
+                              border-top-right-radius: 8px !important;
+                            }
+                            .dropdown-item:last-child {
+                              border-bottom-left-radius: 8px !important;
+                              border-bottom-right-radius: 8px !important;
+                            }
+                            .dropdown-icon {
+                              width: 18px !important;
+                              height: 18px !important;
+                              margin-right: 12px !important;
+                              color: #6b7280 !important;
+                              transition: color 0.15s ease !important;
+                            }
+                            .dropdown-item:hover .dropdown-icon {
+                              color: #4f46e5 !important;
+                            }
+                          `}</style>
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              setShowExportDropdown(false);
+                              exportToPdf();
+                            }}
+                            disabled={exporting}
                           >
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                          </svg>
-                          Export PDF
-                        </>
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className="dropdown-icon" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="16" y1="13" x2="8" y2="13"></line>
+                              <line x1="16" y1="17" x2="8" y2="17"></line>
+                              <polyline points="10 9 9 9 8 9"></polyline>
+                            </svg>
+                            <span>Export as PDF</span>
+                          </button>
+                          
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              setShowExportDropdown(false);
+                              exportToWord();
+                            }}
+                            disabled={exporting}
+                          >
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className="dropdown-icon" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="12" y1="11" x2="12" y2="17"></line>
+                              <polyline points="9 14 12 17 15 14"></polyline>
+                            </svg>
+                            <span>Export as Word</span>
+                          </button>
+                          
+                          <button
+                            className="dropdown-item"
+                            onClick={() => {
+                              setShowExportDropdown(false);
+                              exportToXML();
+                            }}
+                            disabled={exporting}
+                          >
+                            <svg 
+                              xmlns="http://www.w3.org/2000/svg" 
+                              className="dropdown-icon" 
+                              viewBox="0 0 24 24" 
+                              fill="none" 
+                              stroke="currentColor" 
+                              strokeWidth="2" 
+                              strokeLinecap="round" 
+                              strokeLinejoin="round"
+                            >
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                              <polyline points="14 2 14 8 20 8"></polyline>
+                              <line x1="9.5" y1="12.5" x2="14.5" y2="17.5"></line>
+                              <line x1="14.5" y1="12.5" x2="9.5" y2="17.5"></line>
+                            </svg>
+                            <span>Export as XML</span>
+                          </button>
+                        </div>
                       )}
-                    </motion.button>
+                    </div>
                     
                     <motion.button
                       className={styles.emailButton}
@@ -2216,35 +2910,56 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                   Close
                 </button>
                 
-                <button
-                  className={styles.modalExportButton}
-                  onClick={() => {
-                    // Instead of setting state and exporting after delay, directly generate PDF from selectedInsight
-                    if (!selectedInsight) return;
-                    
-                    setExporting(true);
-                    
-                    try {
-                      // Create temporary insights object for PDF generation
-                      const tempInsights = {
-                        summary: selectedInsight.summary,
-                        insights: Array.isArray(selectedInsight.insights) 
-                          ? selectedInsight.insights
-                          : typeof selectedInsight.insights === 'string'
-                            ? selectedInsight.insights.split('\n\n').filter(Boolean)
-                            : [],
-                        recommendations: Array.isArray(selectedInsight.recommendations)
-                          ? selectedInsight.recommendations
-                          : typeof selectedInsight.recommendations === 'string'
-                            ? selectedInsight.recommendations.split('\n\n').filter(Boolean)
-                            : [],
-                        rawResponse: selectedInsight.rawResponse
-                      };
-                      
-                      // Create a new PDF document
-                      const doc = new jsPDF();
-                      
-                      // Set document properties
+                <div className={styles.modalExportDropdown}>
+                  <button
+                    className={styles.modalExportButton}
+                    onClick={() => setShowModalExportDropdown(!showModalExportDropdown)}
+                  >
+                    Export
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className={styles.modalDropdownArrow} 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
+                  </button>
+                  
+                  {showModalExportDropdown && (
+                    <div className={styles.modalDropdownMenu}>
+                      <button
+                        className={styles.modalDropdownItem}
+                        onClick={() => {
+                          setShowModalExportDropdown(false);
+                          // Instead of setting state and exporting after delay, directly generate PDF from selectedInsight
+                          if (!selectedInsight) return;
+                          
+                          setExporting(true);
+                          
+                          try {
+                            // Create temporary insights object for PDF generation
+                            const tempInsights = {
+                              summary: selectedInsight.summary,
+                              insights: Array.isArray(selectedInsight.insights) 
+                                ? selectedInsight.insights
+                                : typeof selectedInsight.insights === 'string'
+                                  ? selectedInsight.insights.split('\n\n').filter(Boolean)
+                                  : [],
+                              recommendations: Array.isArray(selectedInsight.recommendations)
+                                ? selectedInsight.recommendations
+                                : typeof selectedInsight.recommendations === 'string'
+                                  ? selectedInsight.recommendations.split('\n\n').filter(Boolean)
+                                  : [],
+                              rawResponse: selectedInsight.rawResponse
+                            };
+                            
+                            // Create a new PDF document
+                            const doc = new jsPDF();                      // Set document properties
                       doc.setProperties({
                         title: `Financial Insights - ${selectedInsight.fileName}`,
                         subject: 'Financial Analysis Report',
@@ -2524,30 +3239,265 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         title: 'PDF Generation Failed',
                         message: err.message || 'Failed to generate PDF report'
                       });
-                    } finally {
-                      setExporting(false);
-                      setShowInsightDetails(false);
-                    }
-                  }}
-                >
-                  <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    className={styles.modalFooterIcon} 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                  >
-                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                    <polyline points="7 10 12 15 17 10"></polyline>
-                    <line x1="12" y1="15" x2="12" y2="3"></line>
-                  </svg>
-                  Export PDF
-                </button>
-                
-                <button
+                            } finally {
+                              setExporting(false);
+                              setShowInsightDetails(false);
+                            }
+                          }}
+                        >
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className={styles.modalDropdownIcon} 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                          </svg>
+                          Export as PDF
+                        </button>
+                        
+                        <button
+                          className={styles.modalDropdownItem}
+                          onClick={() => {
+                            setShowModalExportDropdown(false);
+                            if (!selectedInsight) return;
+                            
+                            setExporting(true);
+                            
+                            try {
+                              // Create Word document content as HTML
+                              let htmlContent = `
+                                <!DOCTYPE html>
+                                <html>
+                                <head>
+                                  <meta charset="UTF-8">
+                                  <title>Financial Assistant Analysis Report</title>
+                                  <style>
+                                    body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+                                    h1 { color: #4f46e5; border-bottom: 2px solid #4f46e5; padding-bottom: 10px; }
+                                    h2 { color: #374151; margin-top: 30px; }
+                                    .header-info { color: #6b7280; font-size: 14px; margin-bottom: 20px; }
+                                    .insight-item { margin-bottom: 15px; padding: 10px; background-color: #f9fafb; border-left: 4px solid #4f46e5; }
+                                    table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+                                    th, td { border: 1px solid #d1d5db; padding: 12px; text-align: left; }
+                                    th { background-color: #4f46e5; color: white; }
+                                    .metrics-table { margin: 20px 0; }
+                                  </style>
+                                </head>
+                                <body>
+                                  <h1>Financial Assistant Analysis Report</h1>
+                                  <div class="header-info">
+                                    <p><strong>File:</strong> ${selectedInsight.fileName}</p>
+                                    <p><strong>Generated:</strong> ${new Date().toLocaleString()}</p>
+                                  </div>
+                              `;
+
+                              // Add Key Metrics if available
+                              if (selectedInsight.insightCards && Array.isArray(selectedInsight.insightCards) && selectedInsight.insightCards.length > 0) {
+                                htmlContent += `
+                                  <h2>Key Metrics</h2>
+                                  <table class="metrics-table">
+                                    <tr><th>Metric</th><th>Value</th><th>Change</th></tr>
+                                `;
+                                
+                                selectedInsight.insightCards.forEach(card => {
+                                  const changeText = card.change ? 
+                                    `${card.change.positive ? '+' : '-'}${Math.abs(card.change.value)}%` : 
+                                    'N/A';
+                                  htmlContent += `<tr><td>${card.label}</td><td>${card.value}</td><td>${changeText}</td></tr>`;
+                                });
+                                
+                                htmlContent += `</table>`;
+                              }
+
+                              // Add Summary
+                              htmlContent += `
+                                <h2>Summary</h2>
+                                <p>${selectedInsight.summary}</p>
+                              `;
+
+                              // Add Key Insights
+                              if (Array.isArray(selectedInsight.insights) && selectedInsight.insights.length > 0) {
+                                htmlContent += `<h2>Key Insights</h2>`;
+                                selectedInsight.insights.forEach((insight, index) => {
+                                  htmlContent += `<div class="insight-item">${index + 1}. ${insight}</div>`;
+                                });
+                              }
+
+                              htmlContent += `
+                                </body>
+                                </html>
+                              `;
+
+                              // Create and download the Word document
+                              const blob = new Blob([htmlContent], { type: 'application/msword' });
+                              const url = window.URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = `${selectedInsight.fileName.replace(/\.[^/.]+$/, '')}-report.doc`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              window.URL.revokeObjectURL(url);
+
+                              setNotification({
+                                show: true,
+                                type: 'success',
+                                title: 'Word Document Exported',
+                                message: 'Report has been downloaded successfully.'
+                              });
+                            } catch (error) {
+                              console.error('Error exporting Word document:', error);
+                              setNotification({
+                                show: true,
+                                type: 'error',
+                                title: 'Word Export Failed',
+                                message: 'Failed to export Word document'
+                              });
+                            } finally {
+                              setExporting(false);
+                              setShowInsightDetails(false);
+                            }
+                          }}
+                        >
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className={styles.modalDropdownIcon} 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="12" y1="11" x2="12" y2="17"></line>
+                            <polyline points="9 14 12 17 15 14"></polyline>
+                          </svg>
+                          Export as Word
+                        </button>
+                        
+                        <button
+                          className={styles.modalDropdownItem}
+                          onClick={() => {
+                            setShowModalExportDropdown(false);
+                            if (!selectedInsight) return;
+                            
+                            setExporting(true);
+                            
+                            try {
+                              // Create XML content
+                              let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<FinancialReport>
+  <Header>
+    <Title>Financial Assistant Analysis Report</Title>
+    <FileName>${selectedInsight.fileName}</FileName>
+    <GeneratedDate>${new Date().toISOString()}</GeneratedDate>
+  </Header>
+                              `;
+
+                              // Add Key Metrics if available
+                              if (selectedInsight.insightCards && Array.isArray(selectedInsight.insightCards) && selectedInsight.insightCards.length > 0) {
+                                xmlContent += `
+  <KeyMetrics>`;
+                                
+                                selectedInsight.insightCards.forEach(card => {
+                                  const changeValue = card.change ? card.change.value : 0;
+                                  const changeDirection = card.change ? (card.change.positive ? 'positive' : 'negative') : 'none';
+                                  xmlContent += `
+    <Metric>
+      <Label>${card.label}</Label>
+      <Value>${card.value}</Value>
+      <Change direction="${changeDirection}">${changeValue}</Change>
+    </Metric>`;
+                                });
+                                
+                                xmlContent += `
+  </KeyMetrics>`;
+                              }
+
+                              // Add Summary
+                              xmlContent += `
+  <Summary><![CDATA[${selectedInsight.summary}]]></Summary>
+                              `;
+
+                              // Add Key Insights
+                              if (Array.isArray(selectedInsight.insights) && selectedInsight.insights.length > 0) {
+                                xmlContent += `
+  <KeyInsights>`;
+                                selectedInsight.insights.forEach((insight, index) => {
+                                  xmlContent += `
+    <Insight id="${index + 1}"><![CDATA[${insight}]]></Insight>`;
+                                });
+                                xmlContent += `
+  </KeyInsights>`;
+                              }
+
+                              xmlContent += `
+</FinancialReport>`;
+
+                              // Create and download the XML file
+                              const blob = new Blob([xmlContent], { type: 'application/xml' });
+                              const url = window.URL.createObjectURL(blob);
+                              const link = document.createElement('a');
+                              link.href = url;
+                              link.download = `${selectedInsight.fileName.replace(/\.[^/.]+$/, '')}-report.xml`;
+                              document.body.appendChild(link);
+                              link.click();
+                              document.body.removeChild(link);
+                              window.URL.revokeObjectURL(url);
+
+                              setNotification({
+                                show: true,
+                                type: 'success',
+                                title: 'XML File Exported',
+                                message: 'Report has been downloaded successfully.'
+                              });
+                            } catch (error) {
+                              console.error('Error exporting XML file:', error);
+                              setNotification({
+                                show: true,
+                                type: 'error',
+                                title: 'XML Export Failed',
+                                message: 'Failed to export XML file'
+                              });
+                            } finally {
+                              setExporting(false);
+                              setShowInsightDetails(false);
+                            }
+                          }}
+                        >
+                          <svg 
+                            xmlns="http://www.w3.org/2000/svg" 
+                            className={styles.modalDropdownIcon} 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="9.5" y1="12.5" x2="14.5" y2="17.5"></line>
+                            <line x1="14.5" y1="12.5" x2="9.5" y2="17.5"></line>
+                          </svg>
+                          Export as XML
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <button
                   className={styles.modalEmailButton}
                   onClick={() => {
                     // Handle email functionality properly
@@ -2843,6 +3793,18 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
         onClose={handleTaxOptimizationModalClose}
         onExportReport={handleTaxOptimizationReportExport}
       />
+      
+      {/* Email Modal */}
+      <AnimatePresence>
+        {showEmailModal && (
+          <EmailModal 
+            isOpen={showEmailModal}
+            onClose={() => setShowEmailModal(false)}
+            onSubmit={handleEmailSubmit}
+            sending={sending}
+          />
+        )}
+      </AnimatePresence>
       
       {/* Existing notification */}
       <AnimatePresence>

@@ -351,31 +351,78 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
     setToastMessage('Preparing PDF export...');
     setShowToast(true);
     
+    // Add a longer delay to ensure charts are fully rendered
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    
     try {
-      // Collect all chart canvases from the DOM with a more specific selector
-      const chartContainers = document.querySelectorAll('.chart-canvas');
+      // Collect all chart canvases from the DOM with improved logic
       const chartCanvases: HTMLCanvasElement[] = [];
       
+      console.log('Starting chart collection...');
+      
+      // Method 1: Look for canvases in chart containers (CSS modules)
+      const chartContainers = document.querySelectorAll('[class*="chartContainer"]');
+      console.log(`Method 1: Found ${chartContainers.length} chart containers`);
       chartContainers.forEach(container => {
         const canvas = container.querySelector('canvas') as HTMLCanvasElement;
-        if (canvas) {
+        if (canvas && canvas.width > 100 && canvas.height > 100) {
+          console.log(`Adding canvas from method 1: ${canvas.width}x${canvas.height}`);
           chartCanvases.push(canvas);
         }
       });
       
-      // Alternative approach: look for canvases in chart containers
+      // Method 2: Look for react-chartjs-2 canvases directly (they have role="img")
+      if (chartCanvases.length === 0) {
+        const reactChartCanvases = document.querySelectorAll('canvas[role="img"]');
+        console.log(`Method 2: Found ${reactChartCanvases.length} canvas[role="img"] elements`);
+        reactChartCanvases.forEach(canvas => {
+          if (canvas instanceof HTMLCanvasElement && canvas.width > 100 && canvas.height > 100) {
+            console.log(`Adding canvas from method 2: ${canvas.width}x${canvas.height}`);
+            chartCanvases.push(canvas);
+          }
+        });
+      }
+      
+      // Method 3: Look for chart-canvas class (might be transformed by CSS modules)
+      if (chartCanvases.length === 0) {
+        const chartElements = document.querySelectorAll('[class*="chart-canvas"], .chart-canvas');
+        console.log(`Method 3: Found ${chartElements.length} chart-canvas elements`);
+        chartElements.forEach(element => {
+          if (element.tagName === 'CANVAS') {
+            const canvas = element as HTMLCanvasElement;
+            if (canvas.width > 100 && canvas.height > 100) {
+              console.log(`Adding canvas from method 3: ${canvas.width}x${canvas.height}`);
+              chartCanvases.push(canvas);
+            }
+          } else {
+            const canvas = element.querySelector('canvas') as HTMLCanvasElement;
+            if (canvas && canvas.width > 100 && canvas.height > 100) {
+              console.log(`Adding canvas from method 3 (nested): ${canvas.width}x${canvas.height}`);
+              chartCanvases.push(canvas);
+            }
+          }
+        });
+      }
+      
+      // Method 4: Fallback - look for any canvas that might be a chart
       if (chartCanvases.length === 0) {
         const allCanvases = document.querySelectorAll('canvas');
+        console.log(`Method 4: Found ${allCanvases.length} total canvases`);
         allCanvases.forEach(canvas => {
-          // Check if the canvas is within a chart visualization container
-          const chartContainer = canvas.closest('[class*="chartContainer"]');
-          if (chartContainer) {
+          if (canvas instanceof HTMLCanvasElement && 
+              canvas.width > 200 && canvas.height > 150) { // Charts are typically larger
+            console.log(`Adding canvas from method 4: ${canvas.width}x${canvas.height}`);
             chartCanvases.push(canvas);
           }
         });
       }
       
       console.log(`Found ${chartCanvases.length} chart canvases for PDF export`);
+      
+      // Debug: Log details about found canvases
+      chartCanvases.forEach((canvas, index) => {
+        console.log(`Canvas ${index + 1}: ${canvas.width}x${canvas.height}, has data: ${canvas.toDataURL('image/png').length > 1000}`);
+      });
       
       // Filter messages with chart and table data
       const messagesWithData = messages.map(msg => ({
@@ -384,6 +431,13 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
       }));
       
       // Generate the PDF with visualizations and tables
+      console.log('Calling generateChatPDF with:', {
+        messagesCount: messagesWithData.length,
+        chartCanvasesCount: chartCanvases.length,
+        includeCharts: chartCanvases.length > 0,
+        fileName: fileName || undefined
+      });
+      
       await generateChatPDF(
         messagesWithData, 
         chartCanvases.length > 0 ? chartCanvases : undefined,
@@ -391,7 +445,7 @@ const FinancialAssistant: React.FC<FinancialAssistantProps> = ({ csvData, fileNa
         { 
           includeCharts: chartCanvases.length > 0,
           includeTimestamp: true,
-          title: 'Financial Analysis Report'
+          title: 'Financial Assistant Analysis Report'
         }
       );
       

@@ -76,6 +76,8 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
   const [isExportingPdf, setIsExportingPdf] = useState<boolean>(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState<boolean>(false);
   const [isSendingEmail, setIsSendingEmail] = useState<boolean>(false);
+  const [showExportDropdown, setShowExportDropdown] = useState<boolean>(false);
+  const [exporting, setExporting] = useState<boolean>(false);
 
   // Function to generate detailed analysis for a table
   const generateDetailedTableAnalysis = async (
@@ -1804,19 +1806,47 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
     setIsSendingEmail(true);
     
     try {
-      // Generate PDF as base64 using the same function as export
-      const pdfBase64 = await exportToPdf(true);
+      let fileData: string;
+      let fileName: string;
+      let contentType: string;
       
-      if (!pdfBase64) {
-        throw new Error('Failed to generate PDF for email');
+      const baseFileName = `${workspaceData?.name || 'Financial'}-Report-${new Date().toISOString().split('T')[0]}`;
+      
+      // Generate data based on selected format
+      switch (emailData.exportFormat) {
+        case 'pdf':
+          // Generate PDF as base64 using the same function as export
+          const pdfData = await exportToPdf(true);
+          if (!pdfData) {
+            throw new Error('Failed to generate PDF for email');
+          }
+          fileData = pdfData;
+          fileName = `${baseFileName}.pdf`;
+          contentType = 'application/pdf';
+          break;
+          
+        case 'word':
+          // Generate Word document HTML content
+          fileData = await generateWordContent();
+          fileName = `${baseFileName}.doc`;
+          contentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+          break;
+          
+        case 'xml':
+          // Generate XML content
+          fileData = await generateXMLContent();
+          fileName = `${baseFileName}.xml`;
+          contentType = 'application/xml';
+          break;
+          
+        default:
+          throw new Error('Invalid export format selected');
       }
 
       const token = localStorage.getItem('token');
       if (!token) {
         throw new Error('Authentication required');
       }
-
-      const fileName = `${workspaceData?.name || 'Financial'}-Report-${new Date().toISOString().split('T')[0]}.pdf`;
 
       const response = await fetch(buildApiUrl('api/email/send-professional-report'), {
         method: 'POST',
@@ -1827,8 +1857,10 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         body: JSON.stringify({
           recipientEmail: emailData.recipientEmail,
           recipientName: emailData.recipientName,
-          pdfData: pdfBase64,
+          fileData: fileData,
           fileName: fileName,
+          contentType: contentType,
+          exportFormat: emailData.exportFormat,
           workspaceName: emailData.workspaceName,
           customMessage: emailData.customMessage
         })
@@ -1840,7 +1872,7 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
         throw new Error(result.error || 'Failed to send email');
       }
 
-      toast.success('Report email sent successfully!');
+      toast.success(`Report email sent successfully as ${emailData.exportFormat.toUpperCase()}!`);
       setIsEmailModalOpen(false);
     } catch (error: any) {
       console.error('Error sending email:', error);
@@ -1849,6 +1881,501 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
       setIsSendingEmail(false);
     }
   };
+
+  // Helper function to generate Word content for email
+  const generateWordContent = async (): Promise<string> => {
+    if (!reportData) {
+      throw new Error('No data available for Word export');
+    }
+
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <meta charset="UTF-8">
+          <title>Financial Report</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; line-height: 1.6; }
+            h1 { color: #2563eb; text-align: center; margin-bottom: 30px; }
+            h2 { color: #1e40af; margin-top: 25px; margin-bottom: 15px; }
+            h3 { color: #374151; margin-top: 20px; margin-bottom: 10px; }
+            h4 { color: #4b5563; margin-top: 15px; margin-bottom: 8px; }
+            .report-header { text-align: center; margin-bottom: 30px; padding: 20px; background: #f8fafc; border-radius: 8px; }
+            .section { margin-bottom: 25px; }
+            table { width: 100%; border-collapse: collapse; margin: 15px 0; }
+            th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+            th { background-color: #f3f4f6; font-weight: bold; }
+            .metric { margin: 10px 0; }
+            ul { margin: 10px 0; padding-left: 20px; }
+            li { margin: 5px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="report-header">
+            <h1>Financial Analysis Report</h1>
+            <p><strong>Workspace:</strong> ${workspaceData?.name || 'Financial Analysis'}</p>
+            <p><strong>Generated:</strong> ${new Date().toLocaleDateString()}</p>
+          </div>
+    `;
+
+    // Add tables data if available
+    if (reportData.tables && Array.isArray(reportData.tables)) {
+      reportData.tables.forEach((table: any, index: number) => {
+        htmlContent += `
+          <div class="section">
+            <h2>Table ${index + 1}: ${table.title || 'Financial Data'}</h2>
+        `;
+        
+        if (table.data && Array.isArray(table.data) && table.data.length > 0) {
+          htmlContent += '<table>';
+          
+          // Add headers
+          const headers = Object.keys(table.data[0]);
+          htmlContent += '<tr>';
+          headers.forEach(header => {
+            htmlContent += `<th>${header}</th>`;
+          });
+          htmlContent += '</tr>';
+          
+          // Add data rows
+          table.data.forEach((row: any) => {
+            htmlContent += '<tr>';
+            headers.forEach(header => {
+              htmlContent += `<td>${row[header] || ''}</td>`;
+            });
+            htmlContent += '</tr>';
+          });
+          
+          htmlContent += '</table>';
+        }
+        
+        // Add detailed analysis if available
+        if (table.detailedAnalysis) {
+          const detailedAnalysis = table.detailedAnalysis;
+          htmlContent += `
+            <div class="analysis">
+              <h3>Analysis</h3>
+              <p><strong>Summary:</strong> ${detailedAnalysis.summary}</p>
+              
+              <h4>Key Metrics</h4>
+              <ul>
+          `;
+          
+          detailedAnalysis.keyMetrics?.forEach((metric: string) => {
+            htmlContent += `<li>${metric}</li>`;
+          });
+
+          htmlContent += `
+              </ul>
+              
+              <h4>Recommendations</h4>
+              <ul>
+          `;
+          
+          detailedAnalysis.recommendations?.forEach((recommendation: string) => {
+            htmlContent += `<li>${recommendation}</li>`;
+          });
+
+          htmlContent += `
+              </ul>
+              
+              <h4>Forecast Insights</h4>
+              <p>${detailedAnalysis.forecastInsights}</p>
+            </div>
+          `;
+        }
+        
+        htmlContent += '</div>';
+      });
+    }
+
+    htmlContent += `
+        </body>
+      </html>
+    `;
+
+    // Convert HTML to base64 for email sending
+    return btoa(unescape(encodeURIComponent(htmlContent)));
+  };
+
+  // Helper function to generate XML content for email
+  const generateXMLContent = async (): Promise<string> => {
+    if (!reportData) {
+      throw new Error('No data available for XML export');
+    }
+
+    let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<FinancialReport>
+  <ReportInfo>
+    <WorkspaceName>${workspaceData?.name || 'Financial'}</WorkspaceName>
+    <GeneratedDate>${new Date().toISOString()}</GeneratedDate>
+  </ReportInfo>
+  <Tables>`;
+
+    if (reportData.tables && Array.isArray(reportData.tables)) {
+      reportData.tables.forEach((table: any, index: number) => {
+        xmlContent += `
+    <Table id="${index + 1}">
+      <Title>${table.title || 'Financial Data'}</Title>`;
+      
+        if (table.data && Array.isArray(table.data)) {
+          xmlContent += `
+      <Data>`;
+          table.data.forEach((row: any, rowIndex: number) => {
+            xmlContent += `
+        <Row id="${rowIndex + 1}">`;
+            Object.entries(row).forEach(([key, value]) => {
+              xmlContent += `
+          <${key}>${value}</${key}>`;
+            });
+            xmlContent += `
+        </Row>`;
+          });
+          xmlContent += `
+      </Data>`;
+        }
+        
+        if (table.detailedAnalysis) {
+          const analysis = table.detailedAnalysis;
+          xmlContent += `
+      <Analysis>
+        <Summary>${analysis.summary}</Summary>
+        <KeyMetrics>`;
+          analysis.keyMetrics?.forEach((metric: string, metricIndex: number) => {
+            xmlContent += `
+          <Metric id="${metricIndex + 1}">${metric}</Metric>`;
+          });
+          xmlContent += `
+        </KeyMetrics>
+        <Recommendations>`;
+          analysis.recommendations?.forEach((rec: string, recIndex: number) => {
+            xmlContent += `
+          <Recommendation id="${recIndex + 1}">${rec}</Recommendation>`;
+          });
+          xmlContent += `
+        </Recommendations>
+        <ForecastInsights>${analysis.forecastInsights}</ForecastInsights>
+      </Analysis>`;
+        }
+        
+        xmlContent += `
+    </Table>`;
+      });
+    }
+
+    xmlContent += `
+  </Tables>
+</FinancialReport>`;
+
+    // Convert XML to base64 for email sending
+    return btoa(unescape(encodeURIComponent(xmlContent)));
+  };
+
+  // Function to export to Word format
+  const exportToWord = async () => {
+    if (!reportData) {
+      toast.error('No data available for export');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      // Generate HTML content for the report
+      let htmlContent = `
+        <html>
+          <head>
+            <title>${workspaceData?.name || 'Financial'} Report</title>
+            <style>
+              body { font-family: Arial, sans-serif; margin: 20px; }
+              h1 { color: #1f2937; border-bottom: 2px solid #3b82f6; padding-bottom: 10px; }
+              h2 { color: #374151; margin-top: 30px; }
+              h3 { color: #4b5563; }
+              table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+              th, td { border: 1px solid #d1d5db; padding: 8px; text-align: left; }
+              th { background-color: #f3f4f6; font-weight: bold; }
+              .analysis { background-color: #f8fafc; padding: 15px; margin: 15px 0; border-left: 4px solid #3b82f6; }
+              .risk { color: #dc2626; }
+              .opportunity { color: #059669; }
+            </style>
+          </head>
+          <body>
+            <h1>${workspaceData?.name || 'Financial'} Report</h1>
+            <p><strong>Generated on:</strong> ${new Date().toLocaleDateString()}</p>
+      `;
+
+      // Add tables and analysis
+      const visibleTables = reportData.tables.filter((table: any) => 
+        activeTab === 'overview' ? true : activeTab === table.id
+      );
+
+      visibleTables.forEach((table: any) => {
+        htmlContent += `
+          <h2>${table.title}</h2>
+          <p>${table.description}</p>
+          <table>
+            <thead>
+              <tr>
+        `;
+        
+        table.columns.forEach((column: any) => {
+          htmlContent += `<th>${column.header}</th>`;
+        });
+        
+        htmlContent += `
+              </tr>
+            </thead>
+            <tbody>
+        `;
+        
+        table.data.forEach((row: any) => {
+          htmlContent += '<tr>';
+          table.columns.forEach((column: any) => {
+            const value = row[column.accessor];
+            let cellValue = '';
+            if (column.isNumeric && column.isCurrency && typeof value === 'number') {
+              cellValue = new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD'
+              }).format(value);
+            } else if (column.isNumeric) {
+              cellValue = typeof value === 'number' ? value.toLocaleString() : value;
+            } else {
+              cellValue = value || '';
+            }
+            htmlContent += `<td>${cellValue}</td>`;
+          });
+          htmlContent += '</tr>';
+        });
+        
+        htmlContent += `
+            </tbody>
+          </table>
+        `;
+
+        // Add detailed analysis if available
+        const detailedAnalysis = reportData.detailedAnalysis?.[table.id];
+        if (detailedAnalysis) {
+          htmlContent += `
+            <div class="analysis">
+              <h3>📊 Comprehensive Financial Analysis</h3>
+              <h4>Business Context</h4>
+              <p>${detailedAnalysis.businessContext}</p>
+              
+              <h4>Financial Implications</h4>
+              <p>${detailedAnalysis.financialImplications}</p>
+              
+              <h4>Industry Benchmark</h4>
+              <p>${detailedAnalysis.industryBenchmark}</p>
+              
+              <h4>Risk Factors</h4>
+              <ul>
+          `;
+          
+          detailedAnalysis.riskFactors?.forEach((risk: string) => {
+            htmlContent += `<li class="risk">${risk}</li>`;
+          });
+          
+          htmlContent += `
+              </ul>
+              
+              <h4>Opportunities</h4>
+              <ul>
+          `;
+          
+          detailedAnalysis.opportunities?.forEach((opportunity: string) => {
+            htmlContent += `<li class="opportunity">${opportunity}</li>`;
+          });
+          
+          htmlContent += `
+              </ul>
+              
+              <h4>Recommendations</h4>
+              <ul>
+          `;
+          
+          detailedAnalysis.recommendations?.forEach((recommendation: string) => {
+            htmlContent += `<li>${recommendation}</li>`;
+          });
+          
+          htmlContent += `
+              </ul>
+              
+              <h4>Forecast Insights</h4>
+              <p>${detailedAnalysis.forecastInsights}</p>
+            </div>
+          `;
+        }
+      });
+
+      htmlContent += `
+          </body>
+        </html>
+      `;
+
+      // Create and download the Word document
+      const blob = new Blob([htmlContent], { 
+        type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${workspaceData?.name || 'Financial'}-Report-${new Date().toISOString().split('T')[0]}.doc`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('Word document exported successfully!');
+    } catch (error) {
+      console.error('Error exporting to Word:', error);
+      toast.error('Failed to export Word document');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Function to export to XML format
+  const exportToXML = async () => {
+    if (!reportData) {
+      toast.error('No data available for export');
+      return;
+    }
+
+    setExporting(true);
+    try {
+      let xmlContent = `<?xml version="1.0" encoding="UTF-8"?>
+<FinancialReport>
+  <ReportInfo>
+    <WorkspaceName>${workspaceData?.name || 'Financial'}</WorkspaceName>
+    <GeneratedDate>${new Date().toISOString()}</GeneratedDate>
+    <ReportType>Financial Analysis Report</ReportType>
+  </ReportInfo>
+  <Tables>`;
+
+      // Add tables data
+      const visibleTables = reportData.tables.filter((table: any) => 
+        activeTab === 'overview' ? true : activeTab === table.id
+      );
+
+      visibleTables.forEach((table: any) => {
+        xmlContent += `
+    <Table id="${table.id}">
+      <Title>${table.title}</Title>
+      <Description>${table.description}</Description>
+      <Columns>`;
+      
+        table.columns.forEach((column: any) => {
+          xmlContent += `
+        <Column>
+          <Header>${column.header}</Header>
+          <Accessor>${column.accessor}</Accessor>
+          <IsNumeric>${column.isNumeric}</IsNumeric>
+          <IsCurrency>${column.isCurrency || false}</IsCurrency>
+        </Column>`;
+        });
+        
+        xmlContent += `
+      </Columns>
+      <Data>`;
+      
+        table.data.forEach((row: any, index: number) => {
+          xmlContent += `
+        <Row index="${index}">`;
+          table.columns.forEach((column: any) => {
+            const value = row[column.accessor];
+            xmlContent += `
+          <Cell column="${column.accessor}">${value || ''}</Cell>`;
+          });
+          xmlContent += `
+        </Row>`;
+        });
+        
+        xmlContent += `
+      </Data>`;
+
+        // Add detailed analysis if available
+        const detailedAnalysis = reportData.detailedAnalysis?.[table.id];
+        if (detailedAnalysis) {
+          xmlContent += `
+      <Analysis>
+        <BusinessContext>${detailedAnalysis.businessContext}</BusinessContext>
+        <FinancialImplications>${detailedAnalysis.financialImplications}</FinancialImplications>
+        <IndustryBenchmark>${detailedAnalysis.industryBenchmark}</IndustryBenchmark>
+        <RiskFactors>`;
+        
+          detailedAnalysis.riskFactors?.forEach((risk: string) => {
+            xmlContent += `
+          <Risk>${risk}</Risk>`;
+          });
+          
+          xmlContent += `
+        </RiskFactors>
+        <Opportunities>`;
+        
+          detailedAnalysis.opportunities?.forEach((opportunity: string) => {
+            xmlContent += `
+          <Opportunity>${opportunity}</Opportunity>`;
+          });
+          
+          xmlContent += `
+        </Opportunities>
+        <Recommendations>`;
+        
+          detailedAnalysis.recommendations?.forEach((recommendation: string) => {
+            xmlContent += `
+          <Recommendation>${recommendation}</Recommendation>`;
+          });
+          
+          xmlContent += `
+        </Recommendations>
+        <ForecastInsights>${detailedAnalysis.forecastInsights}</ForecastInsights>
+      </Analysis>`;
+        }
+        
+        xmlContent += `
+    </Table>`;
+      });
+
+      xmlContent += `
+  </Tables>
+</FinancialReport>`;
+
+      // Create and download the XML file
+      const blob = new Blob([xmlContent], { type: 'application/xml' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${workspaceData?.name || 'Financial'}-Report-${new Date().toISOString().split('T')[0]}.xml`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      toast.success('XML file exported successfully!');
+    } catch (error) {
+      console.error('Error exporting to XML:', error);
+      toast.error('Failed to export XML file');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  // Click outside handler for dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (showExportDropdown) {
+        const target = event.target as Element;
+        if (!target.closest('.export-container')) {
+          setShowExportDropdown(false);
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showExportDropdown]);
 
   return (
     <div className={styles.reportContainer}>
@@ -1877,15 +2404,185 @@ Remember: Use ONLY plain text. NO asterisks, NO bold formatting, NO markdown. Wr
               </div>
             ))}
             
-            {/* Export to PDF option */}
-            <div 
-              className={styles.tabItem}
-              onClick={() => exportToPdf(false)}
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-              </svg>
-              <span className={styles.tabTitle}>Export PDF</span>
+            {/* Export dropdown with multiple format options */}
+            <div className="export-container" style={{ position: 'relative' }}>
+              <div 
+                className={styles.tabItem}
+                onClick={() => setShowExportDropdown(!showExportDropdown)}
+                style={{ cursor: 'pointer' }}
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={styles.tabIcon}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m.75 12l3 3m0 0l3-3m-3 3v-6m-1.5-9H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+                <span className={styles.tabTitle}>Export Report</span>
+                <svg 
+                  xmlns="http://www.w3.org/2000/svg" 
+                  className={styles.dropdownIcon}
+                  style={{ 
+                    width: '16px', 
+                    height: '16px', 
+                    marginLeft: '8px',
+                    transform: showExportDropdown ? 'rotate(180deg)' : 'rotate(0deg)',
+                    transition: 'transform 0.2s ease'
+                  }}
+                  fill="none" 
+                  viewBox="0 0 24 24" 
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+              </div>
+
+              {/* Interactive Dropdown */}
+              {showExportDropdown && (
+                <div 
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '0',
+                    backgroundColor: 'white',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '8px',
+                    boxShadow: '0 10px 25px rgba(0, 0, 0, 0.1)',
+                    zIndex: 1000,
+                    minWidth: '200px',
+                    animation: 'fadeIn 0.2s ease-out',
+                    overflow: 'hidden',
+                    marginTop: '8px'
+                  }}
+                >
+                  <style>
+                    {`
+                      @keyframes fadeIn {
+                        from { opacity: 0; transform: translateY(10px); }
+                        to { opacity: 1; transform: translateY(0); }
+                      }
+                      .dropdown-item {
+                        display: flex;
+                        align-items: center;
+                        width: 100%;
+                        padding: 12px 16px;
+                        border: none;
+                        background: none;
+                        color: #374151;
+                        font-size: 14px;
+                        cursor: pointer;
+                        transition: all 0.2s ease;
+                        text-align: left;
+                        border-bottom: 1px solid #f3f4f6;
+                      }
+                      .dropdown-item:last-child {
+                        border-bottom: none;
+                      }
+                      .dropdown-item:hover {
+                        background-color: #f8fafc;
+                        color: #1f2937;
+                        transform: translateX(2px);
+                      }
+                      .dropdown-item:active {
+                        transform: scale(0.98);
+                      }
+                      .dropdown-item:disabled {
+                        opacity: 0.5;
+                        cursor: not-allowed;
+                      }
+                      .dropdown-icon {
+                        width: 18px;
+                        height: 18px;
+                        margin-right: 12px;
+                        color: #6b7280;
+                        transition: color 0.2s ease;
+                      }
+                      .dropdown-item:hover .dropdown-icon {
+                        color: #4f46e5;
+                      }
+                      .dropdown-item span {
+                        font-weight: 500;
+                      }
+                    `}
+                  </style>
+                  
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setShowExportDropdown(false);
+                      exportToPdf(false);
+                    }}
+                    disabled={exporting}
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="dropdown-icon" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="16" y1="13" x2="8" y2="13"></line>
+                      <line x1="16" y1="17" x2="8" y2="17"></line>
+                      <polyline points="10 9 9 9 8 9"></polyline>
+                    </svg>
+                    <span>Export as PDF</span>
+                  </button>
+                  
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setShowExportDropdown(false);
+                      exportToWord();
+                    }}
+                    disabled={exporting}
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="dropdown-icon" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="12" y1="11" x2="12" y2="17"></line>
+                      <polyline points="9 14 12 17 15 14"></polyline>
+                    </svg>
+                    <span>Export as Word</span>
+                  </button>
+                  
+                  <button
+                    className="dropdown-item"
+                    onClick={() => {
+                      setShowExportDropdown(false);
+                      exportToXML();
+                    }}
+                    disabled={exporting}
+                  >
+                    <svg 
+                      xmlns="http://www.w3.org/2000/svg" 
+                      className="dropdown-icon" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      stroke="currentColor" 
+                      strokeWidth="2" 
+                      strokeLinecap="round" 
+                      strokeLinejoin="round"
+                    >
+                      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                      <polyline points="14 2 14 8 20 8"></polyline>
+                      <line x1="9.5" y1="12.5" x2="14.5" y2="17.5"></line>
+                      <line x1="14.5" y1="12.5" x2="9.5" y2="17.5"></line>
+                    </svg>
+                    <span>Export as XML</span>
+                  </button>
+                </div>
+              )}
             </div>
             
             {/* Email Report option */}

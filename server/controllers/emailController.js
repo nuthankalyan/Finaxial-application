@@ -74,8 +74,11 @@ exports.sendProfessionalReport = async (req, res) => {
     const { 
       recipientEmail, 
       recipientName, 
-      pdfData, 
+      fileData,
+      pdfData, // Keep backward compatibility
       fileName, 
+      contentType,
+      exportFormat,
       workspaceName, 
       customMessage 
     } = req.body;
@@ -87,40 +90,60 @@ exports.sendProfessionalReport = async (req, res) => {
       });
     }
     
-    if (!pdfData) {
+    // Use fileData if available, otherwise fall back to pdfData for backward compatibility
+    const dataToProcess = fileData || pdfData;
+    if (!dataToProcess) {
       return res.status(400).json({ 
         success: false, 
-        error: 'PDF data is required' 
+        error: 'File data is required' 
       });
     }
     
     console.log(`Received professional report email request for: ${recipientEmail}`);
-    console.log(`PDF data size: ${pdfData.length} characters`);
+    console.log(`File data size: ${dataToProcess.length} characters`);
+    console.log(`Export format: ${exportFormat || 'pdf'}`);
     
     try {
       // Convert base64 data to buffer for nodemailer
-      const pdfBuffer = Buffer.from(pdfData, 'base64');
+      const fileBuffer = Buffer.from(dataToProcess, 'base64');
       
       // Validate that the conversion worked
-      if (!pdfBuffer || pdfBuffer.length === 0) {
-        throw new Error('Failed to convert PDF data to buffer');
+      if (!fileBuffer || fileBuffer.length === 0) {
+        throw new Error('Failed to convert file data to buffer');
       }
       
-      console.log(`Converted to buffer. Buffer size: ${pdfBuffer.length} bytes`);
+      console.log(`Converted to buffer. Buffer size: ${fileBuffer.length} bytes`);
+      
+      // Determine the actual content type based on format
+      let actualContentType = contentType;
+      if (!actualContentType) {
+        switch (exportFormat) {
+          case 'word':
+            actualContentType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+            break;
+          case 'xml':
+            actualContentType = 'application/xml';
+            break;
+          default:
+            actualContentType = 'application/pdf';
+        }
+      }
       
       const result = await sendReportEmail(
         recipientEmail,
         recipientName,
-        pdfBuffer,
+        fileBuffer,
         fileName,
         workspaceName,
-        customMessage
+        customMessage,
+        actualContentType,
+        exportFormat
       );
       
       if (result.success) {
         return res.status(200).json({
           success: true,
-          message: 'Professional report email sent successfully',
+          message: `Professional report email sent successfully as ${(exportFormat || 'PDF').toUpperCase()}`,
           messageId: result.messageId
         });
       } else {
@@ -130,10 +153,10 @@ exports.sendProfessionalReport = async (req, res) => {
         });
       }
     } catch (conversionError) {
-      console.error('Error converting PDF data:', conversionError);
+      console.error('Error converting file data:', conversionError);
       return res.status(500).json({
         success: false,
-        error: 'Failed to process PDF data: ' + conversionError.message
+        error: 'Failed to process file data: ' + conversionError.message
       });
     }
   } catch (error) {
