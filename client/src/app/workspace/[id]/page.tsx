@@ -2402,7 +2402,8 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                       style={{ 
                         position: 'relative', 
                         zIndex: 1000,
-                        overflow: 'visible'
+                        overflow: 'visible',
+                        display: 'inline-block'
                       }}
                     >
                       <motion.button
@@ -2454,15 +2455,15 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                         <div 
                           style={{
                             position: 'absolute',
-                            top: '100%',
-                            left: '0',
+                            bottom: '100%',
+                            right: '0',
                             backgroundColor: 'white',
                             border: '1px solid #e5e7eb',
                             borderRadius: '8px',
                             zIndex: 999999,
                             width: '200px',
                             boxShadow: '0 4px 25px -5px rgba(0, 0, 0, 0.15), 0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                            marginTop: '8px',
+                            marginBottom: '8px',
                             maxHeight: '200px',
                             overflow: 'visible',
                             animation: 'dropdownFadeIn 0.2s ease-out'
@@ -2472,7 +2473,7 @@ export default function WorkspacePage({ params }: { params: { id: string } }) {
                             @keyframes dropdownFadeIn {
                               from {
                                 opacity: 0;
-                                transform: translateY(10px);
+                                transform: translateY(-10px);
                               }
                               to {
                                 opacity: 1;
