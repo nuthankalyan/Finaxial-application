@@ -573,6 +573,7 @@
   gap: 0.75rem;
   overflow: visible;
   position: relative;
+  z-index: 5; /* Lower z-index to ensure it stays behind modals */
 }
 
 .saveButton, .exportButton, .emailButton, .reportButton {
@@ -588,6 +589,8 @@
   font-family: inherit;
   margin-bottom: 10px;
   margin-right: 10px;
+  position: relative; /* Add position for stacking context */
+  z-index: 5; /* Lower z-index to ensure buttons stay behind modals */
 }
 
 .saveButton {
@@ -688,7 +691,7 @@
   position: relative;
   display: inline-block;
   overflow: visible;
-  z-index: 10;
+  z-index: 5; /* Lower z-index to ensure it stays behind modals */
 }
 
 .dropdownArrow {
@@ -706,7 +709,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 0.375rem;
   box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  z-index: 1000;
+  z-index: 5; /* Lower z-index to ensure it stays behind modals */
   margin-top: 0.25rem;
   min-width: 160px;
 }
@@ -767,7 +770,7 @@
   border: 1px solid #e5e7eb;
   border-radius: 0.375rem;
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  z-index: 10;
+  z-index: 9 !important;
   margin-bottom: 0.25rem;
 }
 
@@ -819,6 +822,9 @@
   align-items: center;
   z-index: 50;
 } 
+
+/* Class to prevent scrolling when modal is open */
+
 
 /* Email Modal Content */
 .modalContent {

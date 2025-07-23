@@ -8,7 +8,7 @@
   display: flex;
   justify-content: center;
   align-items: center;
-  z-index: 1000;
+  z-index: 1000 !important;
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
 }
@@ -24,6 +24,8 @@
   box-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 1.5px 6px rgba(0,0,0,0.08);
   border: 1.5px solid #e5e7eb;
   overflow: hidden;
+  position: relative; /* Add position for proper stacking context */
+  z-index: 1005; /* Add z-index higher than workspace elements */
 }
 
 .modalHeader {
@@ -240,7 +242,7 @@
   background-color: #f8fafc;
   position: sticky;
   bottom: 0;
-  z-index: 10;
+  z-index: 1010; /* Increased z-index to ensure it's above the workspace export button */
 }
 
 .footerLeft {
