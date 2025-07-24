@@ -489,3 +489,129 @@
   font-size: 0.875rem;
   color: var(--text-secondary);
 }
+
+/* Mobile responsive styles */
+@media (max-width: 768px) {
+  .container {
+    padding: 0 1rem;
+  }
+
+  .heroSection {
+    padding: 4rem 0 3rem;
+  }
+
+  .heroTitle {
+    font-size: 2.25rem;
+    line-height: 1.2;
+  }
+
+  .heroDescription {
+    font-size: 1rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .heroCTA {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .primaryButton,
+  .secondaryButton {
+    width: 100%;
+    text-align: center;
+  }
+
+  .heroImage {
+    margin-top: 2rem;
+  }
+
+  .heroImage img {
+    width: 100%;
+    height: auto;
+    max-width: 400px;
+  }
+
+  .featuresGrid {
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+  }
+
+  .featureIcon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .featureTitle {
+    font-size: 1rem;
+  }
+
+  .featureDescription {
+    font-size: 0.8125rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroTitle {
+    font-size: 1.875rem;
+  }
+
+  .heroDescription {
+    font-size: 0.9375rem;
+  }
+
+  .heroImage img {
+    max-width: 320px;
+  }
+
+  .featureCard {
+    padding: 1.25rem;
+  }
+
+  .featureIcon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .featureTitle {
+    font-size: 0.9375rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .featureDescription {
+    font-size: 0.75rem;
+    line-height: 1.5;
+  }
+
+  .stepNumber {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 0.875rem;
+  }
+
+  .stepTitle {
+    font-size: 1rem;
+  }
+
+  .stepDescription {
+    font-size: 0.75rem;
+  }
+}
+
+@media (max-width: 360px) {
+  .heroTitle {
+    font-size: 1.625rem;
+  }
+
+  .heroImage img {
+    max-width: 280px;
+  }
+
+  .featureCard {
+    padding: 1rem;
+  }
+
+  .featureIcon {
+    width: 36px;
+    height: 36px;
+  }
+}

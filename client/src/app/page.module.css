@@ -1085,6 +1085,70 @@
 
   .featureTitle {
     font-size: 1.25rem;
+    min-height: 3rem;
+  }
+
+  .featureIcon {
+    width: 56px;
+    height: 56px;
+    margin-bottom: 1rem;
+  }
+
+  .featureIcon::after {
+    width: 62px;
+    height: 62px;
+  }
+
+  .featureIcon img {
+    width: 32px;
+    height: 32px;
+  }
+
+  .featureCard {
+    padding: 1.25rem;
+  }
+
+  .featureDescription {
+    font-size: 0.9375rem;
+    line-height: 1.5;
+  }
+}
+
+/* Extra small mobile optimization */
+@media (max-width: 360px) {
+  .featureIcon {
+    width: 48px;
+    height: 48px;
+    margin-bottom: 0.875rem;
+  }
+
+  .featureIcon::after {
+    width: 54px;
+    height: 54px;
+  }
+
+  .featureIcon img {
+    width: 28px;
+    height: 28px;
+  }
+
+  .featureCard {
+    padding: 1rem;
+  }
+
+  .featureTitle {
+    font-size: 1.125rem;
+    min-height: 2.5rem;
+    margin: 0.75rem 0;
+  }
+
+  .featureDescription {
+    font-size: 0.875rem;
+    line-height: 1.4;
+  }
+
+  .featuresGrid {
+    gap: 1rem;
   }
 }
 
@@ -1229,6 +1293,18 @@
 
   .featureIcon {
     margin: 0 auto 1rem;
+    width: 64px;
+    height: 64px;
+  }
+
+  .featureIcon::after {
+    width: 70px;
+    height: 70px;
+  }
+
+  .featureIcon img {
+    width: 36px;
+    height: 36px;
   }
 
   /* Benefits Section Mobile */

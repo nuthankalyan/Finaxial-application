@@ -43,6 +43,12 @@ export default function DataTransformation() {
               alt="Financial data transformation platform showing data pipeline flow"
               width={500}
               height={400}
+              style={{
+                width: '100%',
+                height: 'auto',
+                maxWidth: '500px'
+              }}
+              priority
             />
           </div>
         </div>
