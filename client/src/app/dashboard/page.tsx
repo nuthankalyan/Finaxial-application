@@ -741,6 +741,8 @@ export default function Dashboard() {
           <h2>Welcome, {user.username}!</h2>
         </div>
 
+        {/* Video Demo Player */}
+        
         {/* Dashboard Stats */}
         <div className={styles.dashboardStats}>
           <div className={styles.statCard}>
@@ -1067,7 +1069,49 @@ export default function Dashboard() {
             </div>
           )}
         </div>
-        
+        <div className={styles.videoSection}>
+          <h3>Finaxial Demo</h3>
+          <div className={styles.videoPlayerContainer}>
+            <video 
+              className={styles.videoPlayer} 
+              controls
+              ref={(el) => {
+                if (el) {
+                  // Set current time to 3:55 (235 seconds)
+                  el.addEventListener('loadedmetadata', () => {
+                    el.currentTime = 235; // 3 minutes and 55 seconds
+                    
+                    // Capture the frame as a poster after seeking to the time
+                    el.addEventListener('seeked', () => {
+                      // Take a "screenshot" and use it as poster
+                      const canvas = document.createElement('canvas');
+                      canvas.width = el.videoWidth;
+                      canvas.height = el.videoHeight;
+                      const ctx = canvas.getContext('2d');
+                      ctx?.drawImage(el, 0, 0, canvas.width, canvas.height);
+                      
+                      try {
+                        const dataURL = canvas.toDataURL('image/jpeg');
+                        el.poster = dataURL;
+                        // Reset the current time to 0 so the video starts from beginning when played
+                        el.currentTime = 0;
+                      } catch (e) {
+                        console.error('Could not create poster from video frame', e);
+                        // Fallback to logo
+                        el.poster = '/finaxial-logooo.png';
+                      }
+                    }, { once: true });
+                  });
+                }
+              }}
+              preload="metadata"
+            >
+              <source src="/Finaxial_Demo.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          </div>
+        </div>
+
         {/* Activity Button */}
         <div className={styles.activityButton}>          <button 
             className={styles.activityButtonInner}

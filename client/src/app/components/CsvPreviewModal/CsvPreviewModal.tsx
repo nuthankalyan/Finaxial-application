@@ -1078,8 +1078,10 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 onClick={() => setShowSchemaVisualization(true)}
                 disabled={isLoading}
               >
-              
                 <span>View Schema</span>
+                <div className={styles.schemaHelpIconWrapper}>
+                  <span className={styles.schemaHelpIcon} data-tooltip="You can view all the table schemas which are uploaded that has column names and its relevant datatypes">?</span>
+                </div>
               </button>
             </div>
 
@@ -1088,7 +1090,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 className={styles.actionButton}
                 onClick={handleCheckAnomalies}
                 disabled={isLoading || isCheckingAnomalies}
-                title={`Check for anomalies in your data${hiddenColumnsCount > 0 ? ` (${hiddenColumnsCount} hidden column${hiddenColumnsCount > 1 ? 's' : ''} will be excluded)` : ''}`}
+                data-tooltip={`Check for anomalies in your data${hiddenColumnsCount > 0 ? ` (${hiddenColumnsCount} hidden column${hiddenColumnsCount > 1 ? 's' : ''} will be excluded)` : ''}`}
               >
                 {isCheckingAnomalies ? (
                   <>
@@ -1119,7 +1121,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 className={styles.actionButton}
                 onClick={handleTransformData}
                 disabled={isLoading}
-                title="Transform and clean your data"
+                data-tooltip="Transform and clean your data for analysis, including options for normalization, format conversion, and data enrichment"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -1140,7 +1142,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
                 className={styles.actionButton}
                 onClick={handleCheckCompliance}
                 disabled={isLoading || isCheckingCompliance}
-                title={`Check GAAP, IFRS, and SOX compliance across all ${files.length} file(s) and sheets${hiddenColumnsCount > 0 ? ` (${hiddenColumnsCount} hidden column${hiddenColumnsCount > 1 ? 's' : ''} will be excluded)` : ''}`}
+                data-tooltip={`Check GAAP, IFRS, and SOX compliance across all ${files.length} file(s) and sheets${hiddenColumnsCount > 0 ? ` (${hiddenColumnsCount} hidden column${hiddenColumnsCount > 1 ? 's' : ''} will be excluded)` : ''}`}
               >
                 {isCheckingCompliance ? (
                   <>

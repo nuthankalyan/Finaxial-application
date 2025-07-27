@@ -60,6 +60,8 @@ export default function RootLayout({
     <html lang="en">
       <head>
         {/* No external font resources needed - using system fonts */}
+         <link rel="icon" href="/finaxial-logooo_i.png" sizes="any" />
+        <link rel="apple-touch-icon" href="/finaxial-logooo_i.png" />
       </head>
       <body className="font-sans">
         {/* Structured data for better SEO */}
