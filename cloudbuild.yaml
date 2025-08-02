@@ -1,7 +1,7 @@
 steps:
-  # Build the container image
+  # Build the container image using the root Dockerfile
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/finaxial-client', './client']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/finaxial-client', '.']
   
   # Push the container image to Container Registry
   - name: 'gcr.io/cloud-builders/docker'
@@ -21,7 +21,7 @@ steps:
       - '--region'
       - 'us-central1'
       - '--set-env-vars'
-      - 'NEXT_PUBLIC_API_URL=https://your-backend.onrender.com'
+      - 'NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com'
       - '--allow-unauthenticated'
 
 images:

@@ -11,6 +11,9 @@ RUN npm ci
 # Copy the rest of the application code
 COPY client/ .
 
+# Set the backend API URL before building to ensure it's embedded in the JS bundle
+ENV NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com
+
 # Build the Next.js application
 RUN npm run build
 
@@ -20,6 +23,8 @@ WORKDIR /app
 
 # Set to production environment
 ENV NODE_ENV=production
+# Ensure the backend URL is available at runtime as well
+ENV NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com
 
 # Create a non-root user to run the app and own app files
 RUN addgroup -g 1001 -S nodejs
