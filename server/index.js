@@ -22,6 +22,7 @@ const corsOptions = {
     'https://finaxial.onrender.com',
     'https://finaxial-backend.onrender.com',
     'https://finaxial.tech',
+    'https://finaxial-application-123345821686.europe-west1.run.app',
     process.env.CLIENT_URL,
   ].filter(Boolean),
   credentials: true,

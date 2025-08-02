@@ -21,7 +21,7 @@ steps:
       - '--region'
       - 'us-central1'
       - '--set-env-vars'
-      - 'NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com'
+      - 'NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com,NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyApCEeEM3H1zToN27WIxotWZfE_58VfwqY,NEXT_PUBLIC_GEMINI_API_KEY_1=AIzaSyB3p-N1KKdOmus0qQKN1iM8yBbUeKV1alA,NEXT_PUBLIC_GEMINI_API_KEY_2=AIzaSyCsMd7pwtiF90ufGhCOg83khTiDVPxS2IY,NEXT_PUBLIC_GEMINI_API_KEY_3=AIzaSyDoY_PSXSodvwl4yzl4vQ_uhM4EvrWRrK4,NEXT_PUBLIC_GEMINI_API_KEY_4=AIzaSyBMbucyXbhJ0YzhdjDAC7K9_T9RyfOaZRI,NEXT_PUBLIC_GEMINI_API_KEY_5=AIzaSyAuJ3vh6WP1wz9F5ordUQ7LvbV-V5ymgOg'
       - '--allow-unauthenticated'
 
 images:

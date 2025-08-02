@@ -13,6 +13,13 @@ COPY client/ .
 
 # Set the backend API URL before building to ensure it's embedded in the JS bundle
 ENV NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com
+# Add Gemini API keys for build time
+ENV NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyApCEeEM3H1zToN27WIxotWZfE_58VfwqY
+ENV NEXT_PUBLIC_GEMINI_API_KEY_1=AIzaSyB3p-N1KKdOmus0qQKN1iM8yBbUeKV1alA
+ENV NEXT_PUBLIC_GEMINI_API_KEY_2=AIzaSyCsMd7pwtiF90ufGhCOg83khTiDVPxS2IY
+ENV NEXT_PUBLIC_GEMINI_API_KEY_3=AIzaSyDoY_PSXSodvwl4yzl4vQ_uhM4EvrWRrK4
+ENV NEXT_PUBLIC_GEMINI_API_KEY_4=AIzaSyBMbucyXbhJ0YzhdjDAC7K9_T9RyfOaZRI
+ENV NEXT_PUBLIC_GEMINI_API_KEY_5=AIzaSyAuJ3vh6WP1wz9F5ordUQ7LvbV-V5ymgOg
 
 # Build the Next.js application
 RUN npm run build
@@ -25,6 +32,13 @@ WORKDIR /app
 ENV NODE_ENV=production
 # Ensure the backend URL is available at runtime as well
 ENV NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com
+# Add Gemini API keys for runtime
+ENV NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyApCEeEM3H1zToN27WIxotWZfE_58VfwqY
+ENV NEXT_PUBLIC_GEMINI_API_KEY_1=AIzaSyB3p-N1KKdOmus0qQKN1iM8yBbUeKV1alA
+ENV NEXT_PUBLIC_GEMINI_API_KEY_2=AIzaSyCsMd7pwtiF90ufGhCOg83khTiDVPxS2IY
+ENV NEXT_PUBLIC_GEMINI_API_KEY_3=AIzaSyDoY_PSXSodvwl4yzl4vQ_uhM4EvrWRrK4
+ENV NEXT_PUBLIC_GEMINI_API_KEY_4=AIzaSyBMbucyXbhJ0YzhdjDAC7K9_T9RyfOaZRI
+ENV NEXT_PUBLIC_GEMINI_API_KEY_5=AIzaSyAuJ3vh6WP1wz9F5ordUQ7LvbV-V5ymgOg
 
 # Create a non-root user to run the app and own app files
 RUN addgroup -g 1001 -S nodejs
