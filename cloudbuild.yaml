@@ -20,6 +20,8 @@ steps:
       - 'managed'
       - '--region'
       - 'us-central1'
+      - '--set-env-vars'
+      - 'NEXT_PUBLIC_API_URL=https://your-backend.onrender.com'
       - '--allow-unauthenticated'
 
 images:
