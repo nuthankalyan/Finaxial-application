@@ -44,7 +44,7 @@ class AnomalyDetectionService {
       }
 
       const genAI = new GoogleGenerativeAI(this.apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 
       const prompt = `
 You are a data quality analyst. Analyze the following CSV data for anomalies and data quality issues.

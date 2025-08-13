@@ -14,7 +14,7 @@ COPY client/ .
 # Set the backend API URL before building to ensure it's embedded in the JS bundle
 ENV NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com
 # Add Gemini API keys for build time
-ENV NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyApCEeEM3H1zToN27WIxotWZfE_58VfwqY
+ENV NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyC4WnCGFLlbUOvHao7dfK29VgzzDo8mdlk
 ENV NEXT_PUBLIC_GEMINI_API_KEY_1=AIzaSyB3p-N1KKdOmus0qQKN1iM8yBbUeKV1alA
 ENV NEXT_PUBLIC_GEMINI_API_KEY_2=AIzaSyCsMd7pwtiF90ufGhCOg83khTiDVPxS2IY
 ENV NEXT_PUBLIC_GEMINI_API_KEY_3=AIzaSyDoY_PSXSodvwl4yzl4vQ_uhM4EvrWRrK4
@@ -33,7 +33,7 @@ ENV NODE_ENV=production
 # Ensure the backend URL is available at runtime as well
 ENV NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com
 # Add Gemini API keys for runtime
-ENV NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyApCEeEM3H1zToN27WIxotWZfE_58VfwqY
+ENV NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyC4WnCGFLlbUOvHao7dfK29VgzzDo8mdlk
 ENV NEXT_PUBLIC_GEMINI_API_KEY_1=AIzaSyB3p-N1KKdOmus0qQKN1iM8yBbUeKV1alA
 ENV NEXT_PUBLIC_GEMINI_API_KEY_2=AIzaSyCsMd7pwtiF90ufGhCOg83khTiDVPxS2IY
 ENV NEXT_PUBLIC_GEMINI_API_KEY_3=AIzaSyDoY_PSXSodvwl4yzl4vQ_uhM4EvrWRrK4
