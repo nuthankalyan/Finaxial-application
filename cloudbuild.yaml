@@ -44,3 +44,6 @@ steps:
 
 images:
   - 'gcr.io/$PROJECT_ID/finaxial-client'
+
+options:
+  logging: CLOUD_LOGGING_ONLY
