@@ -93,7 +93,7 @@ const ReportPage: React.FC<ReportPageProps> = ({ params }) => {
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
       // Convert table data to a readable format for analysis
       const tableDataString = table.data.map(row => 

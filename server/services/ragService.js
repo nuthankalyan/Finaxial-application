@@ -307,7 +307,7 @@ Financial statements typically include income statements, balance sheets, and ca
     
     // Initialize Gemini model with more explicit parameters for structured output
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.6-flash',
       generationConfig: {
         temperature: 0.2,  // Lower temperature for more predictable, structured responses
         maxOutputTokens: 8192  // Ensure enough tokens for complete response
@@ -902,7 +902,7 @@ async function checkComplianceWithRAG(csvContent, standards = ['GAAP', 'IFRS', '
     
     // Initialize Gemini model with more explicit parameters for structured output
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-2.0-flash',
+      model: 'gemini-3.6-flash',
       generationConfig: {
         temperature: 0.2,  // Lower temperature for more predictable, structured responses
         maxOutputTokens: 8192  // Ensure enough tokens for complete response

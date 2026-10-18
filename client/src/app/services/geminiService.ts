@@ -5,7 +5,7 @@ import { queryCache, createQueryCacheKey } from '../utils/cacheManager';
 import { cleanText, cleanTextArray, cleanInsightsObject } from '../utils/textCleaner';
 import { getAuthToken } from '../utils/authUtils';
 import axios from 'axios';
-import { API_BASE_URL } from '../utils/apiConfig';
+import { buildApiUrl } from '../utils/apiConfig';
 
 export interface FileInfo {
   content: string;
@@ -49,16 +49,16 @@ export const analyzeWithRAG = async (data: string, queryType: 'financial' | 'com
       throw new Error('Authentication required');
     }
 
-    const apiUrl = API_BASE_URL || 'http://localhost:5000';
     const endpoint = queryType === 'compliance' ? '/api/rag/compliance' : '/api/rag/analyze';
+    const apiUrl = buildApiUrl(endpoint);
     
-    console.log(`Calling RAG API at ${apiUrl}${endpoint}`);
+    console.log(`Calling RAG API at ${apiUrl}`);
     
     // Make sure data is a string
     const contentToSend = typeof data === 'string' ? data : JSON.stringify(data);
     
     const response = await axios.post(
-      `${apiUrl}${endpoint}`,
+      apiUrl,
       { 
         csvContent: contentToSend,
         query: null 
@@ -128,7 +128,7 @@ export const analyzeCsvWithGemini = async (csvContent: string): Promise<Financia
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     // Construct a prompt that instructs the model to analyze the CSV data
     const prompt = `
@@ -315,7 +315,7 @@ export const generateChartData = async (csvContent: string): Promise<ChartData[]
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     // Construct a prompt that instructs the model to generate chart data
     const prompt = `
@@ -576,7 +576,7 @@ export const generateStory = async (
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     // Format insights and recommendations as bullet points
     const formattedInsights = insights.insights
@@ -676,7 +676,7 @@ export const askFinancialQuestion = async (csvContent: string, question: string)
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     // Check if the question is asking for SQL query
     const isAskingForSql = question.toLowerCase().includes('sql') || 
@@ -835,7 +835,7 @@ export const askFinancialQuestionWithVisualization = async (
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     let result: { response: string; chart?: ChartData; tableData?: { headers: string[]; rows: any[][] } } = {
       response: ''
@@ -992,7 +992,7 @@ export const analyzeMultipleCsvFiles = async (files: FileInfo[]): Promise<Financ
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     // Prepare file contents with their names for context
     const filesContent = files.map((file, index) => {
@@ -1162,7 +1162,7 @@ export const generateMultipleFilesChartData = async (files: FileInfo[]): Promise
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     // Prepare file contents with their names for context
     const filesContent = files.map((file, index) => {

@@ -92,7 +92,7 @@ export const generateExcelSummaryTables = async (excelContent: string, fileName?
     });
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     // Prepare content for all sheets
     const sheetsContent = allSheets.map(([sheetName, sheetData]) => {
@@ -352,7 +352,7 @@ ${file.content}
     }).join('');
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     const prompt = `
 You are a financial analyst. Analyze the following mixed collection of CSV and Excel files and generate comprehensive financial summary tables that consolidate and compare data across all files and sheets.
@@ -477,7 +477,7 @@ export const generateSummaryTables = async (csvContent: string, fileName?: strin
     console.log('[SummaryTableService] Processing headers (visible columns only):', headers);
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     const prompt = `
 You are a financial analyst. Analyze the following CSV data and generate comprehensive financial summary tables suitable for a professional financial report.
@@ -719,7 +719,7 @@ export const generateMultiFileSummaryTables = async (files: { content: string; f
     // Any historical data or previously uploaded files are not included
 
     const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
     // Prepare file contents with column information
     const filesContent = files.map((file, index) => {
