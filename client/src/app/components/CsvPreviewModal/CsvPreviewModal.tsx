@@ -784,6 +784,7 @@ export const CsvPreviewModal: React.FC<CsvPreviewModalProps> = ({
   return (
     <AnimatePresence>
       <motion.div
+        key="csv-preview-modal"
         className={styles.modalOverlay}
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}

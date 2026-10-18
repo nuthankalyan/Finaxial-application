@@ -39,7 +39,7 @@ class TaxOptimizationService {
 
     try {
       const genAI = new GoogleGenerativeAI(this.apiKey);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+      const model = genAI.getGenerativeModel({ model: 'gemini-3.6-flash' });
 
       const prompt = `
 You are an expert tax advisor and financial analyst with deep knowledge of tax optimization strategies across various jurisdictions. 
