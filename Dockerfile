@@ -1,5 +1,5 @@
 # Use Node.js LTS as the base image
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
@@ -11,34 +11,31 @@ RUN npm ci
 # Copy the rest of the application code
 COPY client/ .
 
-# Set the backend API URL before building to ensure it's embedded in the JS bundle
-ENV NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com
-# Add Gemini API keys for build time
-ENV NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyC4WnCGFLlbUOvHao7dfK29VgzzDo8mdlk
-ENV NEXT_PUBLIC_GEMINI_API_KEY_1=AIzaSyB3p-N1KKdOmus0qQKN1iM8yBbUeKV1alA
-ENV NEXT_PUBLIC_GEMINI_API_KEY_2=AIzaSyCsMd7pwtiF90ufGhCOg83khTiDVPxS2IY
-ENV NEXT_PUBLIC_GEMINI_API_KEY_3=AIzaSyDoY_PSXSodvwl4yzl4vQ_uhM4EvrWRrK4
-ENV NEXT_PUBLIC_GEMINI_API_KEY_4=AIzaSyBMbucyXbhJ0YzhdjDAC7K9_T9RyfOaZRI
-ENV NEXT_PUBLIC_GEMINI_API_KEY_5=AIzaSyAuJ3vh6WP1wz9F5ordUQ7LvbV-V5ymgOg
+# These values are supplied by the deployment build and embedded by Next.js.
+ARG NEXT_PUBLIC_API_URL
+ARG NEXT_PUBLIC_GEMINI_API_KEY
+ARG NEXT_PUBLIC_GEMINI_API_KEY_1
+ARG NEXT_PUBLIC_GEMINI_API_KEY_2
+ARG NEXT_PUBLIC_GEMINI_API_KEY_3
+ARG NEXT_PUBLIC_GEMINI_API_KEY_4
+ARG NEXT_PUBLIC_GEMINI_API_KEY_5
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+ENV NEXT_PUBLIC_GEMINI_API_KEY=$NEXT_PUBLIC_GEMINI_API_KEY
+ENV NEXT_PUBLIC_GEMINI_API_KEY_1=$NEXT_PUBLIC_GEMINI_API_KEY_1
+ENV NEXT_PUBLIC_GEMINI_API_KEY_2=$NEXT_PUBLIC_GEMINI_API_KEY_2
+ENV NEXT_PUBLIC_GEMINI_API_KEY_3=$NEXT_PUBLIC_GEMINI_API_KEY_3
+ENV NEXT_PUBLIC_GEMINI_API_KEY_4=$NEXT_PUBLIC_GEMINI_API_KEY_4
+ENV NEXT_PUBLIC_GEMINI_API_KEY_5=$NEXT_PUBLIC_GEMINI_API_KEY_5
 
 # Build the Next.js application
 RUN npm run build
 
 # Production image
-FROM node:18-alpine AS runner
+FROM node:20-alpine AS runner
 WORKDIR /app
 
 # Set to production environment
 ENV NODE_ENV=production
-# Ensure the backend URL is available at runtime as well
-ENV NEXT_PUBLIC_API_URL=https://finaxial-backend.onrender.com
-# Add Gemini API keys for runtime
-ENV NEXT_PUBLIC_GEMINI_API_KEY=AIzaSyC4WnCGFLlbUOvHao7dfK29VgzzDo8mdlk
-ENV NEXT_PUBLIC_GEMINI_API_KEY_1=AIzaSyB3p-N1KKdOmus0qQKN1iM8yBbUeKV1alA
-ENV NEXT_PUBLIC_GEMINI_API_KEY_2=AIzaSyCsMd7pwtiF90ufGhCOg83khTiDVPxS2IY
-ENV NEXT_PUBLIC_GEMINI_API_KEY_3=AIzaSyDoY_PSXSodvwl4yzl4vQ_uhM4EvrWRrK4
-ENV NEXT_PUBLIC_GEMINI_API_KEY_4=AIzaSyBMbucyXbhJ0YzhdjDAC7K9_T9RyfOaZRI
-ENV NEXT_PUBLIC_GEMINI_API_KEY_5=AIzaSyAuJ3vh6WP1wz9F5ordUQ7LvbV-V5ymgOg
 
 # Create a non-root user to run the app and own app files
 RUN addgroup -g 1001 -S nodejs
